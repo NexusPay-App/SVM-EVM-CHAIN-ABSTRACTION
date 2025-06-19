@@ -1,0 +1,16 @@
+# Node.js
+node_modules/
+.env
+
+# TypeScript
+dist/
+
+# Solana Programs
+**/*.so
+target/
+
+# Rust
+Cargo.lock
+
+# Other
+.DS_Store 

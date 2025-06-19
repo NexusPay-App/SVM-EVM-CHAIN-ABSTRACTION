@@ -1,0 +1,17 @@
+{
+  "name": "nexus-defi-sdk",
+  "version": "1.0.0",
+  "description": "TypeScript SDK for NexusDeFi, providing APIs for payments, wallet management, and DeFi primitives.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+} 
