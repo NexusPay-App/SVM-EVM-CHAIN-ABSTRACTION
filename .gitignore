@@ -12,5 +12,49 @@ target/
 # Rust
 Cargo.lock
 
+# Sensitive Planning Documents (Internal Use Only)
+IMMEDIATE_ACTION_PLAN.md
+IMPLEMENTATION_ROADMAP.md
+PHASE1_EVM_SPECIFICATION.md
+INTERNAL_NOTES.md
+BUSINESS_PLAN.md
+STRATEGY.md
+ROADMAP.md
+TODO.md
+
+# Development Environment
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+
+# API Keys and Secrets
+.env.local
+.env.production
+.env.staging
+secrets/
+keys/
+*.key
+*.pem
+
+# Build artifacts
+build/
+dist/
+out/
+
+# Testing
+coverage/
+.nyc_output/
+
 # Other
 .DS_Store 
+.tmp/
+temp/ 
