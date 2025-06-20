@@ -1,0 +1,27 @@
+[package]
+name = "nexus-entry-point"
+version = "0.1.0"
+description = "NexusDeFi SVM Entry Point Program - Solana's ERC-4337 equivalent"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "nexus_entry_point"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-messages = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+solana-program = { workspace = true }
+anchor-lang = { workspace = true }
+anchor-spl = { workspace = true }
+borsh = { workspace = true }
+bytemuck = { workspace = true }
+spl-token = { workspace = true }
+thiserror = { workspace = true } 

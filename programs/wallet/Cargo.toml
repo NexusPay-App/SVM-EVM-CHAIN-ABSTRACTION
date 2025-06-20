@@ -1,0 +1,28 @@
+[package]
+name = "nexus-wallet"
+version = "0.1.0"
+description = "NexusDeFi SVM Wallet Program - PDA-based account abstraction"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "nexus_wallet"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-messages = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+solana-program = { workspace = true }
+anchor-lang = { workspace = true }
+anchor-spl = { workspace = true }
+borsh = { workspace = true }
+bytemuck = { workspace = true }
+spl-token = { workspace = true }
+spl-associated-token-account = { workspace = true }
+thiserror = { workspace = true } 

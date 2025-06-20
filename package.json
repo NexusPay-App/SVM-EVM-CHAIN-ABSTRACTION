@@ -1,5 +1,35 @@
 {
-  "dependencies": {
-    "@openzeppelin/contracts": "^5.3.0"
+  "name": "nexusdefi-evm-contracts",
+  "version": "1.0.0",
+  "description": "NexusDeFi EVM Smart Contracts - Multi-chain DeFi infrastructure",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "setup": "node scripts/setup.js",
+    "compile": "./node_modules/.bin/hardhat compile",
+    "test": "./node_modules/.bin/hardhat test",
+    "deploy:sepolia": "./node_modules/.bin/hardhat run scripts/deploy.js --network sepolia",
+    "deploy:arbitrum": "./node_modules/.bin/hardhat run scripts/deploy.js --network arbitrumSepolia", 
+    "deploy:base": "./node_modules/.bin/hardhat run scripts/deploy.js --network baseSepolia",
+    "deploy:polygon": "./node_modules/.bin/hardhat run scripts/deploy.js --network polygonMumbai",
+    "deploy:all": "node scripts/deploy-all.js",
+    "verify:sepolia": "./node_modules/.bin/hardhat verify --network sepolia",
+    "verify:arbitrum": "./node_modules/.bin/hardhat verify --network arbitrumSepolia",
+    "verify:base": "./node_modules/.bin/hardhat verify --network baseSepolia", 
+    "verify:polygon": "./node_modules/.bin/hardhat verify --network polygonMumbai"
+  },
+  "keywords": ["defi", "smart-contracts", "evm", "multi-chain", "account-abstraction"],
+  "author": "NexusDeFi Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-waffle": "^2.0.6",
+    "@openzeppelin/contracts": "^5.3.0",
+    "chai": "^4.3.7",
+    "chai-as-promised": "^8.0.1",
+    "dotenv": "^16.5.0",
+    "ethereum-waffle": "^4.0.10",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.24.3"
   }
 }
