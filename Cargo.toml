@@ -8,13 +8,10 @@ members = [
 ]
 
 [workspace.dependencies]
-solana-program = "1.18.2"
-anchor-lang = "0.29.0"
-anchor-spl = "0.29.0"
+anchor-lang = "0.28.0"
+anchor-spl = "0.28.0"
 bytemuck = "1.14.0"
 borsh = "0.10.3"
-spl-token = "4.0.0"
-spl-associated-token-account = "2.3.0"
 thiserror = "1.0.50"
 
 [profile.release]

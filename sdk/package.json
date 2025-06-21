@@ -1,17 +1,63 @@
 {
-  "name": "nexus-defi-sdk",
+  "name": "@nexusplatform/sdk",
   "version": "1.0.0",
-  "description": "TypeScript SDK for NexusDeFi, providing APIs for payments, wallet management, and DeFi primitives.",
+  "description": "Unified SDK for EVM + SVM wallet infrastructure - The ThirdWeb alternative with Solana integration",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "web3",
+    "ethereum",
+    "solana",
+    "wallet",
+    "account-abstraction",
+    "cross-chain",
+    "social-recovery",
+    "thirdweb-alternative"
+  ],
+  "author": "NexusPlatform Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nexusplatform/svm-evm-sdk"
+  },
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "tsc --watch",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts",
+    "prepare": "npm run build",
+    "docs": "typedoc src/index.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "dependencies": {
+    "@solana/web3.js": "^1.91.0",
+    "@solana/wallet-adapter-base": "^0.9.23",
+    "@coral-xyz/anchor": "^0.29.0",
+    "ethers": "^5.7.2",
+    "@ethersproject/contracts": "^5.7.0",
+    "@ethersproject/providers": "^5.7.2",
+    "axios": "^1.6.0",
+    "bs58": "^5.0.0",
+    "buffer": "^6.0.3"
+  },
   "devDependencies": {
-    "typescript": "^5.0.0"
+    "@types/node": "^20.0.0",
+    "@types/jest": "^29.5.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.57.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.3.0",
+    "typedoc": "^0.25.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 } 

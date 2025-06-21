@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/utils/Create2.sol";
  */
 contract WalletFactory {
     address public immutable entryPoint;
-    
+
     event WalletCreated(address indexed wallet, address indexed owner, uint256 salt);
 
     constructor(address _entryPoint) {
@@ -42,7 +42,7 @@ contract WalletFactory {
         
         // Transfer ownership to the specified owner
         Wallet(payable(wallet)).transferOwnership(owner);
-        
+
         emit WalletCreated(wallet, owner, salt);
     }
 

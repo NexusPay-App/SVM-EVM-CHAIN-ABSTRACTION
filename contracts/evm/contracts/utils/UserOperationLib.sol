@@ -50,7 +50,7 @@ library UserOperationLib {
             if (paymasterAndData.length >= 52) {
                 assembly {
                     paymasterVerificationGasLimit := mload(add(paymasterAndData, 52))
-                }
+            }
             }
             
             // Extract post-op gas limit (bytes 52-84)  

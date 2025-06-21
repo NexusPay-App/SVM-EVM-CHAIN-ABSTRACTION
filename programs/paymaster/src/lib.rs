@@ -203,10 +203,14 @@ pub mod nexus_paymaster {
                     .ok_or(PaymasterError::MissingTokenProgram)?;
                 
                 let owner_key = paymaster.owner;
+                let (_paymaster_key, bump) = Pubkey::find_program_address(
+                    &[b"paymaster", owner_key.as_ref()],
+                    &crate::ID,
+                );
                 let seeds = &[
                     b"paymaster",
                     owner_key.as_ref(),
-                    &[ctx.bumps.paymaster],
+                    &[bump],
                 ];
                 
                 transfer(

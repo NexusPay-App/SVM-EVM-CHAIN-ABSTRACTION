@@ -18,11 +18,8 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-solana-program = { workspace = true }
 anchor-lang = { workspace = true }
 anchor-spl = { workspace = true }
 borsh = { workspace = true }
 bytemuck = { workspace = true }
-spl-token = { workspace = true }
-spl-associated-token-account = { workspace = true }
 thiserror = { workspace = true } 

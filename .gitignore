@@ -155,4 +155,13 @@ Cargo.lock
 
 # Solana
 test-ledger/
-.anchor/ 
+.anchor/
+
+# Solana Release Binaries
+solana-release/
+
+# Test Results
+test-results-*.json
+
+# Additional Deployment Keypairs
+deployment-keypair*.json 

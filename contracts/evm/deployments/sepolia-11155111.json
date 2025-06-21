@@ -1,0 +1,10 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "contracts": {
+    "entryPoint": "0x76b734753322a29A1c8bf2c791DcD84d4F0A5ed0",
+    "walletFactory": "0x73c780a09d89b486e2859EA247f54C88C57d3B5C",
+    "paymaster": "0x790eA3268237CbF95B90f1174251a533152cD83D",
+    "testWallet": "0x11208Af2acDcA6d30fc57Cf7344f2dB92cE4bbF5"
+  }
+}

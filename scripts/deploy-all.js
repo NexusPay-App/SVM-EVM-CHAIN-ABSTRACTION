@@ -6,7 +6,8 @@ const NETWORKS = [
   { name: 'sepolia', display: '🔷 Ethereum Sepolia', chainId: 11155111 },
   { name: 'arbitrumSepolia', display: '🔴 Arbitrum Sepolia', chainId: 421614 },
   { name: 'baseSepolia', display: '🔵 Base Sepolia', chainId: 84532 },
-  { name: 'polygonMumbai', display: '🟣 Polygon Mumbai', chainId: 80001 }
+  { name: 'polygonMumbai', display: '🟣 Polygon Mumbai', chainId: 80001 },
+  { name: 'liskSepolia', display: '🟡 Lisk Sepolia', chainId: 4202 }
 ];
 
 async function deployToNetwork(network) {

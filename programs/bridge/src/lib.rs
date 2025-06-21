@@ -259,10 +259,14 @@ pub mod nexus_bridge {
                 };
                 
                 let authority_key = bridge.authority;
+                let (_bridge_key, bump) = Pubkey::find_program_address(
+                    &[b"bridge", authority_key.as_ref()],
+                    &crate::ID,
+                );
                 let seeds = &[
                     b"bridge",
                     authority_key.as_ref(),
-                    &[ctx.bumps.bridge],
+                    &[bump],
                 ];
                 
                 mint_to(
