@@ -164,4 +164,41 @@ solana-release/
 test-results-*.json
 
 # Additional Deployment Keypairs
-deployment-keypair*.json 
+deployment-keypair*.json
+
+# Ngrok
+ngrok.log
+ngrok.yml
+ngrok-*.log
+
+# SDK Development
+sdk/dist/
+sdk/build/
+sdk/lib/
+*.tsbuildinfo
+
+# Package Lock Files (optional - you might want to commit these)
+# package-lock.json
+# yarn.lock
+
+# Runtime Files
+*.pid
+
+# Temporary Files
+.tmp
+.temp
+tmp/
+temp/
+
+# Development Config Files with URLs
+*-config.js
+config/*-config.js
+config/local-*.js
+config/ngrok-*.js
+
+# Test Files with Real Data
+test-user.json
+*-test-data.json
+
+# Local Development Artifacts
+NGROK_DEPLOYMENT_SUCCESS.md 

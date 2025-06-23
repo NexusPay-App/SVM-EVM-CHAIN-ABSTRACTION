@@ -1,12 +1,13 @@
 {
   "name": "@nexusplatform/sdk",
-  "version": "1.0.0",
-  "description": "Unified SDK for EVM + SVM wallet infrastructure - The ThirdWeb alternative with Solana integration",
+  "version": "2.0.0",
+  "description": "Unified SDK for EVM + SVM wallet infrastructure - The ThirdWeb alternative with Solana integration + React Components",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "keywords": [
     "web3",
@@ -16,7 +17,12 @@
     "account-abstraction",
     "cross-chain",
     "social-recovery",
-    "thirdweb-alternative"
+    "thirdweb-alternative",
+    "nextjs",
+    "react",
+    "defi",
+    "gas-station",
+    "multichain"
   ],
   "author": "NexusPlatform Team",
   "license": "MIT",
@@ -25,39 +31,99 @@
     "url": "https://github.com/nexusplatform/svm-evm-sdk"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run build:react",
+    "build:react": "tsc -p tsconfig.react.json",
     "dev": "tsc --watch",
     "test": "jest",
-    "lint": "eslint src/**/*.ts",
+    "test:watch": "jest --watch",
+    "lint": "eslint src/**/*.{ts,tsx}",
+    "lint:fix": "eslint src/**/*.{ts,tsx} --fix",
     "prepare": "npm run build",
-    "docs": "typedoc src/index.ts"
+    "docs": "typedoc src/index.ts",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@solana/web3.js": "^1.91.0",
-    "@solana/wallet-adapter-base": "^0.9.23",
     "@coral-xyz/anchor": "^0.29.0",
-    "ethers": "^5.7.2",
-    "@ethersproject/contracts": "^5.7.0",
-    "@ethersproject/providers": "^5.7.2",
+    "@headlessui/react": "^1.7.17",
+    "@rainbow-me/rainbowkit": "^2.0.0",
+    "@solana/wallet-adapter-base": "^0.9.23",
+    "@solana/wallet-adapter-react": "^0.15.35",
+    "@solana/wallet-adapter-wallets": "^0.19.32",
+    "@solana/web3.js": "^1.91.0",
+    "@tanstack/react-query": "^5.17.0",
     "axios": "^1.6.0",
+    "big.js": "^6.2.1",
     "bs58": "^5.0.0",
-    "buffer": "^6.0.3"
+    "buffer": "^6.0.3",
+    "clsx": "^2.0.0",
+    "decimal.js": "^10.4.3",
+    "ethers": "^6.8.0",
+    "framer-motion": "^11.0.0",
+    "lucide-react": "^0.321.0",
+    "node-fetch": "^3.3.2",
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0",
+    "react-hot-toast": "^2.4.1",
+    "tailwind-merge": "^2.2.0",
+    "viem": "^2.7.0",
+    "wagmi": "^2.5.0",
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
+    "@storybook/addon-essentials": "^7.6.0",
+    "@storybook/addon-interactions": "^7.6.0",
+    "@storybook/addon-links": "^7.6.0",
+    "@storybook/blocks": "^7.6.0",
+    "@storybook/react": "^7.6.0",
+    "@storybook/react-vite": "^7.6.0",
+    "@storybook/testing-library": "^0.2.2",
+    "@types/big.js": "^6.2.0",
     "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
+    "autoprefixer": "^10.4.16",
     "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.33.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "jest": "^29.7.0",
+    "postcss": "^8.4.32",
+    "storybook": "^7.6.0",
+    "tailwindcss": "^3.4.0",
     "ts-jest": "^29.1.0",
-    "typescript": "^5.3.0",
-    "typedoc": "^0.25.0"
+    "typedoc": "^0.25.0",
+    "typescript": "^5.3.0"
+  },
+  "peerDependencies": {
+    "next": ">=13.0.0",
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
+  },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=16.0.0"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js",
+      "require": "./dist/react/index.js"
+    },
+    "./styles.css": "./dist/styles.css"
   }
-} 
+}
