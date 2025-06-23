@@ -13,9 +13,9 @@ nexus_bridge = "Hrhe54Vk1mRR2SXvyR33Y5xaNGzVYh3gXPcmGRFFVxQr"
 
 [programs.devnet]
 nexus_wallet = "G4vCcRCeB3rWpaTkkpsPWTf9Ar2a7qoWTJsWboztF6wS"
-nexus_entry_point = "9tPUcx4o8kjtCioPepUqhBozAY3SjTGkgJyxfhxVJEHo"
-nexus_paymaster = "CvPEv5QcxwH2k3S6YUuw9MtsfEEsWEUimFwnwHL7ytze"
-nexus_bridge = "Hrhe54Vk1mRR2SXvyR33Y5xaNGzVYh3gXPcmGRFFVxQr"
+nexus_entry_point = "DybZJVtnAWHHWvQsCoAfRQkVARdmw4r4DSjKcvKNByP7"
+nexus_paymaster = "Gj6s1Ka5Lvmj5LYuowTTpArW1JJWBwnL3oY9zDPPewAZ"
+nexus_bridge = "FZ87fnqRor9AkuVCp51MAfh9qgUFS5F9auJHdxWNZHoX"
 
 [registry]
 url = "https://api.apr.dev"
