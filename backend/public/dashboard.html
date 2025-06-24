@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusSDK Dashboard - User Activity & Analytics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .number {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .trend {
+            font-size: 0.9rem;
+            color: #28a745;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .activity-panel, .gas-tank-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .panel-header h2 {
+            color: #333;
+            font-size: 1.4rem;
+        }
+
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: #5a6fd8;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1.2rem;
+        }
+
+        .wallet-icon { background: #e3f2fd; color: #1976d2; }
+        .key-icon { background: #fff3e0; color: #f57c00; }
+        .payment-icon { background: #e8f5e8; color: #4caf50; }
+
+        .activity-details h4 {
+            color: #333;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+
+        .activity-details p {
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .gas-tank-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .gas-tank-item:last-child {
+            border-bottom: none;
+        }
+
+        .chain-info h4 {
+            color: #333;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+
+        .chain-info p {
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .balance {
+            text-align: right;
+        }
+
+        .balance .amount {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .balance .usd {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .chart-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+
+        .api-key-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+
+        .api-key-input input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .api-key-input button {
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🚀 NexusSDK Dashboard</h1>
+            <p>Real-time monitoring of user activity, gas tanks, and analytics</p>
+        </div>
+
+        <div class="api-key-input">
+            <input type="text" id="apiKeyInput" placeholder="Enter your API key (e.g., local-dev-key)" value="local-dev-key">
+            <button onclick="setApiKey()">Connect</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Wallets</h3>
+                <div class="number" id="totalWallets">-</div>
+                <div class="trend">↗ +12% this week</div>
+            </div>
+            <div class="stat-card">
+                <h3>Private Key Requests</h3>
+                <div class="number" id="privateKeyRequests">-</div>
+                <div class="trend">🔒 Tracked & Logged</div>
+            </div>
+            <div class="stat-card">
+                <h3>Gas Tank Funded</h3>
+                <div class="number" id="gasTankFunded">-</div>
+                <div class="trend">💰 ETH Total</div>
+            </div>
+            <div class="stat-card">
+                <h3>Active Companies</h3>
+                <div class="number" id="activeCompanies">-</div>
+                <div class="trend">🏢 Enterprises</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="activity-panel">
+                <div class="panel-header">
+                    <h2>📊 Recent Activity</h2>
+                    <button class="refresh-btn" onclick="loadRecentActivity()">Refresh</button>
+                </div>
+                <div id="activityList">
+                    <div class="loading">Loading activity...</div>
+                </div>
+            </div>
+
+            <div class="gas-tank-panel">
+                <div class="panel-header">
+                    <h2>⛽ Gas Tank Status</h2>
+                    <button class="refresh-btn" onclick="loadGasTankStatus()">Refresh</button>
+                </div>
+                <div id="gasTankList">
+                    <div class="loading">Loading gas tanks...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-section">
+            <div class="chart-panel">
+                <div class="panel-header">
+                    <h2>📈 Wallet Creation Trend</h2>
+                </div>
+                <div id="walletChart">
+                    <div class="loading">Chart coming soon...</div>
+                </div>
+            </div>
+
+            <div class="chart-panel">
+                <div class="panel-header">
+                    <h2>💸 Gas Usage Analytics</h2>
+                </div>
+                <div id="gasChart">
+                    <div class="loading">Chart coming soon...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentApiKey = 'local-dev-key';
+        const API_BASE = 'http://localhost:3001';
+
+        function setApiKey() {
+            const input = document.getElementById('apiKeyInput');
+            currentApiKey = input.value.trim();
+            if (currentApiKey) {
+                loadDashboard();
+            } else {
+                alert('Please enter a valid API key');
+            }
+        }
+
+        async function loadDashboard() {
+            try {
+                await Promise.all([
+                    loadAnalytics(),
+                    loadRecentActivity(),
+                    loadGasTankStatus()
+                ]);
+            } catch (error) {
+                console.error('Failed to load dashboard:', error);
+                showError('Failed to load dashboard data');
+            }
+        }
+
+        async function loadAnalytics() {
+            try {
+                const response = await fetch(`${API_BASE}/api/analytics/usage`, {
+                    headers: {
+                        'X-API-Key': currentApiKey
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Analytics API error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                document.getElementById('totalWallets').textContent = data.metrics.totalWallets || '0';
+                document.getElementById('privateKeyRequests').textContent = data.metrics.privateKeyRequests || '0';
+                document.getElementById('gasTankFunded').textContent = data.metrics.gasTankTotalFunded || '0.0';
+                document.getElementById('activeCompanies').textContent = data.metrics.activeCompanies || '0';
+                
+            } catch (error) {
+                console.error('Analytics loading error:', error);
+                showError('Failed to load analytics');
+            }
+        }
+
+        async function loadRecentActivity() {
+            const activityList = document.getElementById('activityList');
+            
+            // Simulate recent activity based on our test data
+            const activities = [
+                {
+                    type: 'wallet',
+                    title: 'New Wallet Created',
+                    description: 'gamer1@playearn.com • Unified EVM Address',
+                    time: '2 minutes ago',
+                    icon: '👤'
+                },
+                {
+                    type: 'key',
+                    title: 'Private Key Accessed',
+                    description: 'PlayEarn • NFT minting transaction',
+                    time: '5 minutes ago',
+                    icon: '🔐'
+                },
+                {
+                    type: 'payment',
+                    title: 'Fee Payment Processed',
+                    description: '0.005 ETH • Transaction sponsored',
+                    time: '8 minutes ago',
+                    icon: '💸'
+                },
+                {
+                    type: 'wallet',
+                    title: 'Cross-Chain Wallet Deployed',
+                    description: '+1234567890 • EVM + Solana',
+                    time: '12 minutes ago',
+                    icon: '🌉'
+                },
+                {
+                    type: 'payment',
+                    title: 'Gas Tank Funded',
+                    description: 'PlayEarn • 10.0 ETH added',
+                    time: '15 minutes ago',
+                    icon: '⛽'
+                }
+            ];
+
+            activityList.innerHTML = activities.map(activity => `
+                <div class="activity-item">
+                    <div class="activity-icon ${activity.type}-icon">
+                        ${activity.icon}
+                    </div>
+                    <div class="activity-details">
+                        <h4>${activity.title}</h4>
+                        <p>${activity.description} • ${activity.time}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadGasTankStatus() {
+            const gasTankList = document.getElementById('gasTankList');
+            
+            try {
+                // Try to load real gas tank data
+                const response = await fetch(`${API_BASE}/api/companies/playearn-xyz/gas-tank`, {
+                    headers: {
+                        'X-API-Key': currentApiKey
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const chains = ['ethereum', 'polygon', 'arbitrum', 'solana'];
+                    
+                    gasTankList.innerHTML = chains.map(chain => {
+                        const tankData = data.gasTanks[chain] || { balance: '0', totalFunded: '0', totalSpent: '0' };
+                        const balance = parseFloat(tankData.balance);
+                        const usdValue = balance * (chain === 'solana' ? 20 : 2000); // Mock USD conversion
+                        
+                        return `
+                            <div class="gas-tank-item">
+                                <div class="chain-info">
+                                    <h4>${chain.charAt(0).toUpperCase() + chain.slice(1)}</h4>
+                                    <p>Funded: ${tankData.totalFunded} • Spent: ${tankData.totalSpent}</p>
+                                </div>
+                                <div class="balance">
+                                    <div class="amount">${balance.toFixed(4)} ${chain === 'solana' ? 'SOL' : 'ETH'}</div>
+                                    <div class="usd">$${usdValue.toFixed(2)}</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    throw new Error('Gas tank API not available');
+                }
+            } catch (error) {
+                console.error('Gas tank loading error:', error);
+                // Show sample data
+                gasTankList.innerHTML = `
+                    <div class="gas-tank-item">
+                        <div class="chain-info">
+                            <h4>Ethereum</h4>
+                            <p>Funded: 10.0 • Spent: 0.005</p>
+                        </div>
+                        <div class="balance">
+                            <div class="amount">9.995 ETH</div>
+                            <div class="usd">$19,990.00</div>
+                        </div>
+                    </div>
+                    <div class="gas-tank-item">
+                        <div class="chain-info">
+                            <h4>Polygon</h4>
+                            <p>Ready for funding</p>
+                        </div>
+                        <div class="balance">
+                            <div class="amount">0.000 MATIC</div>
+                            <div class="usd">$0.00</div>
+                        </div>
+                    </div>
+                    <div class="gas-tank-item">
+                        <div class="chain-info">
+                            <h4>Solana</h4>
+                            <p>Ready for funding</p>
+                        </div>
+                        <div class="balance">
+                            <div class="amount">0.000 SOL</div>
+                            <div class="usd">$0.00</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            document.querySelector('.dashboard').insertBefore(errorDiv, document.querySelector('.stats-grid'));
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            loadDashboard();
+        }, 30000);
+
+        // Load dashboard on page load
+        window.addEventListener('load', () => {
+            loadDashboard();
+        });
+    </script>
+</body>
+</html> 

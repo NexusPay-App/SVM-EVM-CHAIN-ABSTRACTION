@@ -198,7 +198,36 @@ config/ngrok-*.js
 
 # Test Files with Real Data
 test-user.json
-*-test-data.json
 
-# Local Development Artifacts
-NGROK_DEPLOYMENT_SUCCESS.md 
+# Test Scripts (Development Only)
+test-*.js
+**/test-*.js
+test-complete-flow.js
+test-wallet-functionality.js
+sdk/test-*.js
+backend/test-*.js
+
+# Unnecessary Documentation Files
+SVM_DEPLOYMENT_STATUS.md
+TESTNET_DEPLOYMENT_PLAN.md
+DEPLOYMENT_GUIDE.md
+contracts/evm/DEPLOYMENT_SUMMARY.md
+contracts/evm/TEST_RESULTS.md
+
+# Package variants (keep main package.json only)
+sdk/package-full.json
+sdk/package-simple.json
+
+# TypeScript config variants
+sdk/tsconfig.simple.json
+sdk/tsconfig.react.json
+
+# Vercel deployment artifacts
+backend/.vercel/
+
+# Cache directories
+contracts/evm/cache/
+contracts/evm/artifacts/
+
+# Empty files
+data.md 

@@ -179,68 +179,287 @@ export class NexusSDK {
     console.log(`🔐 Creating social wallet for ${socialType}: ${socialId}`);
     console.log(`🌐 Chains: ${chains.join(', ')}`);
     
-    const addresses: Record<SupportedChain, string> = {} as any;
-    const balances: Record<SupportedChain, TokenBalance[]> = {} as any;
-    const gasTanks: Record<SupportedChain, GasTankBalance> = {} as any;
-    
-    // Create EVM wallets (same address across EVM chains using CREATE2)
-    const evmChains = chains.filter(chain => chain !== 'solana') as EVMChain[];
-    if (evmChains.length > 0) {
-      const evmResult = await this.evmManager.createWallet(socialId, evmChains);
-      evmChains.forEach(chain => {
-        addresses[chain] = evmResult.address;
-        balances[chain] = evmResult.balances[chain] || [];
+    try {
+      // Use the new deployment flow that creates and deploys in one step
+      const response = await fetch(`${this.config.endpoints.api}/api/wallets/deploy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': this.config.apiKey
+        },
+        body: JSON.stringify({
+          socialId,
+          socialType,
+          chains
+        })
       });
-    }
-    
-    // Create SVM wallet (Solana using PDA)
-    const svmChains = chains.filter(chain => chain === 'solana') as SVMChain[];
-    if (svmChains.length > 0) {
-      const svmResult = await this.svmManager.createWallet(socialId);
-      addresses['solana'] = svmResult.address;
-      balances['solana'] = svmResult.balances || [];
-    }
-    
-    // Setup Gas Tanks if enabled
-    if (gasTankConfig?.enabled && this.config.features?.gasTank) {
-      for (const chain of chains) {
-        const gasTankBalance = await this.gasTank.createGasTank(socialId, chain, {
-          autoRefill: gasTankConfig.autoRefill || false,
-          refillThreshold: gasTankConfig.refillThreshold || '0.01',
-          refillAmount: gasTankConfig.refillAmount || '0.1'
-        });
-        gasTanks[chain] = gasTankBalance;
+      
+      if (!response.ok) {
+        throw new Error(`Wallet creation failed: ${response.status}`);
       }
+      
+      const deploymentResult = await response.json();
+      
+      // Format the response to match our WalletInfo structure
+      const walletInfo: WalletInfo = {
+        socialId,
+        socialType,
+        addresses: deploymentResult.addresses,
+        balances: this.formatBalances(deploymentResult.addresses),
+        gasTank: {
+          enabled: gasTankConfig?.enabled || false,
+          balances: this.initializeGasTankBalances(chains)
+        },
+        crossChainEnabled: true,
+        createdAt: deploymentResult.timestamp || new Date().toISOString(),
+        lastUsed: new Date().toISOString(),
+        deploymentStatus: {
+          evm: deploymentResult.deployments?.evm || { isDeployed: false },
+          svm: deploymentResult.deployments?.solana || { isDeployed: false }
+        },
+        isNew: deploymentResult.isNew || false
+      };
+      
+      console.log('✅ Wallet created successfully');
+      console.log(`📍 Unified EVM Address: ${deploymentResult.addresses.ethereum}`);
+      console.log(`📍 Solana Address: ${deploymentResult.addresses.solana}`);
+      
+      return walletInfo;
+      
+    } catch (error) {
+      console.error('❌ Wallet creation failed:', error);
+      throw this.createError('WALLET_CREATION_FAILED', `Failed to create wallet: ${(error as Error).message}`);
     }
+  }
+
+  /**
+   * Get private key for a wallet (tracked and logged)
+   * 
+   * @example
+   * ```typescript
+   * const keyData = await sdk.getPrivateKey({
+   *   socialId: 'user@company.com',
+   *   socialType: 'email',
+   *   reason: 'Transaction signing',
+   *   companyId: 'playearn-xyz'
+   * });
+   * ```
+   */
+  async getPrivateKey(params: {
+    socialId: string;
+    socialType?: string;
+    reason: string;
+    companyId?: string;
+  }): Promise<{
+    privateKey: string;
+    address: string;
+    trackingId: string;
+    warning: string;
+  }> {
+    await this.ensureInitialized();
     
-    const walletInfo: WalletInfo = {
-      socialId,
-      socialType,
-      addresses,
-      balances,
-      gasTanks: Object.keys(gasTanks).length > 0 ? gasTanks : undefined,
-      createdAt: new Date().toISOString(),
-      recoverySetup: false,
-      isActive: true,
-      crossChainEnabled: this.config.features?.crossChain ?? false,
-      gaslessEnabled: this.config.features?.gaslessTransactions ?? false,
-      metadata: params.metadata
-    };
+    const { socialId, socialType = 'email', reason, companyId } = params;
     
-    // Setup social recovery if requested
-    if (params.recoveryOptions && this.config.features?.socialRecovery) {
-      await this.recovery.setupRecovery(socialId, params.recoveryOptions);
-      walletInfo.recoverySetup = true;
+    try {
+      const response = await fetch(`${this.config.endpoints.api}/api/wallets/${encodeURIComponent(socialId)}/private-key`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': this.config.apiKey
+        },
+        body: JSON.stringify({
+          socialType,
+          reason,
+          companyId
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Private key request failed: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      console.log(`🔐 Private key retrieved for ${socialId} (tracked: ${result.trackingId})`);
+      
+      return {
+        privateKey: result.privateKey,
+        address: result.address,
+        trackingId: result.trackingId,
+        warning: result.warning
+      };
+      
+    } catch (error) {
+      console.error('❌ Private key request failed:', error);
+      throw this.createError('PRIVATE_KEY_REQUEST_FAILED', `Failed to get private key: ${(error as Error).message}`);
     }
+  }
+
+  /**
+   * Fund company gas tank for sponsored transactions
+   * 
+   * @example
+   * ```typescript
+   * const funding = await sdk.fundGasTank({
+   *   companyId: 'playearn-xyz',
+   *   amount: '10.0',
+   *   chain: 'ethereum',
+   *   paymentMethod: 'stripe'
+   * });
+   * ```
+   */
+  async fundGasTank(params: {
+    companyId: string;
+    amount: string;
+    chain: SupportedChain;
+    paymentMethod?: string;
+  }): Promise<{
+    success: boolean;
+    fundingId: string;
+    balance: string;
+    txHash: string;
+  }> {
+    await this.ensureInitialized();
     
-    // Calculate total USD value
-    const totalUsdValue = await this.calculateTotalUsdValue(balances);
-    walletInfo.totalUsdValue = totalUsdValue;
+    const { companyId, amount, chain, paymentMethod = 'crypto' } = params;
     
-    console.log(`✅ Social wallet created across ${chains.length} chains`);
-    console.log(`💰 Total portfolio value: $${totalUsdValue}`);
+    try {
+      const response = await fetch(`${this.config.endpoints.api}/api/companies/${companyId}/gas-tank/fund`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': this.config.apiKey
+        },
+        body: JSON.stringify({
+          amount,
+          chain,
+          paymentMethod
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Gas tank funding failed: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      console.log(`💰 Gas tank funded: ${amount} ${chain.toUpperCase()} for ${companyId}`);
+      
+      return {
+        success: result.success,
+        fundingId: result.funding.fundingId,
+        balance: result.gasTank.balance,
+        txHash: result.funding.txHash
+      };
+      
+    } catch (error) {
+      console.error('❌ Gas tank funding failed:', error);
+      throw this.createError('GAS_TANK_FUNDING_FAILED', `Failed to fund gas tank: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Get company gas tank status across all chains
+   * 
+   * @example
+   * ```typescript
+   * const gasTanks = await sdk.getGasTankStatus('playearn-xyz');
+   * ```
+   */
+  async getGasTankStatus(companyId: string): Promise<{
+    companyId: string;
+    gasTanks: Record<SupportedChain, any>;
+    totalValueUsd: string;
+  }> {
+    await this.ensureInitialized();
     
-    return walletInfo;
+    try {
+      const response = await fetch(`${this.config.endpoints.api}/api/companies/${companyId}/gas-tank`, {
+        method: 'GET',
+        headers: {
+          'X-API-Key': this.config.apiKey
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Gas tank status request failed: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      return result;
+      
+    } catch (error) {
+      console.error('❌ Gas tank status request failed:', error);
+      throw this.createError('GAS_TANK_STATUS_FAILED', `Failed to get gas tank status: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Pay transaction fees for users (sponsored transactions)
+   * 
+   * @example
+   * ```typescript
+   * const payment = await sdk.payUserFees({
+   *   companyId: 'playearn-xyz',
+   *   userSocialId: 'gamer123@email.com',
+   *   chain: 'ethereum',
+   *   txHash: '0x...',
+   *   amount: '0.005'
+   * });
+   * ```
+   */
+  async payUserFees(params: {
+    companyId: string;
+    userSocialId: string;
+    socialType?: string;
+    chain: SupportedChain;
+    txHash: string;
+    amount: string;
+  }): Promise<{
+    success: boolean;
+    paymentId: string;
+    remainingBalance: string;
+  }> {
+    await this.ensureInitialized();
+    
+    const { companyId, userSocialId, socialType = 'email', chain, txHash, amount } = params;
+    
+    try {
+      const response = await fetch(`${this.config.endpoints.api}/api/companies/${companyId}/pay-fees`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': this.config.apiKey
+        },
+        body: JSON.stringify({
+          userSocialId,
+          socialType,
+          chain,
+          txHash,
+          amount
+        })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || `Fee payment failed: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      console.log(`💸 Paid fees for user ${userSocialId}: ${amount} ${chain.toUpperCase()}`);
+      
+      return {
+        success: result.success,
+        paymentId: result.feePayment.paymentId,
+        remainingBalance: result.remainingBalance
+      };
+      
+    } catch (error) {
+      console.error('❌ Fee payment failed:', error);
+      throw this.createError('FEE_PAYMENT_FAILED', `Failed to pay user fees: ${(error as Error).message}`);
+    }
   }
 
   /**
@@ -711,6 +930,39 @@ export class NexusSDK {
       message,
       details,
       recoverable: code !== 'UNAUTHORIZED'
+    };
+  }
+
+  // Helper methods
+  private formatBalances(addresses: Record<SupportedChain, string>): Record<SupportedChain, TokenBalance[]> {
+    const balances: Record<SupportedChain, TokenBalance[]> = {} as any;
+    
+    Object.keys(addresses).forEach(chain => {
+      balances[chain as SupportedChain] = [
+        {
+          symbol: chain === 'solana' ? 'SOL' : 'ETH',
+          balance: '0',
+          usdValue: '0',
+          address: 'native'
+        }
+      ];
+    });
+    
+    return balances;
+  }
+
+  private initializeGasTankBalances(chains: SupportedChain[]): GasTankBalance {
+    const balances: Record<SupportedChain, string> = {} as any;
+    
+    chains.forEach(chain => {
+      balances[chain] = '0';
+    });
+    
+    return {
+      totalBalance: '0',
+      chainBalances: balances,
+      lastRefill: new Date().toISOString(),
+      autoRefill: false
     };
   }
 } 

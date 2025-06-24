@@ -9,16 +9,22 @@
     "compile": "./node_modules/.bin/hardhat compile",
     "test": "./node_modules/.bin/hardhat test",
     "deploy:sepolia": "./node_modules/.bin/hardhat run scripts/deploy.js --network sepolia",
-    "deploy:arbitrum": "./node_modules/.bin/hardhat run scripts/deploy.js --network arbitrumSepolia", 
+    "deploy:arbitrum": "./node_modules/.bin/hardhat run scripts/deploy.js --network arbitrumSepolia",
     "deploy:base": "./node_modules/.bin/hardhat run scripts/deploy.js --network baseSepolia",
     "deploy:polygon": "./node_modules/.bin/hardhat run scripts/deploy.js --network polygonMumbai",
     "deploy:all": "node scripts/deploy-all.js",
     "verify:sepolia": "./node_modules/.bin/hardhat verify --network sepolia",
     "verify:arbitrum": "./node_modules/.bin/hardhat verify --network arbitrumSepolia",
-    "verify:base": "./node_modules/.bin/hardhat verify --network baseSepolia", 
+    "verify:base": "./node_modules/.bin/hardhat verify --network baseSepolia",
     "verify:polygon": "./node_modules/.bin/hardhat verify --network polygonMumbai"
   },
-  "keywords": ["defi", "smart-contracts", "evm", "multi-chain", "account-abstraction"],
+  "keywords": [
+    "defi",
+    "smart-contracts",
+    "evm",
+    "multi-chain",
+    "account-abstraction"
+  ],
   "author": "NexusDeFi Team",
   "license": "MIT",
   "devDependencies": {
