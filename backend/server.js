@@ -14,17 +14,20 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API Key validation middleware (production-ready)
+// API Key validation middleware (secure production version)
 const validateApiKey = (req, res, next) => {
   const apiKey = req.headers['x-api-key'] || req.query.apikey;
   
-  // For production deployment, accept any API key that follows the format
-  if (apiKey && (
-    apiKey === 'local-dev-key' || 
-    apiKey === 'dev-key' || 
-    apiKey.startsWith('npay_') ||
-    apiKeys.has(apiKey)
-  )) {
+  if (!apiKey) {
+    return res.status(401).json({ 
+      error: 'API key required. Generate one at: /',
+      code: 'MISSING_API_KEY',
+      solution: 'Visit the homepage to generate a valid API key'
+    });
+  }
+  
+  // Only accept legitimate API keys - either development keys or registered ones
+  if (apiKey === 'local-dev-key' || apiKey === 'dev-key' || apiKeys.has(apiKey)) {
     req.apiKey = apiKey;
     
     // Track usage if it's a registered key
@@ -35,20 +38,13 @@ const validateApiKey = (req, res, next) => {
     }
     
     next();
-  } else if (!apiKey) {
-    // Generate a temporary API key for users without one
-    const tempApiKey = 'npay_temp_' + crypto.randomBytes(16).toString('hex');
-    req.apiKey = tempApiKey;
-    
-    console.log('⚠️ No API key provided, using temporary key:', tempApiKey);
-    console.log('💡 Get a permanent API key at: /api/keys/generate');
-    
-    next();
   } else {
+    // Reject all other keys, including made-up ones
     return res.status(401).json({ 
-      error: 'Invalid API key format. API key should start with "npay_"',
+      error: 'Invalid API key. Please generate a valid API key.',
       code: 'INVALID_API_KEY',
-      solution: 'Generate a valid API key at /api/keys/generate'
+      solution: 'Visit https://backend-14xupqg7t-griffins-projects-4324ce43.vercel.app/ to generate a valid API key',
+      providedKey: apiKey.substring(0, 8) + '...' // Show partial key for debugging
     });
   }
 };
