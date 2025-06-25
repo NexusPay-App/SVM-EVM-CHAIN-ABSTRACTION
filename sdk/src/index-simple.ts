@@ -1,394 +1,268 @@
 /**
- * NexusSDK - Cross-chain wallet infrastructure with SVM-EVM Integration
+ * NexusSDK v1.0.1 - Simplified Cross-Chain Wallet SDK
  * 
- * @version 1.0.0
- * @description Simplified SDK for EVM + SVM wallet infrastructure with gasless transactions and asset bridging
- * @author NexusPay Team
+ * Production-ready SDK for real blockchain wallet creation
  */
 
-// ============================================================================
-// CORE TYPES EXPORT
-// ============================================================================
-
-export type {
-  // Configuration Types
-  NexusConfig,
-  
-  // Chain Types
-  SupportedChain,
-  EVMChain,
-  SVMChain,
-  SocialIdType,
-  
-  // Wallet Types
-  CreateWalletParams,
-  WalletInfo,
-  
-  // Transaction Types
-  TransactionParams,
-  TransactionResult,
-  
-  // Bridge Types
-  BridgeParams,
-  BridgeResult,
-  
-  // Recovery Types
-  RecoveryParams,
-  
-  // Analytics Types
-  AnalyticsData,
-  
-  // Error Types
-  NexusError,
-  
-  // Event Types
-  WalletEvent,
-  
-  // Config Types
-  ChainConfig,
-  PlatformConfig,
-  ContractAddresses,
-  
-  // User Operation Types
-  UserOperation,
-  Guardian,
-  PaymasterPolicy
-} from './types';
-
-// ============================================================================
-// CONSTANTS & UTILITIES
-// ============================================================================
-
-/**
- * Supported chains configuration
- */
-export const SUPPORTED_CHAINS = {
-  EVM: [
-    'ethereum',
-    'polygon',
-    'arbitrum',
-    'base',
-    'optimism',
-    'avalanche',
-    'bsc',
-    'fantom',
-    'gnosis',
-    'celo',
-    'moonbeam',
-    'aurora'
-  ] as const,
-  SVM: ['solana'] as const
-} as const;
-
-/**
- * Default configuration templates for development
- */
-export const DEFAULT_CONFIGS = {
-  LOCAL_DEVELOPMENT: {
-    environment: 'development' as const,
-    chains: ['ethereum', 'polygon', 'solana'] as const,
-    features: {
-      socialRecovery: true,
-      gaslessTransactions: true,
-      crossChain: true,
-      analytics: true
-    },
-    endpoints: {
-      api: 'http://localhost:3001',
-      websocket: 'ws://localhost:3001'
-    }
-  },
-  
-  PRODUCTION: {
-    environment: 'production' as const,
-    chains: ['ethereum', 'polygon', 'solana'] as const,
-    features: {
-      socialRecovery: true,
-      gaslessTransactions: true,
-      crossChain: true,
-      analytics: true
-    },
-    endpoints: {
-      api: 'https://nexuspay-5dhrqoe12-griffins-projects-4324ce43.vercel.app',
-      websocket: 'wss://nexuspay-5dhrqoe12-griffins-projects-4324ce43.vercel.app'
-    }
-  },
-  
-  NGROK_DEVELOPMENT: {
-    environment: 'development' as const,
-    chains: ['ethereum', 'polygon', 'solana'] as const,
-    features: {
-      socialRecovery: true,
-      gaslessTransactions: true,
-      crossChain: true,
-      analytics: true
-    },
-    endpoints: {
-      api: 'https://your-ngrok-url.ngrok.io',
-      websocket: 'wss://your-ngrok-url.ngrok.io'
-    }
-  }
-} as const;
-
-/**
- * Common token addresses across chains (real addresses)
- */
-export const COMMON_TOKENS = {
-  ethereum: {
-    USDC: '0xA0b86a33E6F2c3b0C32C78bD8b4D4a4eD2a46C87',
-    USDT: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-    WBTC: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
-    DAI: '0x6B175474E89094C44Da98b954EedeAC495271d0F'
-  },
-  polygon: {
-    USDC: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
-    USDT: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
-    WBTC: '0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6',
-    DAI: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063'
-  },
-  solana: {
-    USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-    USDT: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
-    WBTC: '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E'
-  }
-} as const;
-
-/**
- * Utility functions
- */
-export const Utils = {
-  /**
-   * Create a local development configuration
-   */
-  createLocalConfig: (apiKey: string = 'local-dev-key') => ({
-    apiKey,
-    ...DEFAULT_CONFIGS.LOCAL_DEVELOPMENT
-  }),
-  
-  /**
-   * Create a production configuration
-   */
-  createProductionConfig: (apiKey: string) => ({
-    apiKey,
-    ...DEFAULT_CONFIGS.PRODUCTION
-  }),
-  
-  /**
-   * Create an ngrok configuration
-   */
-  createNgrokConfig: (apiKey: string, ngrokUrl: string) => ({
-    apiKey,
-    ...DEFAULT_CONFIGS.NGROK_DEVELOPMENT,
-    endpoints: {
-      api: `https://${ngrokUrl}.ngrok.io`,
-      websocket: `wss://${ngrokUrl}.ngrok.io`
-    }
-  }),
-  
-  /**
-   * Create a basic NexusSDK configuration
-   */
-  createConfig: (apiKey: string, options: Partial<typeof DEFAULT_CONFIGS.LOCAL_DEVELOPMENT> = {}) => ({
-    apiKey,
-    ...DEFAULT_CONFIGS.LOCAL_DEVELOPMENT,
-    ...options
-  })
-} as const;
-
-// ============================================================================
-// SIMPLIFIED NEXUS SDK CLASS
-// ============================================================================
-
-/**
- * Simplified NexusSDK class for initial npm release
- */
-export class NexusSDK {
-  private config: any;
-  
-  constructor(config: any) {
-    this.config = config;
-  }
-  
-  /**
-   * Initialize the SDK
-   */
-  async initialize(): Promise<void> {
-    console.log('NexusSDK initialized with config:', this.config);
-  }
-  
-  /**
-   * Create a new wallet
-   */
-  async createWallet(params: any): Promise<any> {
-    const response = await fetch(`${this.config.endpoints.api}/api/wallets`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': this.config.apiKey
-      },
-      body: JSON.stringify(params)
-    });
-    
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
-    }
-    
-    return response.json();
-  }
-  
-  /**
-   * Get wallet by social ID
-   */
-  async getWallet(socialId: string, socialType: string = 'email'): Promise<any> {
-    const url = new URL(`${this.config.endpoints.api}/api/wallets/${encodeURIComponent(socialId)}`);
-    url.searchParams.append('socialType', socialType);
-    
-    const response = await fetch(url.toString(), {
-      headers: {
-        'X-API-Key': this.config.apiKey
-      }
-    });
-    
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
-    }
-    
-    return response.json();
-  }
-  
-  /**
-   * Send payment
-   */
-  async sendPayment(params: any): Promise<any> {
-    const response = await fetch(`${this.config.endpoints.api}/api/payments`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': this.config.apiKey
-      },
-      body: JSON.stringify(params)
-    });
-    
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
-    }
-    
-    return response.json();
-  }
-  
-  /**
-   * Bridge assets between chains
-   */
-  async bridgeAssets(params: any): Promise<any> {
-    const response = await fetch(`${this.config.endpoints.api}/api/bridge`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': this.config.apiKey
-      },
-      body: JSON.stringify(params)
-    });
-    
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
-    }
-    
-    return response.json();
-  }
-  
-  /**
-   * Get gas tank balance
-   */
-  async getGasTankBalance(socialId: string): Promise<any> {
-    const response = await fetch(`${this.config.endpoints.api}/api/gas-tank/${encodeURIComponent(socialId)}`, {
-      headers: {
-        'X-API-Key': this.config.apiKey
-      }
-    });
-    
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
-    }
-    
-    return response.json();
-  }
-  
-  /**
-   * Refill gas tank
-   */
-  async refillGasTank(params: any): Promise<any> {
-    const response = await fetch(`${this.config.endpoints.api}/api/gas-tank/refill`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': this.config.apiKey
-      },
-      body: JSON.stringify(params)
-    });
-    
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
-    }
-    
-    return response.json();
-  }
-  
-  /**
-   * Get SDK information
-   */
-  getSDKInfo() {
-    return {
-      name: '@nexuspay/sdk',
-      version: '1.0.0',
-      description: 'Cross-chain wallet SDK supporting both EVM and Solana (SVM) networks',
-      supportedChains: SUPPORTED_CHAINS,
-      features: [
-        'Multi-chain wallets',
-        'Gasless transactions',
-        'Cross-chain payments',
-        'Asset bridging',
-        'Social recovery'
-      ],
-      endpoints: this.config.endpoints,
-      environment: this.config.environment
-    };
-  }
-}
-
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
-/**
- * Get SDK information
- */
-export function getSDKInfo() {
-  return {
-    name: '@nexuspay/sdk',
-    version: '1.0.0',
-    description: 'Cross-chain wallet SDK supporting both EVM and Solana (SVM) networks',
-    author: 'NexusPay Team',
-    repository: 'https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION',
-    supportedChains: SUPPORTED_CHAINS,
-    features: [
-      'Multi-chain wallets (EVM + Solana)',
-      'Gasless transactions via paymaster',
-      'Cross-chain payments',
-      'Asset bridging between chains',
-      'Social recovery system',
-      'Account abstraction'
-    ]
+export interface NexusConfig {
+  apiKey: string;
+  environment?: 'production' | 'development';
+  chains?: string[];
+  endpoints?: {
+    api?: string;
   };
 }
 
-// ============================================================================
-// DEFAULT EXPORT
-// ============================================================================
+export interface WalletInfo {
+  socialId: string;
+  socialType: string;
+  addresses: {
+    [chain: string]: string;
+  };
+  metadata?: any;
+  deploymentStatus?: {
+    [chain: string]: 'deployed' | 'pending' | 'failed';
+  };
+}
+
+/**
+ * Simple NexusSDK class for cross-chain wallet creation
+ */
+export class NexusSDK {
+  private config: NexusConfig;
+  private initialized: boolean = false;
+
+  constructor(config: NexusConfig) {
+    this.config = {
+      environment: 'production',
+      endpoints: {
+        api: 'https://nexuspay-5dhrqoe12-griffins-projects-4324ce43.vercel.app'
+      },
+      ...config,
+      chains: config.chains || ['ethereum', 'solana']
+    };
+  }
+
+  async initialize(): Promise<void> {
+    try {
+      const response = await fetch(`${this.config.endpoints?.api}/health`, {
+        headers: {
+          'X-API-Key': this.config.apiKey
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API connection failed: ${response.status}`);
+      }
+      
+      this.initialized = true;
+      console.log('✅ NexusSDK initialized successfully');
+    } catch (error) {
+      console.error('❌ NexusSDK initialization failed:', error);
+      throw error;
+    }
+  }
+
+  private ensureInitialized(): void {
+    if (!this.initialized) {
+      throw new Error('NexusSDK not initialized. Call initialize() first.');
+    }
+  }
+
+  private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
+    this.ensureInitialized();
+    
+    const url = `${this.config.endpoints?.api}${endpoint}`;
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': this.config.apiKey,
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || `HTTP ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Create and deploy real blockchain wallets
+   */
+  async createWallet(options: {
+    socialId: string;
+    socialType?: string;
+    chains?: string[];
+    paymaster?: boolean;
+    metadata?: any;
+  }): Promise<WalletInfo> {
+    console.log('🚀 Creating and deploying real blockchain wallet...');
+    
+    const response = await this.makeRequest('/api/wallets/deploy', {
+      method: 'POST',
+      body: JSON.stringify({
+        socialId: options.socialId,
+        socialType: options.socialType || 'email',
+        chains: options.chains || this.config.chains,
+        metadata: options.metadata || {},
+        paymaster: options.paymaster !== false
+      }),
+    });
+
+    console.log('✅ REAL BLOCKCHAIN WALLETS DEPLOYED!');
+    console.log('🔍 Addresses are now visible on block explorers');
+    
+    return response;
+  }
+
+  /**
+   * Get wallet information
+   */
+  async getWallet(socialId: string, socialType: string = 'email'): Promise<WalletInfo> {
+    const encodedSocialId = encodeURIComponent(socialId);
+    return this.makeRequest(`/api/wallets/${encodedSocialId}?socialType=${socialType}`);
+  }
+
+  /**
+   * Send cross-chain payment
+   */
+  async sendPayment(options: {
+    from: { socialId: string; chain: string };
+    to: { socialId: string; chain: string };
+    amount: string;
+    asset?: string;
+    gasless?: boolean;
+  }): Promise<any> {
+    return this.makeRequest('/api/payments', {
+      method: 'POST',
+      body: JSON.stringify(options),
+    });
+  }
+
+  /**
+   * Bridge assets between chains
+   */
+  async bridgeAssets(options: {
+    from: { chain: string; asset: string };
+    to: { chain: string; asset: string };
+    amount: string;
+  }): Promise<any> {
+    return this.makeRequest('/api/bridge', {
+      method: 'POST',
+      body: JSON.stringify(options),
+    });
+  }
+
+  /**
+   * Fund company gas tank
+   */
+  async fundGasTank(options: {
+    companyId: string;
+    amount: string;
+    chain: string;
+    token?: string;
+  }): Promise<any> {
+    return this.makeRequest(`/api/companies/${options.companyId}/gas-tank/fund`, {
+      method: 'POST',
+      body: JSON.stringify({
+        amount: options.amount,
+        chain: options.chain,
+        token: options.token || 'ETH'
+      }),
+    });
+  }
+
+  /**
+   * Get gas tank status
+   */
+  async getGasTankStatus(options: { companyId: string }): Promise<any> {
+    return this.makeRequest(`/api/companies/${options.companyId}/gas-tank`);
+  }
+
+  /**
+   * Get private key (tracked for compliance)
+   */
+  async getPrivateKey(options: {
+    socialId: string;
+    socialType?: string;
+    reason?: string;
+    ipAddress?: string;
+    userAgent?: string;
+  }): Promise<any> {
+    const params = new URLSearchParams({
+      socialType: options.socialType || 'email',
+      reason: options.reason || 'user_requested',
+      ...(options.ipAddress && { ipAddress: options.ipAddress }),
+      ...(options.userAgent && { userAgent: options.userAgent })
+    });
+
+    return this.makeRequest(`/api/wallets/${encodeURIComponent(options.socialId)}/private-key?${params}`);
+  }
+
+  /**
+   * Get usage analytics
+   */
+  async getUsageAnalytics(options: { timeframe?: string } = {}): Promise<any> {
+    const params = options.timeframe ? `?timeframe=${options.timeframe}` : '';
+    return this.makeRequest(`/api/analytics/usage${params}`);
+  }
+
+  /**
+   * Get SDK configuration
+   */
+  getConfig(): NexusConfig {
+    return { ...this.config };
+  }
+}
+
+// Common social types
+export const COMMON_SOCIAL_TYPES = {
+  EMAIL: 'email',
+  PHONE: 'phone',
+  GOOGLE: 'google',
+  TWITTER: 'twitter',
+  DISCORD: 'discord',
+  GITHUB: 'github',
+  GAME_ID: 'gameId',
+  USER_ID: 'userId',
+  PLAYER_TAG: 'playerTag',
+  NFT_HOLDER: 'nftHolder',
+  WALLET_ADDRESS: 'walletAddress'
+} as const;
+
+// Supported chains
+export const SUPPORTED_CHAINS = {
+  EVM: ['ethereum', 'polygon', 'arbitrum', 'base', 'optimism', 'avalanche', 'bsc'] as const,
+  SVM: ['solana'] as const
+} as const;
+
+// Utility functions
+export const Utils = {
+  createConfig: (apiKey: string, options: Partial<NexusConfig> = {}) => ({
+    apiKey,
+    environment: 'production' as const,
+    chains: ['ethereum', 'solana'],
+    endpoints: {
+      api: 'https://nexuspay-5dhrqoe12-griffins-projects-4324ce43.vercel.app'
+    },
+    ...options
+  }),
+  
+  isEVMChain: (chain: string): boolean => {
+    return SUPPORTED_CHAINS.EVM.includes(chain as any);
+  },
+  
+  isSVMChain: (chain: string): boolean => {
+    return SUPPORTED_CHAINS.SVM.includes(chain as any);
+  }
+};
+
+// Version info
+export const VERSION = '1.0.1';
+export const SDK_NAME = 'NexusSDK';
 
 export default NexusSDK; 

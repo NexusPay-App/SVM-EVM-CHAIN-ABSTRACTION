@@ -8,7 +8,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { NexusSDK } from '../../core/NexusSDK';
 import { NexusConfig, WalletInfo, SupportedChain } from '../../types';
 
-interface NexusContextType {
+export interface NexusContextType {
   sdk: NexusSDK | null;
   isInitialized: boolean;
   isLoading: boolean;
@@ -124,11 +124,7 @@ export function NexusProvider({ config, children }: NexusProviderProps) {
           socialId,
           socialType: socialType as any,
           chains: config.chains,
-          gasTankConfig: {
-            enabled: config.features?.gasTank ?? false,
-            autoRefill: true,
-            refillThreshold: '0.01'
-          }
+          paymaster: config.features?.gaslessTransactions ?? true
         });
       }
 

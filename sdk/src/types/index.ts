@@ -16,8 +16,25 @@ export type SupportedChain =
 export type EVMChain = Exclude<SupportedChain, 'solana'>;
 export type SVMChain = 'solana';
 
-// Social identity types
-export type SocialIdType = 'email' | 'phone' | 'ens' | 'twitter' | 'discord' | 'telegram';
+// Social identity types - developers can use any custom type
+export type SocialIdType = string; // Allow any custom social identifier type
+
+// Common social types (examples - not restricted to these)
+export const COMMON_SOCIAL_TYPES = {
+  EMAIL: 'email',
+  PHONE: 'phone',
+  USERNAME: 'username',
+  GOOGLE: 'google',
+  TWITTER: 'twitter',
+  DISCORD: 'discord',
+  TELEGRAM: 'telegram',
+  GITHUB: 'github',
+  GAME_ID: 'gameId',
+  USER_ID: 'userId',
+  PLAYER_TAG: 'playerTag',
+  NFT_HOLDER: 'nftHolder',
+  WALLET_ADDRESS: 'walletAddress'
+} as const;
 
 // Base configuration
 export interface NexusConfig {
@@ -240,4 +257,27 @@ export interface PaymasterPolicy {
   perTransactionLimit: string;
   allowedContracts?: string[];
   blockedContracts?: string[];
+}
+
+// React component props
+export interface WalletConnectProps {
+  onWalletCreated?: (wallet: WalletInfo) => void;
+  onError?: (error: NexusError) => void;
+  onConnect?: (wallet: WalletInfo) => void;
+  onDisconnect?: () => void;
+  socialType?: SocialIdType;
+  chains?: SupportedChain[];
+  className?: string;
+  buttonText?: string;
+  showBalance?: boolean;
+  showGasTank?: boolean;
+}
+
+// Wallet options for SDK
+export interface WalletOptions {
+  socialId: string;
+  socialType?: SocialIdType;
+  chains?: SupportedChain[];
+  metadata?: any;
+  paymaster?: boolean;
 } 

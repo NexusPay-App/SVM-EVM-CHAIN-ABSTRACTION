@@ -1,30 +1,14 @@
-# NexusSDK v2.0 - Enterprise Cross-Chain Wallet Infrastructure
+# NexusSDK v1.1.1 ⚡
 
-> **Production-ready wallet infrastructure** with unified addresses, gas tank management, private key tracking, and complete usage analytics.
+**Production-Ready Cross-Chain Wallet SDK for Third-Party Applications**
 
-## 🚀 Enterprise Features
+[![NPM Version](https://img.shields.io/npm/v/@nexuspay/sdk)](https://www.npmjs.com/package/@nexuspay/sdk)
+[![License](https://img.shields.io/npm/l/@nexuspay/sdk)](https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION/blob/main/LICENSE)
+[![Downloads](https://img.shields.io/npm/dm/@nexuspay/sdk)](https://www.npmjs.com/package/@nexuspay/sdk)
 
-### ✅ **Unified Addresses**
-- **Same EVM address** across Ethereum, Polygon, Arbitrum, Base, Optimism, etc.
-- **Separate Solana addresses** for SVM ecosystem
-- **One-step deployment** - create and deploy wallets instantly
+Create real blockchain wallets for **any social identifier** on both **Ethereum** and **Solana** with a single API call. Perfect for gaming platforms, enterprise applications, NFT marketplaces, and DeFi protocols.
 
-### ✅ **Gas Tank Management**
-- **Company funding** - Fund gas tanks for sponsored transactions
-- **Multi-chain support** - Manage gas across all networks
-- **Real-time tracking** - Monitor usage and costs
-
-### ✅ **Private Key Tracking**
-- **Complete audit trail** - Every private key request logged
-- **Compliance ready** - Track who, when, why, and where
-- **Security monitoring** - Real-time access alerts
-
-### ✅ **Usage Analytics**
-- **Real-time dashboard** - Monitor user activity
-- **Cost tracking** - Track gas spending and optimization
-- **Company metrics** - Wallet creation, usage patterns
-
-## 📦 Quick Start
+## 🚀 Quick Start
 
 ```bash
 npm install @nexuspay/sdk
@@ -34,169 +18,312 @@ npm install @nexuspay/sdk
 import { NexusSDK } from '@nexuspay/sdk';
 
 const sdk = new NexusSDK({
-  apiKey: 'your-api-key',
-  chains: ['ethereum', 'polygon', 'solana'],
-  endpoints: {
-    api: 'https://nexuspay-5dhrqoe12-griffins-projects-4324ce43.vercel.app'
-  }
+  apiKey: 'your-api-key', // Get from https://backend-amber-zeta-94.vercel.app/
+  environment: 'production',
+  chains: ['ethereum', 'solana']
 });
 
-// Create unified wallet
+await sdk.initialize();
+
+// Create real blockchain wallets instantly
 const wallet = await sdk.createWallet({
-  socialId: 'user@company.com',
+  socialId: 'user@yourapp.com',
   socialType: 'email',
-  chains: ['ethereum', 'polygon', 'solana']
+  chains: ['ethereum', 'solana'],
+  paymaster: true // Your app pays gas fees
 });
 
-// Fund company gas tank
-await sdk.fundGasTank({
-  companyId: 'your-company',
-  amount: '10.0',
-  chain: 'ethereum'
-});
-
-// Pay user transaction fees
-await sdk.payUserFees({
-  companyId: 'your-company',
-  userSocialId: 'user@company.com',
-  chain: 'ethereum',
-  txHash: '0x...',
-  amount: '0.005'
-});
+console.log('✅ Real wallets deployed!');
+console.log('🔗 Ethereum:', wallet.addresses.ethereum);
+console.log('⚡ Solana:', wallet.addresses.solana);
 ```
 
-## 🌐 Production Endpoints
+## ✨ Key Features
 
-### API Endpoint
-```
-🔗 Production API: https://nexuspay-5dhrqoe12-griffins-projects-4324ce43.vercel.app
-🏥 Health Check: https://nexuspay-5dhrqoe12-griffins-projects-4324ce43.vercel.app/health
-🔑 Generate API Key: https://nexuspay-5dhrqoe12-griffins-projects-4324ce43.vercel.app/api/keys/generate
-```
+### 🔧 **Third-Party Ready**
+- **Request Caching**: Automatic 5-minute caching for better performance
+- **Batch Operations**: Create multiple wallets efficiently
+- **Health Monitoring**: Built-in health checks and statistics
+- **Webhook Support**: Safe identifier generation for webhook systems
+- **Configuration Validation**: Ensure proper SDK setup
 
-### Live Dashboard
-```
-📊 Production Dashboard: https://dashboard-nexuspay.vercel.app
-📈 Real-time Analytics: Monitor all your users and gas tanks
-🔐 Security Logs: Track private key access requests
-```
+### ⚡ **Real Blockchain Deployment**
+- **EVM Chains**: Smart contract wallets on Ethereum, Polygon, Arbitrum, Base, Optimism
+- **SVM Chains**: Native account creation on Solana
+- **Instant Deployment**: Wallets are immediately visible on block explorers
+- **Unified Addresses**: Same address across all EVM chains
 
-### Development
-```
-🏠 Local API: http://localhost:3001
-📊 Local Dashboard: http://localhost:3001/dashboard
-```
+### 💰 **Flexible Gas Payment**
+- **Paymaster ON**: Your app pays all gas fees (perfect for gaming/enterprise)
+- **Paymaster OFF**: Users pay their own gas fees (great for DeFi/marketplaces)
+- **Real-time Control**: Set gas payment per wallet creation
 
-## 🎮 Perfect for Gaming Companies
-
-**PlayEarn Example:**
+### 🎯 **Unlimited Social Types**
+Create wallets for ANY identifier type:
 ```typescript
-class PlayEarnPlatform {
-  private sdk = new NexusSDK({ 
-    apiKey: 'your-key',
-    endpoints: {
-      api: 'https://nexuspay-5dhrqoe12-griffins-projects-4324ce43.vercel.app'
-    }
-  });
-  
-  // User signup with unified wallet
-  async onUserSignup(email: string) {
-    return await this.sdk.createWallet({
-      socialId: email,
-      socialType: 'email',
-      chains: ['ethereum', 'polygon', 'solana']
-    });
+// Gaming
+{ socialId: 'player_123', socialType: 'gamePlayerId' }
+// Enterprise  
+{ socialId: 'emp_jane_doe', socialType: 'employeeId' }
+// NFT Communities
+{ socialId: 'ape_holder_rare', socialType: 'nftCollectorId' }
+// Custom Business Logic
+{ socialId: 'premium_tier_3', socialType: 'customerTierId' }
+```
+
+## 🎮 Perfect For Gaming
+
+```typescript
+// Create wallets for 1000 players instantly
+const playerWallets = await sdk.createWalletBatch([
+  { socialId: 'player_001', socialType: 'gameId', chains: ['polygon'], paymaster: true },
+  { socialId: 'player_002', socialType: 'gameId', chains: ['polygon'], paymaster: true },
+  // ... more players
+]);
+
+// All gas fees sponsored by your game
+console.log(`🎮 ${playerWallets.length} player wallets ready!`);
+```
+
+## 🏢 Enterprise Ready
+
+```typescript
+// Employee wallet system
+const employeeWallet = await sdk.createWallet({
+  socialId: 'emp_engineering_jane_doe_001',
+  socialType: 'enterpriseEmployeeId',
+  chains: ['ethereum', 'base'],
+  paymaster: true, // Company sponsors all transactions
+  metadata: {
+    department: 'Engineering',
+    clearanceLevel: 'L5',
+    startDate: '2024-01-15'
   }
-  
-  // Company pays all user transaction fees
-  async payoutRewards(userEmail: string, txHash: string) {
-    return await this.sdk.payUserFees({
-      companyId: 'playearn-xyz',
-      userSocialId: userEmail,
-      chain: 'ethereum',
-      txHash,
-      amount: '0.005'
-    });
+});
+
+// Webhook integration
+const webhookId = sdk.generateWebhookId(
+  'emp_engineering_jane_doe_001', 
+  'enterpriseEmployeeId'
+);
+```
+
+## 🎨 NFT Marketplace Integration
+
+```typescript
+// Collector wallets with metadata
+const collectorWallet = await sdk.createWallet({
+  socialId: 'whale_collector_ultra_rare',
+  socialType: 'nftCollectorTier',
+  chains: ['ethereum'],
+  paymaster: false, // Collectors pay their own gas
+  metadata: {
+    tier: 'Ultra Rare',
+    collections: ['BoredApes', 'CryptoPunks'],
+    totalValue: '500 ETH'
   }
+});
+```
+
+## 📊 Third-Party Integration Features
+
+### Health Monitoring
+```typescript
+const health = await sdk.healthCheck();
+console.log('API Status:', health.status);
+console.log('SDK Version:', health.sdk.version);
+```
+
+### Performance Analytics
+```typescript
+const stats = sdk.getStats();
+console.log('Cache Hit Rate:', stats.cacheSize);
+console.log('Supported Chains:', stats.supportedChains);
+```
+
+### Batch Operations
+```typescript
+// Efficient bulk operations
+const results = await sdk.createWalletBatch(requests);
+const wallets = await sdk.getWalletBatch(walletIds);
+```
+
+### Webhook Integration
+```typescript
+// Safe webhook identifiers
+const webhookId = sdk.generateWebhookId(socialId, socialType);
+const { socialId, socialType } = sdk.parseWebhookId(webhookId);
+```
+
+## 🌐 Production Endpoint
+
+**Base URL**: `https://backend-amber-zeta-94.vercel.app`
+
+### Get Your API Key
+Visit [https://backend-amber-zeta-94.vercel.app/](https://backend-amber-zeta-94.vercel.app/) to generate your production API key.
+
+### Core Endpoints
+- `POST /api/wallets/deploy` - Create and deploy wallets
+- `GET /api/wallets/{socialId}` - Get wallet information  
+- `GET /health` - API health check
+- `POST /api/payments` - Cross-chain payments
+
+## 🔧 Configuration Options
+
+```typescript
+const sdk = new NexusSDK({
+  apiKey: 'your-api-key',           // Required: Get from production URL
+  environment: 'production',        // 'production' | 'development'
+  chains: ['ethereum', 'solana'],   // Supported chains to use
+  endpoints: {
+    api: 'https://backend-amber-zeta-94.vercel.app' // Production endpoint
+  }
+});
+```
+
+## 📚 Documentation
+
+- **[Quick Start Guide](./DEVELOPER_QUICKSTART.md)** - Get started in 5 minutes
+- **[Complete API Reference](./API_REFERENCE.md)** - All methods and endpoints
+- **[GitHub Repository](https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION)** - Source code and examples
+
+## 🛠️ Framework Examples
+
+### React Hook
+```typescript
+import { NexusSDK } from '@nexuspay/sdk';
+
+function useWallet() {
+  const [sdk] = useState(() => new NexusSDK({
+    apiKey: process.env.REACT_APP_NEXUS_API_KEY,
+    environment: 'production'
+  }));
+
+  useEffect(() => {
+    sdk.initialize();
+  }, []);
+
+  return { sdk };
 }
 ```
 
-## 📊 Live Dashboard
+### Next.js API Route
+```typescript
+// pages/api/create-wallet.ts
+const sdk = new NexusSDK({
+  apiKey: process.env.NEXUS_API_KEY!,
+  environment: 'production'
+});
 
-Monitor your users in real-time:
-
-```
-🌐 Production Dashboard: https://dashboard-nexuspay.vercel.app
-📊 Metrics:
-  - Total wallets created
-  - Private key access logs
-  - Gas tank balances
-  - Cross-chain activity
-  - Company usage analytics
-```
-
-## 🔧 Core Methods
-
-### `createWallet(params)`
-Create unified wallet with instant deployment across all chains.
-
-### `getPrivateKey(params)`
-Get private key with complete tracking and audit trail.
-
-### `fundGasTank(params)`
-Fund company gas tank for sponsored transactions.
-
-### `payUserFees(params)`
-Pay transaction fees for users seamlessly.
-
-### `getGasTankStatus(companyId)`
-Get real-time gas tank status across all chains.
-
-## 🚀 Getting Started
-
-### 1. Generate API Key
-```bash
-curl -X POST https://nexuspay-5dhrqoe12-griffins-projects-4324ce43.vercel.app/api/keys/generate \
-  -H "Content-Type: application/json" \
-  -d '{"email":"you@company.com","projectName":"Your Project"}'
+export default async function handler(req, res) {
+  const wallet = await sdk.createWallet(req.body);
+  res.json({ success: true, wallet });
+}
 ```
 
-### 2. Install SDK
-```bash
-npm install @nexuspay/sdk
-```
-
-### 3. Initialize
+### Express.js Integration
 ```typescript
 import { NexusSDK } from '@nexuspay/sdk';
 
 const sdk = new NexusSDK({
-  apiKey: 'npay_your-generated-key',
-  endpoints: {
-    api: 'https://nexuspay-5dhrqoe12-griffins-projects-4324ce43.vercel.app'
-  }
+  apiKey: process.env.NEXUS_API_KEY,
+  environment: 'production'
+});
+
+app.post('/wallets', async (req, res) => {
+  const wallet = await sdk.createWallet(req.body);
+  res.json(wallet);
 });
 ```
 
-### 4. Monitor Usage
-Visit the live dashboard: https://dashboard-nexuspay.vercel.app
+## 🔐 Security & Best Practices
 
-## 🎯 Use Cases
+### ✅ Secure API Key Storage
+```typescript
+// ✅ Good: Server-side environment variable
+const sdk = new NexusSDK({
+  apiKey: process.env.NEXUS_API_KEY
+});
 
-- **Gaming Platforms**: Sponsor all user transactions
-- **DeFi Applications**: Unified experience across chains  
-- **Enterprise Apps**: Company-managed wallet infrastructure
-- **Compliance**: Complete audit trail and monitoring
+// ❌ Bad: Client-side exposure
+const sdk = new NexusSDK({
+  apiKey: 'npay_your_key_here' // Never expose keys!
+});
+```
 
-## 🌟 Why Choose NexusSDK?
+### ✅ Error Handling
+```typescript
+try {
+  const wallet = await sdk.createWallet(options);
+  return { success: true, wallet };
+} catch (error) {
+  if (error.message.includes('rate limit')) {
+    return { error: 'Rate limited, try again later' };
+  }
+  return { error: 'Wallet creation failed' };
+}
+```
 
-✅ **Production Ready** - Real blockchain deployments  
-✅ **Enterprise Grade** - Gas tanks, tracking, analytics  
-✅ **Developer Friendly** - Simple API, TypeScript support  
-✅ **Cross-Chain Native** - EVM + Solana out of the box  
-✅ **Cost Efficient** - Unified addresses reduce deployment costs  
-✅ **Compliance Ready** - Complete logging and audit trails  
+## 📈 Performance Features
+
+- **Request Caching**: 5-minute cache for GET requests
+- **Batch Operations**: Create multiple wallets efficiently  
+- **Connection Pooling**: Optimized for high-throughput applications
+- **Rate Limiting**: 1000 requests/minute in production
+
+## 🌊 Supported Chains
+
+### EVM Chains (Unified Addresses)
+- **Ethereum** - Mainnet + Sepolia Testnet
+- **Polygon** - Mainnet + Mumbai Testnet  
+- **Arbitrum** - Mainnet + Goerli Testnet
+- **Base** - Mainnet + Goerli Testnet
+- **Optimism** - Mainnet + Goerli Testnet
+- **Avalanche** - Mainnet + Fuji Testnet
+- **BSC** - Mainnet + Testnet
+
+### SVM Chains
+- **Solana** - Mainnet + Devnet + Testnet
+
+## 💡 Use Cases
+
+### 🎮 Gaming Platforms
+- Player wallet creation with game currency
+- Guild treasury management
+- NFT reward distribution
+- Sponsored gas for better UX
+
+### 🏢 Enterprise Applications
+- Employee crypto payment systems
+- Company treasury management
+- Compliance-ready wallet tracking
+- Department-specific wallet organization
+
+### 🎨 NFT Marketplaces
+- Collector wallet management
+- Creator payout systems
+- Royalty distribution
+- Community membership wallets
+
+### 💰 DeFi Protocols
+- User wallet abstraction
+- Protocol treasury management
+- Yield farming automation
+- Cross-chain liquidity management
+
+## 📞 Support
+
+- **Documentation**: Complete guides in this repository
+- **API Key Generation**: [https://backend-amber-zeta-94.vercel.app/](https://backend-amber-zeta-94.vercel.app/)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION/issues)
+- **NPM Package**: [@nexuspay/sdk](https://www.npmjs.com/package/@nexuspay/sdk)
+
+## 📝 License
+
+MIT License - see [LICENSE](https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION/blob/main/LICENSE) for details.
 
 ---
 
-**🚀 Get Started:** [Generate API Key](https://nexuspay-5dhrqoe12-griffins-projects-4324ce43.vercel.app/api/keys/generate) | 📊 [Live Dashboard](https://dashboard-nexuspay.vercel.app) | 📖 [API Documentation](./API_REFERENCE.md) 
+**Ready to deploy real blockchain wallets in your app?** 🚀
+
+Get your API key at [https://backend-amber-zeta-94.vercel.app/](https://backend-amber-zeta-94.vercel.app/) and start building! 

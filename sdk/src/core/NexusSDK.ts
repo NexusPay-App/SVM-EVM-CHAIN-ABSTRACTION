@@ -1,839 +1,364 @@
 /**
- * NexusSDK - The ThirdWeb Killer with SVM-EVM Integration
+ * NexusSDK v1.0.1 - Cross-Chain Wallet Infrastructure
  * 
- * Unified interface for companies to build DApps on both ecosystems
- * Features: Gas Tank, DeFi primitives, Cross-chain bridge, Social wallets
- * 
- * @example
- * ```typescript
- * import { NexusSDK } from '@nexusplatform/sdk';
- * 
- * const sdk = new NexusSDK({
- *   apiKey: 'your-api-key',
- *   projectId: 'your-project',
- *   chains: ['ethereum', 'polygon', 'solana'],
- *   features: {
- *     gasTank: true,
- *     crossChain: true,
- *     defiIntegrations: true
- *   }
- * });
- * ```
+ * SDK for real blockchain wallet creation and deployment
  */
 
 import { 
   NexusConfig, 
-  CreateWalletParams, 
   WalletInfo, 
-  TransactionParams,
-  TransactionResult,
-  BridgeParams,
-  BridgeResult,
-  RecoveryParams,
-  AnalyticsData,
-  UserAnalytics,
   SupportedChain,
-  EVMChain,
-  SVMChain,
-  TokenInfo,
-  TokenBalance,
-  GasTankBalance,
-  GasTankRefillParams,
-  GasTankUsage,
-  SwapParams,
-  SwapResult,
-  LendingPosition,
-  YieldPosition,
-  NexusError,
-  ErrorCode,
-  PaginationParams,
-  FilterParams
+  SocialIdType
 } from '../types';
 
-import { EVMManager } from '../managers/EVMManager';
-import { SVMManager } from '../managers/SVMManager'; 
-import { CrossChainBridge } from '../bridge/CrossChainBridge';
-import { SocialRecovery } from '../recovery/SocialRecovery';
-import { GasTankManager } from '../gastank/GasTankManager';
-import { DeFiManager } from '../defi/DeFiManager';
-import { TokenManager } from '../tokens/TokenManager';
-import { AnalyticsManager } from '../analytics/AnalyticsManager';
+// Simple interfaces for API endpoints
+interface WalletOptions {
+  socialId: string;
+  socialType?: SocialIdType;
+  chains?: SupportedChain[];
+  metadata?: any;
+  paymaster?: boolean; // true = company pays gas, false = user pays gas
+}
+
+interface PaymentOptions {
+  from: any;
+  to: any;
+  amount: string;
+  asset?: string;
+  gasless?: boolean;
+}
+
+interface TokenTransferOptions {
+  from: {
+    socialId: string;
+    socialType?: SocialIdType;
+    chain: SupportedChain;
+  };
+  to: {
+    address: string;
+    chain: SupportedChain;
+  };
+  tokenAddress: string;
+  amount: string;
+  decimals?: number;
+  gasless?: boolean;
+}
+
+interface NFTTransferOptions {
+  from: {
+    socialId: string;
+    socialType?: SocialIdType;
+    chain: SupportedChain;
+  };
+  to: {
+    address: string;
+    chain: SupportedChain;
+  };
+  nftContract: string;
+  tokenId: string;
+  gasless?: boolean;
+}
+
+interface TokenMintOptions {
+  socialId: string;
+  socialType?: SocialIdType;
+  chain: SupportedChain;
+  tokenContract: string;
+  amount: string;
+  metadata?: any;
+}
+
+interface NFTMintOptions {
+  socialId: string;
+  socialType?: SocialIdType;
+  chain: SupportedChain;
+  nftContract: string;
+  tokenURI: string;
+  metadata?: any;
+}
 
 /**
- * Main NexusSDK Class - The ThirdWeb Alternative with Superpowers
- * 
- * @example
- * ```typescript
- * import { NexusSDK } from '@nexusplatform/sdk';
- * 
- * const sdk = new NexusSDK({
- *   apiKey: 'your-api-key',
- *   projectId: 'your-project',
- *   chains: ['ethereum', 'polygon', 'solana'],
- *   features: {
- *     gasTank: true,
- *     crossChain: true,
- *     defiIntegrations: true
- *   }
- * });
- * 
- * // Create social wallet
- * const wallet = await sdk.createWallet({
- *   socialId: 'user@company.com',
- *   socialType: 'email',
- *   chains: ['ethereum', 'solana']
- * });
- * 
- * // Send cross-chain payment
- * const tx = await sdk.sendPayment({
- *   from: { chain: 'solana', socialId: 'sender@email.com' },
- *   to: { chain: 'ethereum', address: '0x...' },
- *   amount: '100',
- *   token: 'USDC'
- * });
- * ```
+ * Main NexusSDK class - Your gateway to cross-chain wallet infrastructure
  */
 export class NexusSDK {
   private config: NexusConfig;
-  private evmManager: EVMManager;
-  private svmManager: SVMManager;
-  private bridge: CrossChainBridge;
-  private recovery: SocialRecovery;
-  private gasTank: GasTankManager;
-  private defi: DeFiManager;
-  private tokens: TokenManager;
-  private analytics: AnalyticsManager;
   private initialized: boolean = false;
+  private requestCache: Map<string, { data: any; timestamp: number }> = new Map();
+  private cacheTimeout: number = 5 * 60 * 1000; // 5 minutes
 
   constructor(config: NexusConfig) {
-    this.validateConfig(config);
-    this.config = config;
-    
-    console.log(`🚀 Initializing NexusSDK v2.0 - The ThirdWeb Killer`);
-    console.log(`📊 Chains: ${config.chains.join(', ')}`);
-    console.log(`⚡ Features: ${Object.keys(config.features || {}).join(', ')}`);
-    
-    // Initialize core managers
-    this.evmManager = new EVMManager(config);
-    this.svmManager = new SVMManager(config);
-    this.tokens = new TokenManager(config);
-    this.gasTank = new GasTankManager(config, this.evmManager, this.svmManager);
-    this.bridge = new CrossChainBridge(config, this.evmManager, this.svmManager);
-    this.recovery = new SocialRecovery(config);
-    this.defi = new DeFiManager(config, this.evmManager, this.svmManager);
-    this.analytics = new AnalyticsManager(config);
+    this.config = {
+      environment: 'production',
+      endpoints: {
+        api: 'https://backend-amber-zeta-94.vercel.app'
+      },
+      ...config,
+      chains: config.chains || ['ethereum', 'polygon', 'solana']
+    };
   }
 
-  /**
-   * Initialize the SDK - Must be called before using other methods
-   */
   async initialize(): Promise<void> {
-    if (this.initialized) return;
-    
-    console.log('🔧 Initializing NexusSDK components...');
-    
     try {
-      // Initialize all managers in parallel
-      await Promise.all([
-        this.tokens.initialize(),
-        this.evmManager.initialize(),
-        this.svmManager.initialize(),
-        this.gasTank.initialize(),
-        this.defi.initialize()
-      ]);
+      // Test API connection
+      const response = await fetch(`${this.config.endpoints?.api}/health`, {
+        headers: {
+          'X-API-Key': this.config.apiKey
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API connection failed: ${response.status}`);
+      }
       
       this.initialized = true;
-      console.log('✅ NexusSDK initialized successfully');
+      console.log('NexusSDK initialized successfully');
     } catch (error) {
-      console.error('❌ Failed to initialize NexusSDK:', error);
-      throw new Error(`SDK initialization failed: ${(error as Error).message}`);
+      console.error('NexusSDK initialization failed:', error);
+      throw error;
     }
   }
 
-  // ============================================================================
-  // WALLET MANAGEMENT
-  // ============================================================================
+  private ensureInitialized(): void {
+    if (!this.initialized) {
+      throw new Error('NexusSDK not initialized. Call initialize() first.');
+    }
+  }
 
-  /**
-   * Create a new social wallet across specified chains
-   * 
-   * @example
-   * ```typescript
-   * const wallet = await sdk.createWallet({
-   *   socialId: 'user@company.com',
-   *   socialType: 'email',
-   *   chains: ['ethereum', 'polygon', 'solana'],
-   *   gasTankConfig: {
-   *     enabled: true,
-   *     autoRefill: true,
-   *     refillThreshold: '0.01' // Refill when below 0.01 ETH/SOL
-   *   }
-   * });
-   * ```
-   */
-  async createWallet(params: CreateWalletParams): Promise<WalletInfo> {
-    await this.ensureInitialized();
+  private async makeRequest(endpoint: string, options: RequestInit = {}, cacheable: boolean = false): Promise<any> {
+    this.ensureInitialized();
     
-    const { socialId, socialType, chains, gasTankConfig } = params;
-    
-    console.log(`🔐 Creating social wallet for ${socialType}: ${socialId}`);
-    console.log(`🌐 Chains: ${chains.join(', ')}`);
-    
-    try {
-      // Use the new deployment flow that creates and deploys in one step
-      const response = await fetch(`${this.config.endpoints.api}/api/wallets/deploy`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': this.config.apiKey
-        },
-        body: JSON.stringify({
-          socialId,
-          socialType,
-          chains
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Wallet creation failed: ${response.status}`);
+    // Check cache for GET requests
+    const cacheKey = `${endpoint}:${JSON.stringify(options.body || {})}`;
+    if (cacheable && options.method !== 'POST' && this.requestCache.has(cacheKey)) {
+      const cached = this.requestCache.get(cacheKey)!;
+      if (Date.now() - cached.timestamp < this.cacheTimeout) {
+        return cached.data;
       }
-      
-      const deploymentResult = await response.json();
-      
-      // Format the response to match our WalletInfo structure
-      const walletInfo: WalletInfo = {
-        socialId,
-        socialType,
-        addresses: deploymentResult.addresses,
-        balances: this.formatBalances(deploymentResult.addresses),
-        gasTank: {
-          enabled: gasTankConfig?.enabled || false,
-          balances: this.initializeGasTankBalances(chains)
-        },
-        crossChainEnabled: true,
-        createdAt: deploymentResult.timestamp || new Date().toISOString(),
-        lastUsed: new Date().toISOString(),
-        deploymentStatus: {
-          evm: deploymentResult.deployments?.evm || { isDeployed: false },
-          svm: deploymentResult.deployments?.solana || { isDeployed: false }
-        },
-        isNew: deploymentResult.isNew || false
-      };
-      
-      console.log('✅ Wallet created successfully');
-      console.log(`📍 Unified EVM Address: ${deploymentResult.addresses.ethereum}`);
-      console.log(`📍 Solana Address: ${deploymentResult.addresses.solana}`);
-      
-      return walletInfo;
-      
-    } catch (error) {
-      console.error('❌ Wallet creation failed:', error);
-      throw this.createError('WALLET_CREATION_FAILED', `Failed to create wallet: ${(error as Error).message}`);
+      this.requestCache.delete(cacheKey);
     }
+    
+    const url = `${this.config.endpoints?.api}${endpoint}`;
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': this.config.apiKey,
+        'User-Agent': `NexusSDK/1.0.1`,
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Cache successful GET requests
+    if (cacheable && options.method !== 'POST') {
+      this.requestCache.set(cacheKey, { data, timestamp: Date.now() });
+    }
+
+    return data;
   }
 
   /**
-   * Get private key for a wallet (tracked and logged)
-   * 
-   * @example
-   * ```typescript
-   * const keyData = await sdk.getPrivateKey({
-   *   socialId: 'user@company.com',
-   *   socialType: 'email',
-   *   reason: 'Transaction signing',
-   *   companyId: 'playearn-xyz'
-   * });
-   * ```
+   * Create a wallet and deploy it to blockchain
+   * ✅ Creates real blockchain wallets visible on block explorers
+   * @param options.paymaster - true: company pays gas fees, false: user pays gas fees
    */
-  async getPrivateKey(params: {
+  async createWallet(options: WalletOptions): Promise<any> {
+    const response = await this.makeRequest('/api/wallets/deploy', {
+      method: 'POST',
+      body: JSON.stringify({
+        socialId: options.socialId,
+        socialType: options.socialType || 'email',
+        chains: options.chains || this.config.chains,
+        metadata: options.metadata || {},
+        paymaster: options.paymaster !== false
+      }),
+    });
+
+    return response;
+  }
+
+  /**
+   * Create wallet with predicted addresses only (not deployed)
+   * ⚠️ These addresses won't show up on block explorers until deployed
+   */
+  async createPredictedWallet(options: WalletOptions): Promise<WalletInfo> {
+    const response = await this.makeRequest('/api/wallets', {
+      method: 'POST',
+      body: JSON.stringify({
+        socialId: options.socialId,
+        socialType: options.socialType || 'email',
+        chains: options.chains || this.config.chains,
+        metadata: options.metadata || {}
+      }),
+    });
+
+    return response;
+  }
+
+  /**
+   * Deploy existing predicted wallet to blockchain
+   */
+  async deployWallet(options: WalletOptions): Promise<any> {
+    const response = await this.makeRequest('/api/wallets/deploy', {
+      method: 'POST',
+      body: JSON.stringify({
+        socialId: options.socialId,
+        socialType: options.socialType || 'email',
+        chains: options.chains || this.config.chains,
+        metadata: options.metadata || {},
+        paymaster: options.paymaster !== false
+      }),
+    });
+
+    return response;
+  }
+
+  /**
+   * Get wallet information (cached for efficiency)
+   */
+  async getWallet(socialId: string, socialType: string = 'email'): Promise<WalletInfo> {
+    const encodedSocialId = encodeURIComponent(socialId);
+    return this.makeRequest(`/api/wallets/${encodedSocialId}?socialType=${socialType}`, {}, true);
+  }
+
+  /**
+   * Batch create multiple wallets efficiently
+   */
+  async createWalletBatch(wallets: WalletOptions[]): Promise<any[]> {
+    const promises = wallets.map(wallet => this.createWallet(wallet));
+    const results = await Promise.allSettled(promises);
+    
+    return results.map(result => 
+      result.status === 'fulfilled' 
+        ? result.value 
+        : { error: result.reason.message }
+    );
+  }
+
+  /**
+   * Check multiple wallet statuses efficiently
+   */
+  async getWalletBatch(walletIds: Array<{socialId: string, socialType?: string}>): Promise<any[]> {
+    const promises = walletIds.map(({ socialId, socialType = 'email' }) => 
+      this.getWallet(socialId, socialType).catch(error => ({ error: error.message, socialId, socialType }))
+    );
+    
+    return Promise.all(promises);
+  }
+
+  /**
+   * Send cross-chain payment
+   */
+  async sendPayment(options: PaymentOptions): Promise<any> {
+    return this.makeRequest('/api/payments', {
+      method: 'POST',
+      body: JSON.stringify(options),
+    });
+  }
+
+  /**
+   * Bridge assets between chains
+   */
+  async bridgeAssets(options: any): Promise<any> {
+    return this.makeRequest('/api/bridge', {
+      method: 'POST',
+      body: JSON.stringify(options),
+    });
+  }
+
+  /**
+   * Get private key (tracked for compliance)
+   */
+  async getPrivateKey(options: {
     socialId: string;
-    socialType?: string;
-    reason: string;
-    companyId?: string;
-  }): Promise<{
-    privateKey: string;
-    address: string;
-    trackingId: string;
-    warning: string;
-  }> {
-    await this.ensureInitialized();
-    
-    const { socialId, socialType = 'email', reason, companyId } = params;
-    
-    try {
-      const response = await fetch(`${this.config.endpoints.api}/api/wallets/${encodeURIComponent(socialId)}/private-key`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': this.config.apiKey
-        },
-        body: JSON.stringify({
-          socialType,
-          reason,
-          companyId
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Private key request failed: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      console.log(`🔐 Private key retrieved for ${socialId} (tracked: ${result.trackingId})`);
-      
-      return {
-        privateKey: result.privateKey,
-        address: result.address,
-        trackingId: result.trackingId,
-        warning: result.warning
-      };
-      
-    } catch (error) {
-      console.error('❌ Private key request failed:', error);
-      throw this.createError('PRIVATE_KEY_REQUEST_FAILED', `Failed to get private key: ${(error as Error).message}`);
-    }
+    socialType?: SocialIdType;
+    reason?: string;
+    ipAddress?: string;
+    userAgent?: string;
+  }): Promise<any> {
+    return this.makeRequest(`/api/wallets/${encodeURIComponent(options.socialId)}/private-key`, {
+      method: 'POST',
+      body: JSON.stringify({
+        socialType: options.socialType || 'email',
+        reason: options.reason || 'user_requested',
+        ipAddress: options.ipAddress,
+        userAgent: options.userAgent
+      }),
+    });
   }
 
   /**
-   * Fund company gas tank for sponsored transactions
-   * 
-   * @example
-   * ```typescript
-   * const funding = await sdk.fundGasTank({
-   *   companyId: 'playearn-xyz',
-   *   amount: '10.0',
-   *   chain: 'ethereum',
-   *   paymentMethod: 'stripe'
-   * });
-   * ```
+   * Fund company gas tank
    */
-  async fundGasTank(params: {
+  async fundGasTank(options: {
     companyId: string;
     amount: string;
-    chain: SupportedChain;
-    paymentMethod?: string;
-  }): Promise<{
-    success: boolean;
-    fundingId: string;
-    balance: string;
-    txHash: string;
-  }> {
-    await this.ensureInitialized();
-    
-    const { companyId, amount, chain, paymentMethod = 'crypto' } = params;
-    
-    try {
-      const response = await fetch(`${this.config.endpoints.api}/api/companies/${companyId}/gas-tank/fund`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': this.config.apiKey
-        },
-        body: JSON.stringify({
-          amount,
-          chain,
-          paymentMethod
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Gas tank funding failed: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      console.log(`💰 Gas tank funded: ${amount} ${chain.toUpperCase()} for ${companyId}`);
-      
-      return {
-        success: result.success,
-        fundingId: result.funding.fundingId,
-        balance: result.gasTank.balance,
-        txHash: result.funding.txHash
-      };
-      
-    } catch (error) {
-      console.error('❌ Gas tank funding failed:', error);
-      throw this.createError('GAS_TANK_FUNDING_FAILED', `Failed to fund gas tank: ${(error as Error).message}`);
-    }
+    chain: string;
+    token?: string;
+  }): Promise<any> {
+    return this.makeRequest(`/api/companies/${options.companyId}/gas-tank/fund`, {
+      method: 'POST',
+      body: JSON.stringify({
+        amount: options.amount,
+        chain: options.chain,
+        token: options.token || 'ETH'
+      }),
+    });
   }
 
   /**
-   * Get company gas tank status across all chains
-   * 
-   * @example
-   * ```typescript
-   * const gasTanks = await sdk.getGasTankStatus('playearn-xyz');
-   * ```
+   * Pay user transaction fees (sponsored transactions)
    */
-  async getGasTankStatus(companyId: string): Promise<{
-    companyId: string;
-    gasTanks: Record<SupportedChain, any>;
-    totalValueUsd: string;
-  }> {
-    await this.ensureInitialized();
-    
-    try {
-      const response = await fetch(`${this.config.endpoints.api}/api/companies/${companyId}/gas-tank`, {
-        method: 'GET',
-        headers: {
-          'X-API-Key': this.config.apiKey
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Gas tank status request failed: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      return result;
-      
-    } catch (error) {
-      console.error('❌ Gas tank status request failed:', error);
-      throw this.createError('GAS_TANK_STATUS_FAILED', `Failed to get gas tank status: ${(error as Error).message}`);
-    }
-  }
-
-  /**
-   * Pay transaction fees for users (sponsored transactions)
-   * 
-   * @example
-   * ```typescript
-   * const payment = await sdk.payUserFees({
-   *   companyId: 'playearn-xyz',
-   *   userSocialId: 'gamer123@email.com',
-   *   chain: 'ethereum',
-   *   txHash: '0x...',
-   *   amount: '0.005'
-   * });
-   * ```
-   */
-  async payUserFees(params: {
+  async payUserFees(options: {
     companyId: string;
     userSocialId: string;
-    socialType?: string;
-    chain: SupportedChain;
-    txHash: string;
-    amount: string;
-  }): Promise<{
-    success: boolean;
-    paymentId: string;
-    remainingBalance: string;
-  }> {
-    await this.ensureInitialized();
-    
-    const { companyId, userSocialId, socialType = 'email', chain, txHash, amount } = params;
-    
-    try {
-      const response = await fetch(`${this.config.endpoints.api}/api/companies/${companyId}/pay-fees`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': this.config.apiKey
-        },
-        body: JSON.stringify({
-          userSocialId,
-          socialType,
-          chain,
-          txHash,
-          amount
-        })
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `Fee payment failed: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      console.log(`💸 Paid fees for user ${userSocialId}: ${amount} ${chain.toUpperCase()}`);
-      
-      return {
-        success: result.success,
-        paymentId: result.feePayment.paymentId,
-        remainingBalance: result.remainingBalance
-      };
-      
-    } catch (error) {
-      console.error('❌ Fee payment failed:', error);
-      throw this.createError('FEE_PAYMENT_FAILED', `Failed to pay user fees: ${(error as Error).message}`);
-    }
+    chain?: string;
+    amount?: string;
+    txHash?: string;
+    transactionType?: string;
+    estimatedGas?: string;
+  }): Promise<any> {
+    return this.makeRequest(`/api/companies/${options.companyId}/pay-fees`, {
+      method: 'POST',
+      body: JSON.stringify({
+        userSocialId: options.userSocialId,
+        chain: options.chain,
+        amount: options.amount,
+        txHash: options.txHash,
+        transactionType: options.transactionType,
+        estimatedGas: options.estimatedGas
+      }),
+    });
   }
 
   /**
-   * Get wallet information with real-time balances
+   * Get gas tank status
    */
-  async getWallet(socialId: string, includeBalances: boolean = true): Promise<WalletInfo | null> {
-    await this.ensureInitialized();
-    
-    try {
-      const walletInfo = await this.analytics.getWalletInfo(socialId);
-      if (!walletInfo) return null;
-      
-      if (includeBalances) {
-        // Fetch real-time balances across all chains
-        const balancePromises = Object.keys(walletInfo.addresses).map(async (chain) => {
-          const address = walletInfo.addresses[chain as SupportedChain];
-          return {
-            chain: chain as SupportedChain,
-            balances: await this.tokens.getTokenBalances(address, chain as SupportedChain)
-          };
-        });
-        
-        const balanceResults = await Promise.all(balancePromises);
-        const balances: Record<SupportedChain, TokenBalance[]> = {} as any;
-        
-        balanceResults.forEach(result => {
-          balances[result.chain] = result.balances;
-        });
-        
-        walletInfo.balances = balances;
-        walletInfo.totalUsdValue = await this.calculateTotalUsdValue(balances);
-        
-        // Update gas tank balances if enabled
-        if (this.config.features?.gasTank && walletInfo.gasTanks) {
-          const gasTankPromises = Object.keys(walletInfo.gasTanks).map(async (chain) => {
-            return {
-              chain: chain as SupportedChain,
-              gasTank: await this.gasTank.getGasTankBalance(socialId, chain as SupportedChain)
-            };
-          });
-          
-          const gasTankResults = await Promise.all(gasTankPromises);
-          const gasTanks: Record<SupportedChain, GasTankBalance> = {} as any;
-          
-          gasTankResults.forEach(result => {
-            if (result.gasTank) {
-              gasTanks[result.chain] = result.gasTank;
-            }
-          });
-          
-          walletInfo.gasTanks = gasTanks;
-        }
-      }
-      
-      return walletInfo;
-    } catch (error) {
-      console.error('Error fetching wallet:', error);
-      return null;
-    }
-  }
-
-  // ============================================================================
-  // PAYMENT & TRANSACTION METHODS
-  // ============================================================================
-
-  /**
-   * Send payment (auto-detects if cross-chain bridge is needed)
-   * 
-   * @example
-   * ```typescript
-   * // Same chain payment
-   * const tx = await sdk.sendPayment({
-   *   from: { chain: 'ethereum', socialId: 'sender@email.com' },
-   *   to: { chain: 'ethereum', address: '0x...' },
-   *   amount: '100',
-   *   token: 'USDC',
-   *   gasSettings: { useGasTank: true }
-   * });
-   * 
-   * // Cross-chain payment (auto-bridges)
-   * const tx = await sdk.sendPayment({
-   *   from: { chain: 'solana', socialId: 'sender@email.com' },
-   *   to: { chain: 'ethereum', address: '0x...' },
-   *   amount: '100',
-   *   token: 'USDC'
-   * });
-   * ```
-   */
-  async sendPayment(params: TransactionParams): Promise<TransactionResult> {
-    await this.ensureInitialized();
-    
-    const { from, to, amount, token = 'NATIVE' } = params;
-    
-    console.log(`💸 Sending ${amount} ${token} from ${from.chain} to ${to.chain}`);
-    
-    // Check if cross-chain payment
-    if (from.chain !== to.chain) {
-      console.log('🌉 Cross-chain payment detected, using bridge...');
-      
-      if (!this.config.features?.crossChain) {
-        throw this.createError('BRIDGE_NOT_AVAILABLE', 'Cross-chain features not enabled');
-      }
-      
-      // Convert to bridge params
-      const bridgeParams: BridgeParams = {
-        fromChain: from.chain,
-        toChain: to.chain,
-        amount,
-        asset: token,
-        recipient: to.address || (await this.getAddressFromSocialId(to.socialId!, to.chain)),
-        socialId: from.socialId
-      };
-      
-      const bridgeResult = await this.bridgeAssets(bridgeParams);
-      
-      // Return the source transaction with bridge metadata
-      return {
-        ...bridgeResult.fromTx,
-        bridgeId: bridgeResult.bridgeId
-      };
-    }
-    
-    // Same chain payment
-    if (from.chain === 'solana') {
-      return await this.svmManager.sendTransaction(params);
-    } else {
-      return await this.evmManager.sendTransaction(params);
-    }
+  async getGasTankStatus(options: { companyId: string }): Promise<any> {
+    return this.makeRequest(`/api/companies/${options.companyId}/gas-tank`);
   }
 
   /**
-   * Bridge assets between EVM and SVM chains
-   * This is your UNIQUE competitive advantage over ThirdWeb
+   * Get usage analytics
    */
-  async bridgeAssets(params: BridgeParams): Promise<BridgeResult> {
-    await this.ensureInitialized();
-    
-    if (!this.config.features?.crossChain) {
-      throw this.createError('BRIDGE_NOT_AVAILABLE', 'Cross-chain features not enabled');
-    }
-    
-    console.log(`🌉 Bridging ${params.amount} ${params.asset} from ${params.fromChain} to ${params.toChain}`);
-    
-    const bridgeResult = await this.bridge.bridgeAssets(params);
-    
-    console.log(`✅ Bridge initiated: ${bridgeResult.bridgeId}`);
-    return bridgeResult;
-  }
-
-  // ============================================================================
-  // GAS TANK METHODS (UNIQUE FEATURE)
-  // ============================================================================
-
-  /**
-   * Refill gas tank for gasless transactions
-   * 
-   * @example
-   * ```typescript
-   * // Refill with MetaMask
-   * await sdk.refillGasTank({
-   *   chain: 'ethereum',
-   *   amount: '0.1',
-   *   socialId: 'user@email.com',
-   *   paymentMethod: 'metamask'
-   * });
-   * 
-   * // Refill with external wallet transfer
-   * await sdk.refillGasTank({
-   *   chain: 'solana',
-   *   amount: '0.5',
-   *   socialId: 'user@email.com',
-   *   paymentMethod: 'external_wallet'
-   * });
-   * ```
-   */
-  async refillGasTank(params: GasTankRefillParams): Promise<{ success: boolean; txHash?: string; message: string }> {
-    await this.ensureInitialized();
-    
-    if (!this.config.features?.gasTank) {
-      throw this.createError('GAS_TANK_EMPTY', 'Gas tank features not enabled');
-    }
-    
-    console.log(`⛽ Refilling gas tank: ${params.amount} on ${params.chain}`);
-    
-    return await this.gasTank.refill(params);
+  async getUsageAnalytics(options: { timeframe?: string } = {}): Promise<any> {
+    const params = options.timeframe ? `?timeframe=${options.timeframe}` : '';
+    return this.makeRequest(`/api/analytics/usage${params}`);
   }
 
   /**
-   * Get gas tank balance and usage statistics
+   * Get wallet balances across all chains
    */
-  async getGasTankInfo(socialId: string, chain?: SupportedChain): Promise<GasTankBalance[]> {
-    await this.ensureInitialized();
-    
-    if (chain) {
-      const balance = await this.gasTank.getGasTankBalance(socialId, chain);
-      return balance ? [balance] : [];
-    }
-    
-    // Get for all chains
-    const chains = this.config.chains;
-    const promises = chains.map(c => this.gasTank.getGasTankBalance(socialId, c));
-    const results = await Promise.all(promises);
-    
-    return results.filter(Boolean) as GasTankBalance[];
+  async getWalletBalances(socialId: string, socialType: string = 'email'): Promise<any> {
+    const encodedSocialId = encodeURIComponent(socialId);
+    return this.makeRequest(`/api/wallets/${encodedSocialId}/balances?socialType=${socialType}`);
   }
-
-  /**
-   * Get gas tank usage history
-   */
-  async getGasTankUsage(socialId: string, timeRange: string = '30d'): Promise<GasTankUsage[]> {
-    await this.ensureInitialized();
-    
-    return await this.gasTank.getUsageHistory(socialId, timeRange);
-  }
-
-  // ============================================================================
-  // DEFI METHODS
-  // ============================================================================
-
-  /**
-   * Swap tokens on any supported chain
-   * 
-   * @example
-   * ```typescript
-   * // Swap on Ethereum
-   * const swap = await sdk.swapTokens({
-   *   fromToken: 'USDC',
-   *   toToken: 'ETH',
-   *   amount: '1000',
-   *   chain: 'ethereum',
-   *   socialId: 'user@email.com',
-   *   slippage: 0.5,
-   *   useGasTank: true
-   * });
-   * 
-   * // Swap on Solana
-   * const swap = await sdk.swapTokens({
-   *   fromToken: 'USDC',
-   *   toToken: 'SOL',
-   *   amount: '100',
-   *   chain: 'solana',
-   *   socialId: 'user@email.com'
-   * });
-   * ```
-   */
-  async swapTokens(params: SwapParams): Promise<SwapResult> {
-    await this.ensureInitialized();
-    
-    if (!this.config.features?.tokenSwaps) {
-      throw this.createError('UNSUPPORTED_CHAIN', 'Token swap features not enabled');
-    }
-    
-    console.log(`🔄 Swapping ${params.amount} ${params.fromToken} to ${params.toToken} on ${params.chain}`);
-    
-    return await this.defi.swapTokens(params);
-  }
-
-  /**
-   * Get lending positions across all protocols
-   */
-  async getLendingPositions(socialId: string): Promise<LendingPosition[]> {
-    await this.ensureInitialized();
-    
-    return await this.defi.getLendingPositions(socialId);
-  }
-
-  /**
-   * Get yield farming positions
-   */
-  async getYieldPositions(socialId: string): Promise<YieldPosition[]> {
-    await this.ensureInitialized();
-    
-    return await this.defi.getYieldPositions(socialId);
-  }
-
-  // ============================================================================
-  // TOKEN METHODS
-  // ============================================================================
-
-  /**
-   * Get supported tokens for a chain
-   */
-  async getSupportedTokens(chain: SupportedChain): Promise<TokenInfo[]> {
-    await this.ensureInitialized();
-    
-    return await this.tokens.getSupportedTokens(chain);
-  }
-
-  /**
-   * Get token information
-   */
-  async getTokenInfo(tokenAddress: string, chain: SupportedChain): Promise<TokenInfo | null> {
-    await this.ensureInitialized();
-    
-    return await this.tokens.getTokenInfo(tokenAddress, chain);
-  }
-
-  /**
-   * Get token balances for an address
-   */
-  async getTokenBalances(address: string, chain: SupportedChain): Promise<TokenBalance[]> {
-    await this.ensureInitialized();
-    
-    return await this.tokens.getTokenBalances(address, chain);
-  }
-
-  // ============================================================================
-  // ANALYTICS METHODS
-  // ============================================================================
-
-  /**
-   * Get user analytics and insights
-   */
-  async getUserAnalytics(socialId: string, timeRange: string = '30d'): Promise<UserAnalytics> {
-    await this.ensureInitialized();
-    
-    return await this.analytics.getUserAnalytics(socialId, timeRange);
-  }
-
-  /**
-   * Get transaction history across all chains
-   */
-  async getTransactionHistory(
-    socialId: string, 
-    options?: {
-      chain?: SupportedChain;
-      pagination?: PaginationParams;
-      filters?: FilterParams;
-    }
-  ): Promise<{ transactions: TransactionResult[]; totalCount: number; hasMore: boolean }> {
-    await this.ensureInitialized();
-    
-    return await this.analytics.getTransactionHistory(socialId, options);
-  }
-
-  // ============================================================================
-  // RECOVERY METHODS
-  // ============================================================================
-
-  /**
-   * Recover wallet using social proof or guardians
-   */
-  async recoverWallet(params: RecoveryParams): Promise<WalletInfo> {
-    await this.ensureInitialized();
-    
-    console.log(`🔍 Recovering wallet for: ${params.socialId}`);
-    
-    const recoveredWallet = await this.recovery.recoverWallet(params);
-    
-    console.log(`✅ Wallet recovered: ${Object.keys(recoveredWallet.addresses).length} chains`);
-    return recoveredWallet;
-  }
-
-  /**
-   * Setup social recovery guardians
-   */
-  async setupSocialRecovery(
-    socialId: string, 
-    guardians: string[], 
-    threshold: number = 2
-  ): Promise<void> {
-    await this.ensureInitialized();
-    
-    if (!this.config.features?.socialRecovery) {
-      throw this.createError('UNAUTHORIZED', 'Social recovery not enabled');
-    }
-    
-    await this.recovery.setupRecovery(socialId, { guardians, threshold });
-    console.log(`🛡️ Social recovery setup for ${socialId} with ${guardians.length} guardians`);
-  }
-
-  // ============================================================================
-  // UTILITY METHODS
-  // ============================================================================
 
   /**
    * Get SDK configuration
@@ -843,126 +368,418 @@ export class NexusSDK {
   }
 
   /**
-   * Get supported chains
+   * Clear request cache (useful for third-party apps)
    */
-  getSupportedChains(): SupportedChain[] {
-    return [...this.config.chains];
+  clearCache(): void {
+    this.requestCache.clear();
+    console.log('🧹 SDK cache cleared');
   }
 
   /**
-   * Check if bridge is available between chains
+   * Health check for third-party monitoring
    */
-  async isBridgeAvailable(fromChain: SupportedChain, toChain: SupportedChain): Promise<boolean> {
-    if (!this.config.features?.crossChain) return false;
-    return await this.bridge.isRouteAvailable(fromChain, toChain);
+  async healthCheck(): Promise<any> {
+    try {
+      const health = await this.makeRequest('/health', {}, true);
+      return {
+        ...health,
+        sdk: {
+          version: '1.0.1',
+          cacheSize: this.requestCache.size,
+          initialized: this.initialized
+        }
+      };
+    } catch (error: any) {
+      throw new Error(`Health check failed: ${error.message}`);
+    }
   }
 
   /**
-   * Estimate bridge costs and time
+   * Generate webhook-safe wallet identifier for third-party integrations
    */
-  async estimateBridge(params: Omit<BridgeParams, 'recipient'>): Promise<{
-    fee: string;
-    estimatedTime: number;
-    available: boolean;
-    route?: string;
-  }> {
-    await this.ensureInitialized();
-    
-    return await this.bridge.estimateBridge(params);
+  generateWebhookId(socialId: string, socialType: string): string {
+    return Buffer.from(`${socialType}:${socialId}`).toString('base64');
   }
 
-  // ============================================================================
-  // PRIVATE HELPER METHODS
-  // ============================================================================
-
-  private async ensureInitialized(): Promise<void> {
-    if (!this.initialized) {
-      await this.initialize();
+  /**
+   * Parse webhook identifier back to social credentials
+   */
+  parseWebhookId(webhookId: string): { socialId: string; socialType: string } {
+    try {
+      const decoded = Buffer.from(webhookId, 'base64').toString('utf-8');
+      const [socialType, socialId] = decoded.split(':');
+      return { socialId, socialType };
+    } catch (error) {
+      throw new Error('Invalid webhook ID format');
     }
   }
 
-  private validateConfig(config: NexusConfig): void {
-    if (!config.apiKey) {
-      throw new Error('API key is required');
+  /**
+   * Validate configuration for third-party apps
+   */
+  validateConfig(): { valid: boolean; errors: string[] } {
+    const errors: string[] = [];
+    
+    if (!this.config.apiKey) {
+      errors.push('API key is required');
     }
     
-    if (!config.chains || config.chains.length === 0) {
-      throw new Error('At least one chain must be specified');
+    if (!this.config.endpoints?.api) {
+      errors.push('API endpoint is required');
     }
     
-    const validChains = [
-      'ethereum', 'polygon', 'arbitrum', 'base', 'optimism', 'avalanche',
-      'bsc', 'fantom', 'gnosis', 'celo', 'moonbeam', 'aurora', 'solana'
-    ];
-    
-    const invalidChains = config.chains.filter(chain => !validChains.includes(chain));
-    if (invalidChains.length > 0) {
-      throw new Error(`Unsupported chains: ${invalidChains.join(', ')}`);
-    }
-  }
-
-  private async calculateTotalUsdValue(balances: Record<SupportedChain, TokenBalance[]>): Promise<string> {
-    let total = 0;
-    
-    for (const chain of Object.keys(balances)) {
-      const chainBalances = balances[chain as SupportedChain];
-      for (const balance of chainBalances) {
-        if (balance.usdValue) {
-          total += parseFloat(balance.usdValue);
-        }
-      }
+    if (!this.config.chains || this.config.chains.length === 0) {
+      errors.push('At least one chain must be specified');
     }
     
-    return total.toFixed(2);
-  }
-
-  private async getAddressFromSocialId(socialId: string, chain: SupportedChain): Promise<string> {
-    const wallet = await this.getWallet(socialId, false);
-    if (!wallet || !wallet.addresses[chain]) {
-      throw this.createError('INVALID_ADDRESS', `No address found for ${socialId} on ${chain}`);
-    }
-    return wallet.addresses[chain];
-  }
-
-  private createError(code: ErrorCode, message: string, details?: any): NexusError {
     return {
-      code,
-      message,
-      details,
-      recoverable: code !== 'UNAUTHORIZED'
+      valid: errors.length === 0,
+      errors
     };
   }
 
-  // Helper methods
-  private formatBalances(addresses: Record<SupportedChain, string>): Record<SupportedChain, TokenBalance[]> {
-    const balances: Record<SupportedChain, TokenBalance[]> = {} as any;
-    
-    Object.keys(addresses).forEach(chain => {
-      balances[chain as SupportedChain] = [
-        {
-          symbol: chain === 'solana' ? 'SOL' : 'ETH',
-          balance: '0',
-          usdValue: '0',
-          address: 'native'
-        }
-      ];
-    });
-    
-    return balances;
+  /**
+   * Get SDK statistics for monitoring
+   */
+  getStats(): any {
+    return {
+      version: '1.0.1',
+      initialized: this.initialized,
+      cacheSize: this.requestCache.size,
+      supportedChains: this.config.chains,
+      environment: this.config.environment,
+      endpoint: this.config.endpoints?.api
+    };
   }
 
-  private initializeGasTankBalances(chains: SupportedChain[]): GasTankBalance {
-    const balances: Record<SupportedChain, string> = {} as any;
-    
-    chains.forEach(chain => {
-      balances[chain] = '0';
+  // =============================================================================
+  // TOKEN & NFT FUNCTIONALITY
+  // =============================================================================
+
+  /**
+   * Transfer ERC20/SPL tokens between wallets
+   * Supports cross-chain token transfers
+   */
+  async transferToken(options: TokenTransferOptions): Promise<any> {
+    const response = await this.makeRequest('/api/tokens/transfer', {
+      method: 'POST',
+      body: JSON.stringify({
+        from: {
+          socialId: options.from.socialId,
+          socialType: options.from.socialType || 'email',
+          chain: options.from.chain
+        },
+        to: {
+          address: options.to.address,
+          chain: options.to.chain
+        },
+        tokenAddress: options.tokenAddress,
+        amount: options.amount,
+        decimals: options.decimals || 18,
+        gasless: options.gasless !== false
+      }),
     });
-    
-    return {
-      totalBalance: '0',
-      chainBalances: balances,
-      lastRefill: new Date().toISOString(),
-      autoRefill: false
-    };
+
+    return response;
+  }
+
+  /**
+   * Transfer NFTs (ERC721/ERC1155/Metaplex) between wallets
+   */
+  async transferNFT(options: NFTTransferOptions): Promise<any> {
+    const response = await this.makeRequest('/api/nfts/transfer', {
+      method: 'POST',
+      body: JSON.stringify({
+        from: {
+          socialId: options.from.socialId,
+          socialType: options.from.socialType || 'email',
+          chain: options.from.chain
+        },
+        to: {
+          address: options.to.address,
+          chain: options.to.chain
+        },
+        nftContract: options.nftContract,
+        tokenId: options.tokenId,
+        gasless: options.gasless !== false
+      }),
+    });
+
+    return response;
+  }
+
+  /**
+   * Get all tokens owned by a wallet
+   */
+  async getTokenBalances(socialId: string, socialType: string = 'email', chain?: SupportedChain): Promise<any> {
+    const response = await this.makeRequest('/api/tokens/balances', {
+      method: 'POST',
+      body: JSON.stringify({
+        socialId,
+        socialType,
+        chain
+      }),
+    }, true);
+
+    return response;
+  }
+
+  /**
+   * Get all NFTs owned by a wallet
+   */
+  async getNFTs(socialId: string, socialType: string = 'email', chain?: SupportedChain): Promise<any> {
+    const response = await this.makeRequest('/api/nfts/list', {
+      method: 'POST',
+      body: JSON.stringify({
+        socialId,
+        socialType,
+        chain
+      }),
+    }, true);
+
+    return response;
+  }
+
+  /**
+   * Mint new tokens to a wallet
+   */
+  async mintTokens(options: TokenMintOptions): Promise<any> {
+    const response = await this.makeRequest('/api/tokens/mint', {
+      method: 'POST',
+      body: JSON.stringify({
+        socialId: options.socialId,
+        socialType: options.socialType || 'email',
+        chain: options.chain,
+        tokenContract: options.tokenContract,
+        amount: options.amount,
+        metadata: options.metadata
+      }),
+    });
+
+    return response;
+  }
+
+  /**
+   * Mint new NFT to a wallet
+   */
+  async mintNFT(options: NFTMintOptions): Promise<any> {
+    const response = await this.makeRequest('/api/nfts/mint', {
+      method: 'POST',
+      body: JSON.stringify({
+        socialId: options.socialId,
+        socialType: options.socialType || 'email',
+        chain: options.chain,
+        nftContract: options.nftContract,
+        tokenURI: options.tokenURI,
+        metadata: options.metadata
+      }),
+    });
+
+    return response;
+  }
+
+  /**
+   * Get token information and metadata
+   */
+  async getTokenInfo(tokenAddress: string, chain: SupportedChain): Promise<any> {
+    const response = await this.makeRequest('/api/tokens/info', {
+      method: 'POST',
+      body: JSON.stringify({
+        tokenAddress,
+        chain
+      }),
+    }, true);
+
+    return response;
+  }
+
+  /**
+   * Get NFT metadata and details
+   */
+  async getNFTMetadata(nftContract: string, tokenId: string, chain: SupportedChain): Promise<any> {
+    const response = await this.makeRequest('/api/nfts/metadata', {
+      method: 'POST',
+      body: JSON.stringify({
+        nftContract,
+        tokenId,
+        chain
+      }),
+    }, true);
+
+    return response;
+  }
+
+  /**
+   * Swap tokens using DEX aggregators
+   */
+  async swapTokens(options: {
+    socialId: string;
+    socialType?: SocialIdType;
+    chain: SupportedChain;
+    fromToken: string;
+    toToken: string;
+    amount: string;
+    slippage?: number;
+    gasless?: boolean;
+  }): Promise<any> {
+    const response = await this.makeRequest('/api/tokens/swap', {
+      method: 'POST',
+      body: JSON.stringify({
+        socialId: options.socialId,
+        socialType: options.socialType || 'email',
+        chain: options.chain,
+        fromToken: options.fromToken,
+        toToken: options.toToken,
+        amount: options.amount,
+        slippage: options.slippage || 1,
+        gasless: options.gasless !== false
+      }),
+    });
+
+    return response;
+  }
+
+  /**
+   * Approve token spending for smart contracts
+   */
+  async approveToken(options: {
+    socialId: string;
+    socialType?: SocialIdType;
+    chain: SupportedChain;
+    tokenAddress: string;
+    spenderAddress: string;
+    amount: string;
+    gasless?: boolean;
+  }): Promise<any> {
+    const response = await this.makeRequest('/api/tokens/approve', {
+      method: 'POST',
+      body: JSON.stringify({
+        socialId: options.socialId,
+        socialType: options.socialType || 'email',
+        chain: options.chain,
+        tokenAddress: options.tokenAddress,
+        spenderAddress: options.spenderAddress,
+        amount: options.amount,
+        gasless: options.gasless !== false
+      }),
+    });
+
+    return response;
+  }
+
+  /**
+   * List NFT on marketplace
+   */
+  async listNFT(options: {
+    socialId: string;
+    socialType?: SocialIdType;
+    chain: SupportedChain;
+    nftContract: string;
+    tokenId: string;
+    price: string;
+    marketplace: string;
+    gasless?: boolean;
+  }): Promise<any> {
+    const response = await this.makeRequest('/api/nfts/list', {
+      method: 'POST',
+      body: JSON.stringify({
+        socialId: options.socialId,
+        socialType: options.socialType || 'email',
+        chain: options.chain,
+        nftContract: options.nftContract,
+        tokenId: options.tokenId,
+        price: options.price,
+        marketplace: options.marketplace,
+        gasless: options.gasless !== false
+      }),
+    });
+
+    return response;
+  }
+
+  /**
+   * Get transaction history for tokens and NFTs
+   */
+  async getTransactionHistory(socialId: string, socialType: string = 'email', options?: {
+    chain?: SupportedChain;
+    asset?: 'native' | 'tokens' | 'nfts' | 'all';
+    limit?: number;
+    offset?: number;
+  }): Promise<any> {
+    const response = await this.makeRequest('/api/transactions/history', {
+      method: 'POST',
+      body: JSON.stringify({
+        socialId,
+        socialType,
+        chain: options?.chain,
+        asset: options?.asset || 'all',
+        limit: options?.limit || 50,
+        offset: options?.offset || 0
+      }),
+    }, true);
+
+    return response;
+  }
+
+  /**
+   * Deploy new ERC20/SPL token contract
+   */
+  async deployToken(options: {
+    socialId: string;
+    socialType?: SocialIdType;
+    chain: SupportedChain;
+    name: string;
+    symbol: string;
+    decimals: number;
+    totalSupply: string;
+    metadata?: any;
+    gasless?: boolean;
+  }): Promise<any> {
+    const response = await this.makeRequest('/api/tokens/deploy', {
+      method: 'POST',
+      body: JSON.stringify({
+        socialId: options.socialId,
+        socialType: options.socialType || 'email',
+        chain: options.chain,
+        name: options.name,
+        symbol: options.symbol,
+        decimals: options.decimals,
+        totalSupply: options.totalSupply,
+        metadata: options.metadata,
+        gasless: options.gasless !== false
+      }),
+    });
+
+    return response;
+  }
+
+  /**
+   * Deploy new NFT collection contract
+   */
+  async deployNFTCollection(options: {
+    socialId: string;
+    socialType?: SocialIdType;
+    chain: SupportedChain;
+    name: string;
+    symbol: string;
+    baseURI?: string;
+    metadata?: any;
+    gasless?: boolean;
+  }): Promise<any> {
+    const response = await this.makeRequest('/api/nfts/deploy', {
+      method: 'POST',
+      body: JSON.stringify({
+        socialId: options.socialId,
+        socialType: options.socialType || 'email',
+        chain: options.chain,
+        name: options.name,
+        symbol: options.symbol,
+        baseURI: options.baseURI,
+        metadata: options.metadata,
+        gasless: options.gasless !== false
+      }),
+    });
+
+    return response;
   }
 } 

@@ -1,0 +1,25 @@
+{
+  "name": "nexus-sdk-examples",
+  "version": "1.0.0",
+  "description": "NexusSDK usage examples demonstrating wallet infrastructure",
+  "type": "module",
+  "main": "simple-wallet-app.js",
+  "scripts": {
+    "simple": "node simple-wallet-app.js",
+    "infrastructure": "node wallet-infrastructure-demo.js",
+    "test": "node simple-wallet-app.js && node wallet-infrastructure-demo.js"
+  },
+  "keywords": [
+    "nexus",
+    "wallet",
+    "blockchain",
+    "ethereum",
+    "solana",
+    "cross-chain",
+    "sdk"
+  ],
+  "author": "NexusPay Team",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {}
+} 

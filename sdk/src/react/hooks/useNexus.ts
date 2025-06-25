@@ -3,10 +3,10 @@
  */
 
 import { useContext } from 'react';
-import { NexusContext } from '../providers/NexusProvider';
+import { useNexusContext, NexusContextType } from '../providers/NexusProvider';
 
-export function useNexus() {
-  const context = useContext(NexusContext);
+export function useNexus(): NexusContextType {
+  const context = useNexusContext();
   if (!context) {
     throw new Error('useNexus must be used within a NexusProvider');
   }

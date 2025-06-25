@@ -6,7 +6,7 @@
  */
 
 import React, { useState } from 'react';
-import { WalletConnectProps, SupportedChain, SocialIdType } from '../../types';
+import { WalletConnectProps, SupportedChain, SocialIdType, WalletInfo } from '../../types';
 
 interface WalletConnectState {
   isConnecting: boolean;
@@ -82,24 +82,35 @@ export function WalletConnect({
       // Mock connection - in real implementation this would use the SDK
       await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
       
-      const mockWallet = {
+      const mockWallet: WalletInfo = {
         socialId: state.socialId,
-        socialType: state.selectedSocialType,
+        socialType: state.selectedSocialType!,
         addresses: {
           ethereum: '0x1234...abcd',
           polygon: '0x1234...abcd',
+          arbitrum: '0x1234...abcd',
+          base: '0x1234...abcd',
+          optimism: '0x1234...abcd',
+          avalanche: '0x1234...abcd',
           solana: 'ABC123...XYZ'
         },
-        balances: {
-          ethereum: [
-            { symbol: 'ETH', balance: '1.5', usdValue: '3750.00' },
-            { symbol: 'USDC', balance: '1000.0', usdValue: '1000.00' }
-          ],
-          solana: [
-            { symbol: 'SOL', balance: '25.0', usdValue: '2500.00' }
-          ]
+        createdAt: new Date().toISOString(),
+        lastUsed: new Date().toISOString(),
+        metadata: {
+          balances: {
+            ethereum: [
+              { symbol: 'ETH', balance: '1.5', usdValue: '3750.00' },
+              { symbol: 'USDC', balance: '1000.0', usdValue: '1000.00' }
+            ],
+            solana: [
+              { symbol: 'SOL', balance: '25.0', usdValue: '2500.00' }
+            ]
+          },
+          totalUsdValue: '7250.00'
         },
-        totalUsdValue: '7250.00'
+        recoverySetup: false,
+        isActive: true,
+        crossChainEnabled: true
       };
 
       setConnectedWallet(mockWallet);
@@ -162,7 +173,7 @@ export function WalletConnect({
             <div className="mb-4">
               <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 text-white">
                 <p className="text-sm opacity-90">Total Portfolio Value</p>
-                <p className="text-2xl font-bold">${connectedWallet.totalUsdValue}</p>
+                <p className="text-2xl font-bold">${connectedWallet.metadata?.totalUsdValue || '0.00'}</p>
               </div>
             </div>
           )}

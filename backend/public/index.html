@@ -3,756 +3,248 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexusPay API - Cross-Chain Wallet Infrastructure</title>
-    <meta name="description" content="Get your API key for NexusPay - the most powerful cross-chain wallet SDK supporting both EVM and Solana networks">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+    <title>NexusPay SDK - Generate API Key</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #333;
             min-height: 100vh;
-        }
-        
-        .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 1rem 0;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-        }
-        
-        .nav {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-        }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #667eea;
-        }
-        
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
-        }
-        
-        .nav-links a {
-            color: #333;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-        }
-        
-        .nav-links a:hover {
-            background: #667eea;
-            color: white;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        
-        .hero {
-            text-align: center;
-            padding: 4rem 0;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            margin: 2rem 0;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-        }
-        
-        .hero h1 {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .hero p {
-            font-size: 1.25rem;
-            color: #666;
-            margin-bottom: 2rem;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        
-        .badges {
-            display: flex;
-            gap: 1rem;
             justify-content: center;
-            flex-wrap: wrap;
-            margin: 2rem 0;
+            padding: 20px;
         }
-        
-        .badge {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.875rem;
-            color: #495057;
-        }
-        
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin: 4rem 0;
-        }
-        
-        .feature {
+
+        .container {
             background: rgba(255, 255, 255, 0.95);
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-        }
-        
-        .feature h3 {
-            color: #667eea;
-            margin-bottom: 1rem;
-            font-size: 1.25rem;
-        }
-        
-        .api-form {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 3rem;
             border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-            margin: 2rem 0;
-        }
-        
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #333;
-        }
-        
-        .form-group input {
+            padding: 40px;
+            max-width: 600px;
             width: 100%;
-            padding: 0.75rem;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 1rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+
+        .security-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 25px;
+            color: #856404;
+        }
+
+        .security-notice h3 {
+            margin-bottom: 8px;
+            color: #e17055;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input[type="email"],
+        input[type="text"],
+        input[type="url"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
             transition: border-color 0.3s ease;
         }
-        
-        .form-group input:focus {
+
+        input:focus {
             outline: none;
             border-color: #667eea;
         }
-        
-        .required {
-            color: #dc3545;
-        }
-        
-        .btn {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+
+        .generate-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 500;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
             cursor: pointer;
-            transition: transform 0.3s ease;
-            width: 100%;
+            transition: transform 0.2s ease;
         }
-        
-        .btn:hover {
+
+        .generate-btn:hover {
             transform: translateY(-2px);
         }
-        
-        .success {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-            display: none;
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
-        
-        .code-block {
-            background: #2d3748;
-            color: #e2e8f0;
-            padding: 1.5rem;
-            border-radius: 8px;
-            overflow-x: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 0.875rem;
-            line-height: 1.6;
-            margin: 1rem 0;
-        }
-        
-        .copy-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-        }
-        
-        .docs-section {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 3rem;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-            margin: 2rem 0;
-        }
-        
-        .docs-section h2 {
-            color: #667eea;
-            margin-bottom: 2rem;
-            font-size: 2rem;
-            text-align: center;
-        }
-        
-        .step {
-            margin-bottom: 2rem;
-            padding: 1.5rem;
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
             background: #f8f9fa;
             border-radius: 10px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #28a745;
+            display: none;
         }
-        
-        .step h3 {
-            color: #333;
-            margin-bottom: 1rem;
-        }
-        
-        .links-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin: 2rem 0;
-        }
-        
-        .link-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            text-decoration: none;
-            color: #333;
-            transition: transform 0.3s ease;
-            border: 2px solid transparent;
-        }
-        
-        .link-card:hover {
-            transform: translateY(-2px);
-            border-color: #667eea;
-            text-decoration: none;
-            color: #333;
-        }
-        
-        .link-card h4 {
-            color: #667eea;
-            margin-bottom: 0.5rem;
-        }
-        
-        .supported-chains {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin: 2rem 0;
-        }
-        
-        .chain {
-            background: white;
-            padding: 1rem;
+
+        .api-key-display {
+            background: #000;
+            color: #00ff00;
+            padding: 15px;
             border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .endpoints {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 8px;
+        }
+
+        .error {
+            color: #dc3545;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8d7da;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .loading {
+            display: none;
             text-align: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        .chain-name {
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .chain-status {
-            color: #28a745;
-            font-size: 0.875rem;
-        }
-        
-        .footer {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 3rem 0;
-            margin-top: 4rem;
-            text-align: center;
-        }
-        
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-        
-        .footer-links a {
             color: #667eea;
-            text-decoration: none;
-            font-weight: 500;
+            margin-top: 10px;
         }
-        
-        .footer-links a:hover {
-            text-decoration: underline;
-        }
-        
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2rem;
-            }
-            
-            .nav-links {
-                display: none;
-            }
-            
+
+        @media (max-width: 600px) {
             .container {
-                padding: 1rem;
+                padding: 20px;
+                margin: 10px;
             }
-        }
-        
-        .highlight {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: bold;
+            
+            h1 {
+                font-size: 2em;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <nav class="nav">
-            <div class="logo">🚀 NexusPay API</div>
-            <ul class="nav-links">
-                <li><a href="#api-key">Get API Key</a></li>
-                <li><a href="#docs">Documentation</a></li>
-                <li><a href="#examples">Examples</a></li>
-                <li><a href="#links">Resources</a></li>
-            </ul>
-        </nav>
-    </div>
-
     <div class="container">
-        <div class="hero">
-            <h1>🚀 NexusPay API</h1>
-            <p>The most powerful cross-chain wallet SDK supporting both <span class="highlight">EVM and Solana (SVM)</span> networks with gasless transactions, account abstraction, and seamless asset bridging.</p>
-            
-            <div class="badges">
-                <span class="badge">🌐 12+ EVM Chains</span>
-                <span class="badge">⚡ Solana Support</span>
-                <span class="badge">🔐 Account Abstraction</span>
-                <span class="badge">⛽ Gasless Transactions</span>
-                <span class="badge">🌉 Cross-Chain Bridge</span>
-                <span class="badge">📱 React Components</span>
-            </div>
+        <div class="header">
+            <h1>🔐 NexusPay SDK</h1>
+            <div class="subtitle">Cross-Chain Wallet Infrastructure</div>
         </div>
 
-        <div class="features">
-            <div class="feature">
-                <h3>🌐 True Cross-Chain</h3>
-                <p>Native support for both EVM (Ethereum, Polygon, Arbitrum, Base, etc.) and SVM (Solana) networks in a single SDK. First of its kind!</p>
-            </div>
-            <div class="feature">
-                <h3>⛽ Gasless Transactions</h3>
-                <p>Your users never worry about gas fees. Built-in gas tank system with developer-configurable fee sponsorship.</p>
-            </div>
-            <div class="feature">
-                <h3>🔐 Account Abstraction</h3>
-                <p>Social logins, email-based recovery, guardian systems. No more seed phrases - just smooth user experience.</p>
-            </div>
-            <div class="feature">
-                <h3>🌉 Asset Bridging</h3>
-                <p>Move assets seamlessly between Ethereum and Solana ecosystems. Built-in bridge with multi-signature security.</p>
-            </div>
-            <div class="feature">
-                <h3>🎯 Developer-First</h3>
-                <p>Simple API, comprehensive docs, TypeScript support, React components. Everything you need to build amazing DApps.</p>
-            </div>
-            <div class="feature">
-                <h3>🚀 Production Ready</h3>
-                <p>Battle-tested smart contracts, enterprise-grade security, 99.9% uptime. Used by production applications.</p>
-            </div>
+        <div class="security-notice">
+            <h3>🚨 Secure API Key Generation</h3>
+            <p><strong>Important:</strong> You must generate your API key here. Made-up or fake API keys will be rejected. 
+            Only legitimate keys generated through this form will work with the NexusPay SDK.</p>
         </div>
 
-        <div class="api-form" id="api-key">
-            <h2 style="text-align: center; margin-bottom: 2rem; color: #667eea;">🔑 Get Your API Key</h2>
-            <form id="apiKeyForm">
-                <div class="form-group">
-                    <label for="email">Email Address <span class="required">*</span></label>
-                    <input type="email" id="email" name="email" required placeholder="your-email@domain.com">
-                </div>
-                <div class="form-group">
-                    <label for="projectName">Project Name <span class="required">*</span></label>
-                    <input type="text" id="projectName" name="projectName" required placeholder="My Awesome DApp">
-                </div>
-                <div class="form-group">
-                    <label for="website">Website URL (optional)</label>
-                    <input type="url" id="website" name="website" placeholder="https://mydapp.com">
-                </div>
-                <button type="submit" class="btn">Generate API Key</button>
-            </form>
-            
-            <div id="successMessage" class="success">
-                <h3>🎉 API Key Generated Successfully!</h3>
-                <p><strong>Your API key:</strong></p>
-                <div class="code-block" id="apiKeyDisplay"></div>
-                <button class="copy-btn" onclick="copyApiKey()">Copy API Key</button>
-                
-                <p style="margin-top: 1rem;"><strong>Integration Example:</strong></p>
-                <div class="code-block" id="integrationExample"></div>
-                <button class="copy-btn" onclick="copyExample()">Copy Example</button>
-                
-                <p style="margin-top: 1rem; color: #dc3545;"><strong>⚠️ Important:</strong> Save this API key securely. You won't be able to see it again!</p>
+        <form id="apiKeyForm">
+            <div class="form-group">
+                <label for="email">Email Address *</label>
+                <input type="email" id="email" name="email" required 
+                       placeholder="your@email.com">
             </div>
+
+            <div class="form-group">
+                <label for="projectName">Project Name *</label>
+                <input type="text" id="projectName" name="projectName" required 
+                       placeholder="My Awesome DApp">
+            </div>
+
+            <div class="form-group">
+                <label for="website">Website/GitHub URL</label>
+                <input type="url" id="website" name="website" 
+                       placeholder="https://myproject.com">
+            </div>
+
+            <button type="submit" class="generate-btn">
+                Generate Secure API Key
+            </button>
+        </form>
+
+        <div class="loading">
+            <p>🔄 Generating your secure API key...</p>
         </div>
 
-        <div class="docs-section" id="docs">
-            <h2>📚 Complete Developer Guide</h2>
-            
-            <div class="step">
-                <h3>Step 1: Install the SDK</h3>
-                <div class="code-block">npm install @nexuspay/sdk
-# or
-yarn add @nexuspay/sdk</div>
+        <div class="error" id="error"></div>
+
+        <div class="result" id="result">
+            <h3>✅ API Key Generated Successfully!</h3>
+            <p><strong>Your API Key:</strong></p>
+            <div class="api-key-display">
+                <span id="apiKeyText"></span>
+                <button class="copy-btn" onclick="copyApiKey()">Copy</button>
             </div>
             
-            <div class="step">
-                <h3>Step 2: Initialize and Create Your First Wallet</h3>
-                <div class="code-block">import { NexusSDK, Utils } from '@nexuspay/sdk';
-
-// Initialize with your API key
-const sdk = new NexusSDK({
-  apiKey: 'npay_your_api_key_here',
-  environment: 'production',
-  chains: ['ethereum', 'polygon', 'solana'],
-  endpoints: {
-    api: 'https://nexuspay-5dhrqoe12-griffins-projects-4324ce43.vercel.app'
-  }
-});
-
-await sdk.initialize();
-
-// Create a multi-chain wallet
-const wallet = await sdk.createWallet({
-  socialId: 'user@example.com',
-  socialType: 'email',
-  chains: ['ethereum', 'polygon', 'solana'],
-  metadata: {
-    name: 'John Doe',
-    email: 'user@example.com'
-  }
-});
-
-console.log('🎉 Wallet created!');
-console.log('Ethereum:', wallet.addresses.ethereum);
-console.log('Polygon:', wallet.addresses.polygon);
-console.log('Solana:', wallet.addresses.solana);</div>
+            <div class="endpoints">
+                <h4>🌐 API Endpoints:</h4>
+                <p><strong>Production:</strong> <code>https://backend-qtd8qjaa1-griffins-projects-4324ce43.vercel.app</code></p>
+                <p><strong>Dashboard:</strong> <a href="/dashboard.html" target="_blank">View Analytics Dashboard</a></p>
             </div>
-            
-            <div class="step">
-                <h3>Step 3: Send Cross-Chain Payments</h3>
-                <div class="code-block">// Send USDC from Ethereum to Solana (gasless!)
-const payment = await sdk.sendPayment({
-  from: {
-    chain: 'ethereum',
-    socialId: 'user@example.com'
-  },
-  to: {
-    chain: 'solana',
-    address: 'GKvqsuNcnwWqPzzuhLmGi4rzzh55FhJtGizkhHaEJqiV'
-  },
-  amount: '100',
-  asset: 'USDC',
-  gasless: true // No gas fees for your users!
-});
 
-console.log('💸 Payment sent:', payment.hash);</div>
-            </div>
-            
-            <div class="step">
-                <h3>Step 4: React Integration</h3>
-                <div class="code-block">import { NexusProvider, useNexus } from '@nexuspay/sdk/react';
-
-function App() {
-  return (
-    &lt;NexusProvider config={{
-      apiKey: 'npay_your_api_key_here',
-      environment: 'production',
-      chains: ['ethereum', 'polygon', 'solana']
-    }}&gt;
-      &lt;WalletComponent /&gt;
-    &lt;/NexusProvider&gt;
-  );
-}
-
-function WalletComponent() {
-  const { sdk, isConnected, wallet, connect } = useNexus();
-  
-  return (
-    &lt;div&gt;
-      {isConnected ? (
-        &lt;p&gt;Connected: {wallet.socialId}&lt;/p&gt;
-      ) : (
-        &lt;button onClick={() =&gt; connect({
-          socialId: 'user@example.com',
-          socialType: 'email'
-        })}&gt;
-          Connect Wallet
-        &lt;/button&gt;
-      )}
-    &lt;/div&gt;
-  );
-}</div>
+            <div style="margin-top: 20px; padding: 15px; background: #d1ecf1; border-radius: 8px;">
+                <h4>📦 Quick Start:</h4>
+                <pre style="background: #000; color: #00ff00; padding: 10px; border-radius: 5px; overflow-x: auto;">npm install @nexuspay/sdk</pre>
+                <p style="margin-top: 10px; font-size: 14px; color: #666;">
+                    📚 <a href="https://www.npmjs.com/package/@nexuspay/sdk" target="_blank">View Documentation</a>
+                </p>
             </div>
         </div>
-
-        <div class="docs-section">
-            <h2>🌐 Supported Networks</h2>
-            <h3 style="margin-bottom: 1rem;">EVM Networks (12+)</h3>
-            <div class="supported-chains">
-                <div class="chain">
-                    <div class="chain-name">Ethereum</div>
-                    <div class="chain-status">✅ Mainnet + Sepolia</div>
-                </div>
-                <div class="chain">
-                    <div class="chain-name">Polygon</div>
-                    <div class="chain-status">✅ Mainnet + Mumbai</div>
-                </div>
-                <div class="chain">
-                    <div class="chain-name">Arbitrum</div>
-                    <div class="chain-status">✅ Mainnet + Goerli</div>
-                </div>
-                <div class="chain">
-                    <div class="chain-name">Base</div>
-                    <div class="chain-status">✅ Mainnet + Testnet</div>
-                </div>
-                <div class="chain">
-                    <div class="chain-name">Optimism</div>
-                    <div class="chain-status">✅ Mainnet + Goerli</div>
-                </div>
-                <div class="chain">
-                    <div class="chain-name">Avalanche</div>
-                    <div class="chain-status">✅ Mainnet + Fuji</div>
-                </div>
-            </div>
-            
-            <h3 style="margin: 2rem 0 1rem 0;">SVM Networks</h3>
-            <div class="supported-chains">
-                <div class="chain">
-                    <div class="chain-name">Solana</div>
-                    <div class="chain-status">✅ Mainnet + Devnet + Testnet</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="docs-section" id="examples">
-            <h2>💡 Real-World Examples</h2>
-            
-            <div class="step">
-                <h3>🎮 Gaming DApp with Multi-Chain NFTs</h3>
-                <div class="code-block">// Create wallet for gaming user
-const gameWallet = await sdk.createWallet({
-  socialId: player.email,
-  socialType: 'email',
-  chains: ['ethereum', 'polygon', 'solana'],
-  metadata: { 
-    playerLevel: 15,
-    achievements: ['first-win', 'streak-10']
-  }
-});
-
-// Buy NFT on Polygon, bridge to Solana for gaming
-await sdk.sendPayment({
-  from: { chain: 'ethereum', socialId: player.email },
-  to: { chain: 'polygon', address: nftContract },
-  amount: '0.1',
-  asset: 'ETH',
-  gasless: true
-});
-
-// Bridge NFT to Solana for in-game use
-await sdk.bridgeAssets({
-  fromChain: 'polygon',
-  toChain: 'solana',
-  asset: 'NFT',
-  tokenId: nftId,
-  recipient: gameWallet.addresses.solana
-});</div>
-            </div>
-            
-            <div class="step">
-                <h3>🛒 E-commerce with Crypto Payments</h3>
-                <div class="code-block">// Customer pays with any token on any chain
-const payment = await sdk.sendPayment({
-  from: {
-    chain: customer.preferredChain, // ethereum, polygon, solana
-    socialId: customer.email
-  },
-  to: {
-    chain: 'ethereum',
-    address: merchantWallet
-  },
-  amount: orderTotal,
-  asset: customer.preferredToken, // USDC, USDT, SOL, etc.
-  gasless: true,
-  memo: `Order #${orderId}`
-});
-
-// Automatic conversion and settlement
-console.log('Payment confirmed:', payment.hash);</div>
-            </div>
-            
-            <div class="step">
-                <h3>🏦 DeFi Portfolio Management</h3>
-                <div class="code-block">// Get user's cross-chain portfolio
-const portfolio = await sdk.getWalletBalances(user.email);
-
-// Rebalance across chains
-if (portfolio.ethereum.usdValue > portfolio.solana.usdValue * 2) {
-  await sdk.bridgeAssets({
-    fromChain: 'ethereum',
-    toChain: 'solana',
-    amount: '1000',
-    asset: 'USDC',
-    socialId: user.email
-  });
-}
-
-// Yield farming across chains
-await sdk.sendPayment({
-  from: { chain: 'polygon', socialId: user.email },
-  to: { chain: 'polygon', address: yieldFarmContract },
-  amount: '500',
-  asset: 'USDC',
-  gasless: true
-});</div>
-            </div>
-        </div>
-
-        <div class="docs-section" id="links">
-            <h2>🔗 Developer Resources & Links</h2>
-            
-            <h3>🔧 Essential Links</h3>
-            <div class="links-grid">
-                <a href="https://npmjs.com/package/@nexuspay/sdk" class="link-card" target="_blank">
-                    <h4>📦 NPM Package</h4>
-                    <p>Install @nexuspay/sdk from npm registry</p>
-                </a>
-                <a href="https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION" class="link-card" target="_blank">
-                    <h4>🏠 GitHub Repository</h4>
-                    <p>Source code, issues, and contributions</p>
-                </a>
-                <a href="https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION/blob/main/sdk/API_REFERENCE.md" class="link-card" target="_blank">
-                    <h4>📚 API Documentation</h4>
-                    <p>Complete API reference and method docs</p>
-                </a>
-                <a href="https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION/blob/main/sdk/DEVELOPER_QUICKSTART.md" class="link-card" target="_blank">
-                    <h4>⚡ Quick Start Guide</h4>
-                    <p>5-minute setup guide for developers</p>
-                </a>
-            </div>
-            
-            <h3>📱 Repository & Development</h3>
-            <div class="links-grid">
-                <a href="https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION/issues" class="link-card" target="_blank">
-                    <h4>🐛 Bug Reports</h4>
-                    <p>Report issues and bugs</p>
-                </a>
-                <a href="https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION/discussions" class="link-card" target="_blank">
-                    <h4>💡 Feature Requests</h4>
-                    <p>Request new features and improvements</p>
-                </a>
-                <a href="https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION/pulls" class="link-card" target="_blank">
-                    <h4>🔄 Pull Requests</h4>
-                    <p>View and submit code contributions</p>
-                </a>
-                <a href="https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION/tree/main/sdk/examples" class="link-card" target="_blank">
-                    <h4>�� Code Examples</h4>
-                    <p>React, Node.js, and integration examples</p>
-                </a>
-            </div>
-            
-            <h3>📖 Documentation Hub</h3>
-            <div class="links-grid">
-                <a href="https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION/blob/main/README.md" class="link-card" target="_blank">
-                    <h4>📋 Main README</h4>
-                    <p>Project overview and architecture</p>
-                </a>
-                <a href="https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION/blob/main/sdk/README.md" class="link-card" target="_blank">
-                    <h4>🚀 SDK Documentation</h4>
-                    <p>Complete SDK guide and examples</p>
-                </a>
-                <a href="https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION/security" class="link-card" target="_blank">
-                    <h4>🔐 Security Policy</h4>
-                    <p>Security practices and vulnerability reporting</p>
-                </a>
-                <a href="https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION/blob/main/LICENSE" class="link-card" target="_blank">
-                    <h4>📄 License (MIT)</h4>
-                    <p>Open source license terms</p>
-                </a>
-            </div>
-        </div>
-
-        <div class="docs-section">
-            <h2>🚀 Why Choose NexusPay?</h2>
-            <div class="features">
-                <div class="feature">
-                    <h3>🆚 vs ThirdWeb</h3>
-                    <p>Native Solana support, true cross-chain bridge, advanced gas tank system, social recovery across both EVM and SVM ecosystems.</p>
-                </div>
-                <div class="feature">
-                    <h3>🆚 vs WalletConnect</h3>
-                    <p>Not just connection - full wallet infrastructure with account abstraction, gasless transactions, and cross-chain functionality.</p>
-                </div>
-                <div class="feature">
-                    <h3>🆚 vs Magic</h3>
-                    <p>Multi-chain from day one, developer-owned infrastructure, no vendor lock-in, transparent pricing, open source components.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="footer">
-        <div class="footer-links">
-            <a href="https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION">GitHub</a>
-            <a href="https://npmjs.com/package/@nexuspay/sdk">NPM</a>
-            <a href="https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION/blob/main/sdk/API_REFERENCE.md">API Docs</a>
-            <a href="https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION/issues">Support</a>
-            <a href="https://twitter.com/nexuspay">Twitter</a>
-            <a href="https://discord.gg/nexuspay">Discord</a>
-        </div>
-        <p>&copy; 2024 NexusPay Team. Built with ❤️ for the cross-chain future.</p>
-        <p><em>Making cross-chain interactions simple, secure, and seamless.</em></p>
     </div>
 
     <script>
@@ -780,12 +272,11 @@ await sdk.sendPayment({
                     generatedApiKey = result.apiKey;
                     generatedExample = result.integration.example;
                     
-                    document.getElementById('apiKeyDisplay').textContent = result.apiKey;
-                    document.getElementById('integrationExample').textContent = result.integration.example;
-                    document.getElementById('successMessage').style.display = 'block';
+                    document.getElementById('apiKeyText').textContent = result.apiKey;
+                    document.getElementById('result').style.display = 'block';
                     
-                    // Scroll to success message
-                    document.getElementById('successMessage').scrollIntoView({ behavior: 'smooth' });
+                    // Scroll to result section
+                    document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
                 } else {
                     alert('Error generating API key: ' + result.error);
                 }

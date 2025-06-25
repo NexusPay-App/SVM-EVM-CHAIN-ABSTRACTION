@@ -236,9 +236,21 @@ class BlockchainWalletManager {
     addresses.bsc = predictedAddress; // Same address on BSC (when factory deployed)
     addresses.fantom = predictedAddress; // Same address on Fantom (when factory deployed)
 
-    // For Solana, generate a deterministic address using a different method
-    const solanaSeed = crypto.createHash('sha256').update(socialId + socialType + 'solana').digest();
-    addresses.solana = solanaSeed.toString('base64').replace(/[^a-zA-Z0-9]/g, '').substring(0, 44);
+    // For Solana, use the same method as solana-deployer.js
+    try {
+      const { Keypair } = require('@solana/web3.js');
+      const solanaSeed = crypto.createHash('sha256')
+        .update(socialId + socialType + 'nexuspay-solana')
+        .digest();
+      
+      // Use first 32 bytes as seed for Solana keypair (same as solana-deployer.js)
+      const solanaKeypair = Keypair.fromSeed(solanaSeed.slice(0, 32));
+      addresses.solana = solanaKeypair.publicKey.toString();
+    } catch (error) {
+      console.warn('⚠️  Could not generate Solana address:', error.message);
+      // Fallback to a placeholder if Solana web3.js is not available
+      addresses.solana = 'SOLANA_ADDRESS_GENERATION_REQUIRES_DEPLOYMENT';
+    }
 
     return {
       addresses,

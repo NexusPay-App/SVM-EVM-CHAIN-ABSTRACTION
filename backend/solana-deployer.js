@@ -23,17 +23,25 @@ class SolanaWalletDeployer {
       console.log('💰 Fund this address at: https://faucet.solana.com/');
     }
 
-    // Check balance
+    // Check balance with more precise gas checking
     const balance = await this.connection.getBalance(this.deployer.publicKey);
     const balanceSOL = balance / LAMPORTS_PER_SOL;
+    const minRequired = 0.01; // Minimum 0.01 SOL required
+    const warningThreshold = 0.05; // Warning below 0.05 SOL
     
     console.log(`💰 Solana deployer balance: ${balanceSOL} SOL`);
-    this.isReady = balance > 0.01 * LAMPORTS_PER_SOL; // Need at least 0.01 SOL
     
-    if (this.isReady) {
-      console.log('✅ Solana deployer ready');
+    if (balanceSOL >= minRequired) {
+      this.isReady = true;
+      if (balanceSOL < warningThreshold) {
+        console.log(`Solana deployer running low (${balanceSOL} SOL) - consider refunding soon`);
+      } else {
+        console.log('Solana deployer ready');
+      }
     } else {
-      console.log('⚠️  Solana deployer needs funding (minimum 0.01 SOL)');
+      this.isReady = false;
+      console.log(`Solana deployer insufficient funds: ${balanceSOL} SOL (need ${minRequired} SOL minimum)`);
+      console.log('💰 Fund at: https://faucet.solana.com/');
     }
   }
 

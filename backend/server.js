@@ -180,12 +180,18 @@ app.get('/api/keys/:keyId', async (req, res) => {
 const { blockchainManager, CONTRACTS } = require('./blockchain-integration');
 const simpleDeployer = require('./simple-deployer');
 const solanaDeployer = require('./solana-deployer');
+const RealTransactionSender = require('./real-transaction-sender');
+const TokenNFTHandler = require('./token-nft-handler');
 
 // In-memory storage (in production, use a database)
 const wallets = new Map();
 const privateKeyRequests = new Map(); // Track private key requests
 const gasTanks = new Map(); // Track company gas tanks
 const usageAnalytics = new Map(); // Track SDK usage
+
+// Initialize real transaction sender and token/NFT handler
+const realTxSender = new RealTransactionSender();
+const tokenNFTHandler = new TokenNFTHandler();
 
 // Instant Account Creation (what users actually need)
 app.post('/api/accounts/create', validateApiKey, async (req, res) => {
@@ -280,14 +286,16 @@ app.post('/api/wallets', validateApiKey, async (req, res) => {
     
     console.log('Creating wallet for:', socialId, 'type:', socialType, 'with API key:', req.apiKey.substring(0, 8) + '...');
     
-    // Validate socialType supports phone numbers
-    const supportedTypes = ['email', 'phone', 'google', 'twitter', 'discord', 'github'];
-    if (!supportedTypes.includes(socialType)) {
+    if (!socialId || !socialType) {
       return res.status(400).json({
-        error: `Unsupported social type: ${socialType}. Supported types: ${supportedTypes.join(', ')}`,
-        code: 'INVALID_SOCIAL_TYPE'
+        error: 'Both socialId and socialType are required',
+        code: 'MISSING_REQUIRED_FIELDS',
+        note: 'You can use any custom socialType - email, phone, username, gameId, etc.'
       });
     }
+    
+    // Allow any custom social type - developers can define their own
+    console.log(`📍 Creating predicted addresses for custom social type "${socialType}":${socialId}`);
     
     // Check if wallet already exists
     const walletKey = `${socialType}:${socialId}`;
@@ -342,7 +350,8 @@ app.post('/api/wallets', validateApiKey, async (req, res) => {
           optimism: '0',
           solana: '0'
         }
-      }
+      },
+      customSocialType: socialType // Highlight that custom social types are supported
     };
     
     // Store wallet
@@ -353,6 +362,7 @@ app.post('/api/wallets', validateApiKey, async (req, res) => {
     console.log('🏗️  Primary wallet info:', blockchainWallet.primaryWallet);
     console.log('🔑 Owner address:', blockchainWallet.ownerAddress);
     console.log('✨ Real blockchain addresses:', blockchainWallet.isRealBlockchainAddresses);
+    console.log('🎯 Custom social type supported:', socialType);
     
     res.json(wallet);
   } catch (error) {
@@ -408,7 +418,13 @@ app.get('/api/wallets/:socialId', validateApiKey, async (req, res) => {
 // Deploy wallet on-chain endpoint (protected) - ONE-STEP WALLET CREATION & DEPLOYMENT
 app.post('/api/wallets/deploy', validateApiKey, async (req, res) => {
   try {
-    const { socialId, socialType = 'email', chains = ['ethereum', 'solana'], metadata = {} } = req.body;
+    const { 
+      socialId, 
+      socialType = 'email', 
+      chains = ['ethereum', 'solana'], 
+      metadata = {},
+      paymaster = true // Default to true (company pays gas fees)
+    } = req.body;
     
     if (!socialId) {
       return res.status(400).json({
@@ -417,16 +433,18 @@ app.post('/api/wallets/deploy', validateApiKey, async (req, res) => {
       });
     }
     
-    // Validate socialType
-    const supportedTypes = ['email', 'phone', 'google', 'twitter', 'discord', 'github'];
-    if (!supportedTypes.includes(socialType)) {
+    if (!socialType) {
       return res.status(400).json({
-        error: `Unsupported social type: ${socialType}. Supported types: ${supportedTypes.join(', ')}`,
-        code: 'INVALID_SOCIAL_TYPE'
+        error: 'socialType is required',
+        code: 'MISSING_SOCIAL_TYPE'
       });
     }
     
-    console.log(`🚀 Creating & deploying wallets for ${socialType}:${socialId} on chains: ${chains.join(', ')}`);
+    // Allow any custom social type - developers can define their own
+    console.log(`🚀 Creating & deploying wallets for custom social type "${socialType}":${socialId}`);
+    
+    const gasPaymentInfo = paymaster ? 'company-sponsored' : 'user-paid';
+    console.log(`📋 Deployment details: chains=[${chains.join(', ')}], gasPayment=${gasPaymentInfo}`);
     
     // Update API key usage
     if (apiKeys.has(req.apiKey)) {
@@ -457,7 +475,8 @@ app.post('/api/wallets/deploy', validateApiKey, async (req, res) => {
         recoverySetup: false,
         isActive: true,
         crossChainEnabled: true,
-        balances: {}
+        balances: {},
+        paymaster: paymaster // Store paymaster preference
       };
       
       // Initialize balances for all chains
@@ -481,7 +500,9 @@ app.post('/api/wallets/deploy', validateApiKey, async (req, res) => {
     const deploymentResults = {
       evm: null,
       solana: null,
-      addresses: existingWallet.addresses
+      addresses: existingWallet.addresses,
+      paymaster: paymaster,
+      gasPaymentMethod: paymaster ? 'company-sponsored' : 'user-paid'
     };
     
     // Deploy EVM wallet if requested
@@ -493,10 +514,15 @@ app.post('/api/wallets/deploy', validateApiKey, async (req, res) => {
             address: existingWallet.blockchainInfo.primaryWallet.address,
             txHash: existingWallet.blockchainInfo.primaryWallet.deploymentTxHash || 'already-deployed',
             isDeployed: true,
-            explorerUrl: `https://sepolia.etherscan.io/address/${existingWallet.blockchainInfo.primaryWallet.address}`
+            explorerUrl: `https://sepolia.etherscan.io/address/${existingWallet.blockchainInfo.primaryWallet.address}`,
+            gasPayment: gasPaymentInfo
           };
+          console.log(`EVM wallet already deployed: ${existingWallet.blockchainInfo.primaryWallet.address}`);
         } else {
           const { deployWallet } = require('./simple-deployer');
+          
+          console.log(paymaster ? 'Company paying gas fees for EVM deployment' : 'User will pay gas fees for EVM deployment');
+          
           const deployment = await deployWallet(
             existingWallet.blockchainInfo.primaryWallet.owner,
             existingWallet.blockchainInfo.primaryWallet.salt
@@ -506,6 +532,7 @@ app.post('/api/wallets/deploy', validateApiKey, async (req, res) => {
           existingWallet.blockchainInfo.primaryWallet.isDeployed = true;
           existingWallet.blockchainInfo.primaryWallet.deploymentTxHash = deployment.txHash;
           existingWallet.blockchainInfo.primaryWallet.deployedAt = new Date().toISOString();
+          existingWallet.blockchainInfo.primaryWallet.gasPayment = gasPaymentInfo;
           
           deploymentResults.evm = {
             message: 'EVM wallet deployed successfully',
@@ -513,17 +540,20 @@ app.post('/api/wallets/deploy', validateApiKey, async (req, res) => {
             txHash: deployment.txHash,
             isDeployed: true,
             explorerUrl: `https://sepolia.etherscan.io/address/${deployment.address}`,
-            txUrl: `https://sepolia.etherscan.io/tx/${deployment.txHash}`
+            txUrl: `https://sepolia.etherscan.io/tx/${deployment.txHash}`,
+            gasPayment: gasPaymentInfo
           };
           
-          console.log(`✅ EVM wallet deployed: ${deployment.address}`);
+          console.log(`EVM wallet deployed: ${deployment.address}`);
+          console.log(`Transaction: ${deployment.txHash}`);
         }
       } catch (error) {
         console.error('EVM deployment error:', error);
         deploymentResults.evm = {
           error: error.message,
           isDeployed: false,
-          status: 'deployment_failed'
+          status: 'deployment_failed',
+          gasPayment: gasPaymentInfo
         };
       }
     }
@@ -531,28 +561,74 @@ app.post('/api/wallets/deploy', validateApiKey, async (req, res) => {
     // Deploy Solana wallet if requested
     if (chains.includes('solana')) {
       try {
+        console.log(paymaster ? 'Company paying gas fees for Solana deployment' : 'User will pay gas fees for Solana deployment');
+        
         const solanaDeployment = await solanaDeployer.deploySolanaWallet(socialId, socialType);
+        
+        // Add gas payment info to Solana deployment
+        solanaDeployment.gasPayment = gasPaymentInfo;
+        
         deploymentResults.solana = solanaDeployment;
-        console.log(`✅ Solana wallet result: ${solanaDeployment.status}`);
+        
+        // Log accurate deployment status
+        if (solanaDeployment.isDeployed) {
+          console.log(`Solana wallet deployed: ${solanaDeployment.address}`);
+          if (solanaDeployment.txHash) {
+            console.log(`Transaction: ${solanaDeployment.txHash}`);
+          }
+        } else {
+          console.error(`Solana wallet deployment failed: ${solanaDeployment.status}`);
+          if (solanaDeployment.error) {
+            console.error(`Error: ${solanaDeployment.error}`);
+          }
+          if (solanaDeployment.status === 'needs_funding') {
+            console.error(`Deployer needs funding. Fund address: ${solanaDeployment.deployerAddress}`);
+          }
+        }
       } catch (error) {
         console.error('Solana deployment error:', error);
         deploymentResults.solana = {
           error: error.message,
           isDeployed: false,
-          status: 'deployment_failed'
+          status: 'deployment_failed',
+          gasPayment: gasPaymentInfo
         };
       }
     }
     
+    // Check deployment success
+    const evmDeployed = deploymentResults.evm?.isDeployed || false;
+    const solanaDeployed = deploymentResults.solana?.isDeployed || false;
+    const hasEvmChain = chains.includes('ethereum') || chains.includes('evm');
+    const hasSolanaChain = chains.includes('solana');
+    
+    let success = true;
+    let message = `Wallet created and deployment completed (${gasPaymentInfo})`;
+    
+    // Check if requested deployments actually succeeded
+    if (hasEvmChain && !evmDeployed) {
+      success = false;
+      message = `EVM deployment failed: ${deploymentResults.evm?.error || deploymentResults.evm?.status || 'unknown error'}`;
+    } else if (hasSolanaChain && !solanaDeployed) {
+      success = false;
+      message = `Solana deployment failed: ${deploymentResults.solana?.error || deploymentResults.solana?.status || 'unknown error'}`;
+    } else if (hasEvmChain && hasSolanaChain && (!evmDeployed || !solanaDeployed)) {
+      success = false;
+      message = `Partial deployment failure - EVM: ${evmDeployed ? 'SUCCESS' : 'FAILED'}, Solana: ${solanaDeployed ? 'SUCCESS' : 'FAILED'}`;
+    }
+
     res.json({
-      success: true,
+      success,
       socialId,
       socialType,
       addresses: deploymentResults.addresses,
       deployments: deploymentResults,
-      message: 'Wallet created and deployment completed',
+      message,
       timestamp: new Date().toISOString(),
-      isNew: !wallets.has(walletKey) // This will be false since we just created it above
+      isNew: !wallets.has(walletKey),
+      paymaster: paymaster,
+      gasPaymentMethod: gasPaymentInfo,
+      customSocialType: socialType
     });
     
   } catch (error) {
@@ -608,6 +684,9 @@ app.post('/api/payments', validateApiKey, async (req, res) => {
     
     // Get sender wallet if using socialId
     let senderAddress = from.address;
+    let senderSocialId = null;
+    let senderSocialType = null;
+    
     if (from.socialId) {
       const socialType = from.socialType || 'email';
       const walletKey = `${socialType}:${from.socialId}`;
@@ -621,49 +700,66 @@ app.post('/api/payments', validateApiKey, async (req, res) => {
       }
       
       senderAddress = senderWallet.addresses[from.chain];
+      senderSocialId = from.socialId;
+      senderSocialType = socialType;
+      
       if (!senderAddress) {
         return res.status(400).json({
           error: `Sender wallet does not support chain: ${from.chain}`,
           code: 'UNSUPPORTED_CHAIN'
         });
       }
+    } else {
+      // If no socialId provided, try to find the wallet by address
+      for (const [walletKey, wallet] of wallets.entries()) {
+        if (wallet.addresses && Object.values(wallet.addresses).includes(from.address)) {
+          const [socialType, socialId] = walletKey.split(':');
+          senderSocialId = socialId;
+          senderSocialType = socialType;
+          break;
+        }
+      }
     }
     
-    // Simulate payment processing
+    // Check if we have social ID for real transaction sending
+    if (!senderSocialId || !senderSocialType) {
+      return res.status(400).json({
+        error: 'Cannot send real transaction: wallet social ID not found. Please use socialId in from object or ensure wallet was created through this system.',
+        code: 'SOCIAL_ID_REQUIRED_FOR_REAL_TX'
+      });
+    }
+
+    // Check for cross-chain (not supported for real transactions yet)
     const isCrossChain = from.chain !== to.chain;
-    const transaction = {
-      hash: from.chain.includes('solana') ? 
-        crypto.randomBytes(32).toString('base64').replace(/[^a-zA-Z0-9]/g, '').substring(0, 44) :
-        '0x' + crypto.randomBytes(32).toString('hex'),
-      from: senderAddress,
-      to: to.address,
-      amount,
-      asset,
-      chain: from.chain,
-      toChain: isCrossChain ? to.chain : undefined,
-      status: 'confirmed',
-      blockNumber: Math.floor(Math.random() * 1000000) + 18000000,
-      gasUsed: gasless ? '0' : (isCrossChain ? '50000' : '21000'),
-      fee: gasless ? '0' : (isCrossChain ? '0.005' : '0.001'),
-      crossChain: isCrossChain,
-      timestamp: new Date().toISOString()
-    };
-    
-    // If cross-chain, add destination transaction
     if (isCrossChain) {
-      transaction.destinationTx = {
-        hash: to.chain.includes('solana') ? 
-          crypto.randomBytes(32).toString('base64').replace(/[^a-zA-Z0-9]/g, '').substring(0, 44) :
-          '0x' + crypto.randomBytes(32).toString('hex'),
-        chain: to.chain,
-        status: 'pending',
-        estimatedConfirmation: new Date(Date.now() + 300000).toISOString() // 5 minutes
-      };
+      return res.status(400).json({
+        error: 'Cross-chain transactions not yet supported for real transactions',
+        code: 'CROSS_CHAIN_NOT_SUPPORTED'
+      });
     }
+
+    // Send real blockchain transaction
+    console.log(`🔥 ATTEMPTING REAL TRANSACTION on ${from.chain.toUpperCase()}`);
+    const transaction = await realTxSender.sendRealTransaction(
+      senderSocialId, 
+      senderSocialType, 
+      from.chain, 
+      to.address, 
+      amount, 
+      asset
+    );
     
-    console.log('✅ Payment processed:', transaction.hash);
-    
-    res.json(transaction);
+    if (transaction.success) {
+      console.log('✅ Real payment sent:', transaction.hash);
+      res.json(transaction);
+    } else {
+      console.error('❌ Real payment failed:', transaction.error);
+      res.status(500).json({
+        error: transaction.error,
+        code: 'REAL_TRANSACTION_FAILED',
+        chain: transaction.chain
+      });
+    }
   } catch (error) {
     console.error('Payment processing error:', error);
     res.status(500).json({ 
@@ -1065,6 +1161,139 @@ app.get('/api/analytics/usage', validateApiKey, async (req, res) => {
       error: error.message,
       code: 'ANALYTICS_FAILED'
     });
+  }
+});
+
+// Token and NFT endpoints
+app.post('/api/tokens/transfer', validateApiKey, async (req, res) => {
+  try {
+    const result = await tokenNFTHandler.transferToken(req.body);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/tokens/balances', validateApiKey, async (req, res) => {
+  try {
+    const { socialId, socialType, chain } = req.body;
+    const result = await tokenNFTHandler.getTokenBalances(socialId, socialType, chain);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/nfts/transfer', validateApiKey, async (req, res) => {
+  try {
+    const result = await tokenNFTHandler.transferNFT(req.body);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/nfts/list', validateApiKey, async (req, res) => {
+  try {
+    const { socialId, socialType, chain } = req.body;
+    const result = await tokenNFTHandler.getNFTs(socialId, socialType, chain);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/tokens/info', validateApiKey, async (req, res) => {
+  try {
+    res.json({ 
+      success: false, 
+      error: 'Token info requires external API integration' 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/nfts/metadata', validateApiKey, async (req, res) => {
+  try {
+    res.json({ 
+      success: false, 
+      error: 'NFT metadata requires external API integration' 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/tokens/mint', validateApiKey, async (req, res) => {
+  try {
+    res.json({ 
+      success: false, 
+      error: 'Token minting requires contract deployment infrastructure' 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/nfts/mint', validateApiKey, async (req, res) => {
+  try {
+    res.json({ 
+      success: false, 
+      error: 'NFT minting requires contract deployment infrastructure' 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/tokens/swap', validateApiKey, async (req, res) => {
+  try {
+    res.json({ 
+      success: false, 
+      error: 'Token swapping requires DEX aggregator integration' 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/tokens/approve', validateApiKey, async (req, res) => {
+  try {
+    res.json({ 
+      success: false, 
+      error: 'Token approval requires real implementation' 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/tokens/deploy', validateApiKey, async (req, res) => {
+  try {
+    const result = await tokenNFTHandler.deployToken(req.body);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/nfts/deploy', validateApiKey, async (req, res) => {
+  try {
+    const result = await tokenNFTHandler.deployNFTCollection(req.body);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/transactions/history', validateApiKey, async (req, res) => {
+  try {
+    const { socialId, socialType, ...options } = req.body;
+    const result = await tokenNFTHandler.getTransactionHistory(socialId, socialType, options);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 

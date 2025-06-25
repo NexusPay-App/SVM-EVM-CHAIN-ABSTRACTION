@@ -30,17 +30,27 @@ class SimpleWalletDeployer {
       this.factory = new ethers.Contract(SIMPLE_DEPLOYER.walletFactory, factoryAbi, this.deployer);
       
       const balance = await this.deployer.provider.getBalance(this.deployer.address);
-      console.log(`💰 Deployer balance: ${ethers.formatEther(balance)} ETH`);
+      const balanceETH = parseFloat(ethers.formatEther(balance));
+      const minRequired = 0.001; // Minimum 0.001 ETH required
+      const warningThreshold = 0.01; // Warning below 0.01 ETH
       
-      this.isReady = balance > ethers.parseEther('0.001');
+      console.log(`💰 EVM deployer balance: ${balanceETH} ETH`);
       
-      if (this.isReady) {
-        console.log('✅ SimpleWalletDeployer ready for deployment');
+      if (balanceETH >= minRequired) {
+        this.isReady = true;
+        if (balanceETH < warningThreshold) {
+          console.log(`⚠️  EVM deployer running low (${balanceETH} ETH) - consider refunding soon`);
+        } else {
+          console.log('✅ EVM deployer ready for deployment');
+        }
       } else {
-        console.log('⚠️  Deployer needs more ETH (minimum 0.001 ETH)');
+        this.isReady = false;
+        console.log(`❌ EVM deployer insufficient funds: ${balanceETH} ETH (need ${minRequired} ETH minimum)`);
+        console.log('💰 Fund at: https://sepoliafaucet.com/');
       }
     } else {
       console.log('⚠️  No DEPLOYER_PRIVATE_KEY set - running in simulation mode');
+      this.isReady = false;
     }
   }
 

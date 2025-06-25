@@ -276,14 +276,14 @@ export const Utils = {
    * Check if a chain is EVM-compatible
    */
   isEVMChain: (chain: string): boolean => {
-    return [...SUPPORTED_CHAINS.EVM].indexOf(chain) !== -1;
+    return (SUPPORTED_CHAINS.EVM as readonly string[]).includes(chain);
   },
   
   /**
    * Check if a chain is SVM-compatible
    */
   isSVMChain: (chain: string): boolean => {
-    return [...SUPPORTED_CHAINS.SVM].indexOf(chain) !== -1;
+    return (SUPPORTED_CHAINS.SVM as readonly string[]).includes(chain);
   },
   
   /**

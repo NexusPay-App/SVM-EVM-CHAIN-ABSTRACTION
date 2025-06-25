@@ -1,202 +1,485 @@
-# NexusSDK Developer Quickstart
+# 🚀 NexusSDK Developer Quickstart v1.1.1
 
-> Get up and running with cross-chain wallet functionality in under 5 minutes.
+**Get started with cross-chain wallet creation in 5 minutes**
 
-## What is NexusSDK?
-
-NexusSDK enables developers to build applications with:
-- **Multi-chain wallets** that work on both Ethereum-based chains and Solana
-- **Gasless transactions** via sponsored gas tanks
-- **Cross-chain asset bridging** between EVM and Solana
-- **Social recovery** using email/phone/social accounts
-- **Account abstraction** with smart contract wallets
-
-## Installation
+## 📦 Installation
 
 ```bash
 npm install @nexuspay/sdk
 ```
 
-## 5-Minute Setup
+## 🔑 Get Your API Key
 
-### 1. Basic Configuration
+Visit [https://backend-amber-zeta-94.vercel.app/](https://backend-amber-zeta-94.vercel.app/) to generate your free API key.
 
-```typescript
-import { NexusSDK, Utils } from '@nexuspay/sdk';
-
-// For development (connects to localhost:3001)
-const sdk = new NexusSDK(Utils.createLocalConfig('dev-key'));
-await sdk.initialize();
-```
-
-### 2. Create a Multi-Chain Wallet
+## ⚡ Quick Start
 
 ```typescript
-const wallet = await sdk.createWallet({
-  socialId: 'user@example.com',
-  socialType: 'email',
-  chains: ['ethereum', 'polygon', 'solana']
+import { NexusSDK } from '@nexuspay/sdk';
+
+// Initialize SDK
+const sdk = new NexusSDK({
+  apiKey: 'your-api-key-here',
+  environment: 'production',
+  chains: ['ethereum', 'solana']
 });
 
-console.log('Addresses created:');
+// Connect and verify
+await sdk.initialize();
+
+// Create your first wallet
+const wallet = await sdk.createWallet({
+  socialId: 'user@yourapp.com',
+  socialType: 'email',
+  chains: ['ethereum', 'solana'],
+  paymaster: true // Your app pays gas fees
+});
+
+console.log('🎉 Wallet created!');
 console.log('Ethereum:', wallet.addresses.ethereum);
-console.log('Polygon:', wallet.addresses.polygon);  
 console.log('Solana:', wallet.addresses.solana);
 ```
 
-### 3. Send a Cross-Chain Payment
+## 🎯 Core Use Cases
+
+### 1. Gaming Platform
 
 ```typescript
-// Send USDC from Ethereum to Solana
-const payment = await sdk.sendPayment({
-  from: {
-    chain: 'ethereum',
-    socialId: 'user@example.com'
-  },
-  to: {
-    chain: 'solana',
-    address: 'GKvqsuNcnwWqPzzuhLmGi4rzzh55FhJtGizkhHaEJqiV'
-  },
-  amount: '100',
-  asset: 'USDC',
-  gasless: true // No gas fees for user!
+// Create wallets for game players
+const gameWallet = await sdk.createWallet({
+  socialId: 'player_12345',
+  socialType: 'gamePlayerId',
+  chains: ['ethereum', 'polygon'],
+  paymaster: true,
+  metadata: {
+    level: 50,
+    guild: 'DragonWarriors',
+    achievements: ['First Blood', 'Legendary']
+  }
 });
 
-console.log('Payment sent:', payment.hash);
+// Check if player already has a wallet
+const existingWallet = await sdk.getWallet('player_12345', 'gamePlayerId');
 ```
 
-### 4. Bridge Assets Between Chains
+### 2. NFT Marketplace
 
 ```typescript
-const bridge = await sdk.bridgeAssets({
-  fromChain: 'ethereum',
-  toChain: 'solana',
-  amount: '1000',
-  asset: 'USDC',
-  recipient: wallet.addresses.solana,
-  socialId: 'user@example.com'
+// Create wallets for NFT collectors
+const nftWallet = await sdk.createWallet({
+  socialId: 'collector_rare_apes',
+  socialType: 'nftCollectorId',
+  chains: ['ethereum'],
+  paymaster: false, // User pays gas
+  metadata: {
+    collection: 'BoredApes',
+    rarityTier: 'Ultra Rare',
+    collectionSize: 25
+  }
 });
-
-console.log('Bridge initiated:', bridge.bridgeId);
 ```
 
-## Common Patterns
-
-### React Hook Example
+### 3. Enterprise Platform
 
 ```typescript
-import { useState, useEffect } from 'react';
-import { NexusSDK, Utils } from '@nexuspay/sdk';
+// Create wallets for employees
+const empWallet = await sdk.createWallet({
+  socialId: 'emp_jane_doe_12345',
+  socialType: 'employeeId',
+  chains: ['ethereum', 'base'],
+  paymaster: true, // Company pays
+  metadata: {
+    department: 'Engineering',
+    role: 'Senior Developer',
+    clearanceLevel: 'L5'
+  }
+});
+```
 
-function useNexusWallet() {
-  const [sdk, setSdk] = useState<NexusSDK | null>(null);
-  const [wallet, setWallet] = useState(null);
+## 🔄 Batch Operations
 
-  useEffect(() => {
-    const initSDK = async () => {
-      const nexusSDK = new NexusSDK(Utils.createLocalConfig('your-key'));
-      await nexusSDK.initialize();
-      setSdk(nexusSDK);
-    };
-    initSDK();
-  }, []);
+### Efficient Bulk Wallet Creation
 
-  const createWallet = async (email: string) => {
-    if (!sdk) return;
-    const newWallet = await sdk.createWallet({
-      socialId: email,
-      socialType: 'email',
-      chains: ['ethereum', 'solana']
-    });
-    setWallet(newWallet);
-    return newWallet;
-  };
+```typescript
+// Create multiple wallets at once
+const walletRequests = [
+  { socialId: 'user1', socialType: 'gameId', chains: ['ethereum'], paymaster: true },
+  { socialId: 'user2', socialType: 'gameId', chains: ['solana'], paymaster: false },
+  { socialId: 'user3', socialType: 'gameId', chains: ['ethereum', 'solana'], paymaster: true }
+];
 
-  return { sdk, wallet, createWallet };
+const results = await sdk.createWalletBatch(walletRequests);
+console.log(`Created ${results.filter(r => !r.error).length} wallets successfully`);
+```
+
+### Batch Status Check
+
+```typescript
+const walletIds = [
+  { socialId: 'user1', socialType: 'gameId' },
+  { socialId: 'user2', socialType: 'email' },
+  { socialId: 'user3', socialType: 'employeeId' }
+];
+
+const wallets = await sdk.getWalletBatch(walletIds);
+```
+
+## 🏗️ Third-Party Integration
+
+### Health Monitoring
+
+```typescript
+// Monitor API and SDK health
+const health = await sdk.healthCheck();
+console.log('API Status:', health.status);
+console.log('SDK Version:', health.sdk.version);
+console.log('Cache Size:', health.sdk.cacheSize);
+```
+
+### Webhook Integration
+
+```typescript
+// Generate safe webhook identifiers
+const webhookId = sdk.generateWebhookId('user@app.com', 'email');
+
+// Store this ID in your webhook system
+// Later, parse it back when receiving webhooks
+const { socialId, socialType } = sdk.parseWebhookId(webhookId);
+```
+
+### Configuration Validation
+
+```typescript
+// Validate your SDK setup
+const validation = sdk.validateConfig();
+if (!validation.valid) {
+  console.error('Configuration errors:', validation.errors);
+  // Handle invalid config
 }
 ```
 
-### Error Handling
+### Performance Monitoring
 
 ```typescript
-try {
-  const payment = await sdk.sendPayment(params);
-} catch (error) {
-  switch (error.code) {
-    case 'INSUFFICIENT_BALANCE':
-      console.log('User needs more funds');
-      break;
-    case 'CHAIN_NOT_SUPPORTED':
-      console.log('Invalid chain specified');
-      break;
-    case 'RATE_LIMIT_EXCEEDED':
-      console.log('Too many requests, slow down');
-      break;
-    default:
-      console.error('Unexpected error:', error.message);
+// Get SDK statistics
+const stats = sdk.getStats();
+console.log('Supported chains:', stats.supportedChains);
+console.log('Environment:', stats.environment);
+console.log('Cache efficiency:', stats.cacheSize);
+```
+
+## 💰 Gas Payment Options
+
+### Company-Sponsored (Paymaster ON)
+
+```typescript
+const wallet = await sdk.createWallet({
+  socialId: 'premium_user',
+  socialType: 'email',
+  chains: ['ethereum'],
+  paymaster: true // Your app pays all gas fees
+});
+// Best for: Gaming, Enterprise, Premium services
+```
+
+### User-Paid (Paymaster OFF)
+
+```typescript
+const wallet = await sdk.createWallet({
+  socialId: 'basic_user',
+  socialType: 'email',
+  chains: ['ethereum'],
+  paymaster: false // User pays their own gas
+});
+// Best for: DeFi, Public marketplaces, Community projects
+```
+
+## 🔧 Performance Optimization
+
+### Caching Strategy
+
+```typescript
+// SDK automatically caches GET requests for 5 minutes
+const wallet1 = await sdk.getWallet('user1', 'email'); // API call
+const wallet2 = await sdk.getWallet('user1', 'email'); // Cached (faster)
+
+// Force fresh data when needed
+sdk.clearCache();
+const freshWallet = await sdk.getWallet('user1', 'email'); // New API call
+```
+
+### Efficient Chain Selection
+
+```typescript
+// For gaming (fast, cheap transactions)
+const gameWallet = await sdk.createWallet({
+  socialId: 'gamer123',
+  socialType: 'gameId',
+  chains: ['polygon', 'base'], // Fast & cheap
+  paymaster: true
+});
+
+// For DeFi (security focused)
+const defiWallet = await sdk.createWallet({
+  socialId: 'trader456',
+  socialType: 'traderId',
+  chains: ['ethereum'], // Most secure
+  paymaster: false
+});
+
+// For cross-chain apps
+const crossWallet = await sdk.createWallet({
+  socialId: 'multichain_user',
+  socialType: 'email',
+  chains: ['ethereum', 'solana'], // Best of both worlds
+  paymaster: true
+});
+```
+
+## 🛡️ Error Handling
+
+### Comprehensive Error Handling
+
+```typescript
+async function createWalletSafely(userId: string) {
+  try {
+    // Validate config first
+    const validation = sdk.validateConfig();
+    if (!validation.valid) {
+      throw new Error(`Invalid config: ${validation.errors.join(', ')}`);
+    }
+
+    // Create wallet
+    const wallet = await sdk.createWallet({
+      socialId: userId,
+      socialType: 'email',
+      chains: ['ethereum']
+    });
+
+    return { success: true, wallet };
+  } catch (error) {
+    console.error('Wallet creation failed:', error.message);
+    
+    // Handle specific errors
+    if (error.message.includes('API key')) {
+      return { success: false, error: 'Invalid API key' };
+    }
+    
+    if (error.message.includes('rate limit')) {
+      return { success: false, error: 'Rate limited, try again later' };
+    }
+    
+    return { success: false, error: 'Unknown error occurred' };
   }
 }
 ```
 
-## Environment Setup
+## 📱 Framework Examples
 
-### Local Development
+### React Integration
 
 ```typescript
-// Connects to backend running on localhost:3001
-const config = Utils.createLocalConfig('dev-key');
+import React, { useState, useEffect } from 'react';
+import { NexusSDK } from '@nexuspay/sdk';
+
+const sdk = new NexusSDK({
+  apiKey: process.env.REACT_APP_NEXUS_API_KEY,
+  environment: 'production',
+  chains: ['ethereum', 'solana']
+});
+
+function WalletCreator() {
+  const [wallet, setWallet] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    sdk.initialize();
+  }, []);
+
+  const createWallet = async (userId: string) => {
+    setLoading(true);
+    try {
+      const newWallet = await sdk.createWallet({
+        socialId: userId,
+        socialType: 'email',
+        chains: ['ethereum', 'solana'],
+        paymaster: true
+      });
+      setWallet(newWallet);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <button onClick={() => createWallet('user@app.com')} disabled={loading}>
+        {loading ? 'Creating...' : 'Create Wallet'}
+      </button>
+      {wallet && (
+        <div>
+          <p>Ethereum: {wallet.addresses.ethereum}</p>
+          <p>Solana: {wallet.addresses.solana}</p>
+        </div>
+      )}
+    </div>
+  );
+}
 ```
 
-### Production with Custom API
+### Next.js API Route
 
 ```typescript
-const config = Utils.createConfig('your-api-key', {
+// pages/api/create-wallet.ts
+import { NextApiRequest, NextApiResponse } from 'next';
+import { NexusSDK } from '@nexuspay/sdk';
+
+const sdk = new NexusSDK({
+  apiKey: process.env.NEXUS_API_KEY!,
   environment: 'production',
-  endpoints: {
-    api: 'https://your-api.com'
-  },
-  chains: ['ethereum', 'polygon', 'solana']
+  chains: ['ethereum', 'solana']
+});
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    await sdk.initialize();
+    
+    const { socialId, socialType, paymaster } = req.body;
+    
+    const wallet = await sdk.createWallet({
+      socialId,
+      socialType,
+      chains: ['ethereum', 'solana'],
+      paymaster
+    });
+
+    res.status(200).json({ success: true, wallet });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+```
+
+### Node.js Express
+
+```typescript
+import express from 'express';
+import { NexusSDK } from '@nexuspay/sdk';
+
+const app = express();
+app.use(express.json());
+
+const sdk = new NexusSDK({
+  apiKey: process.env.NEXUS_API_KEY!,
+  environment: 'production',
+  chains: ['ethereum', 'solana']
+});
+
+// Initialize SDK on startup
+sdk.initialize().then(() => {
+  console.log('NexusSDK initialized');
+});
+
+app.post('/api/wallets', async (req, res) => {
+  try {
+    const { socialId, socialType, chains, paymaster } = req.body;
+    
+    const wallet = await sdk.createWallet({
+      socialId,
+      socialType,
+      chains: chains || ['ethereum', 'solana'],
+      paymaster: paymaster !== false // Default to true
+    });
+
+    res.json({ success: true, wallet });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.listen(3000, () => {
+  console.log('Server running on port 3000');
 });
 ```
 
-### Ngrok Development
+## 🚀 Production Checklist
+
+### Before Going Live
+
+- [ ] **API Key**: Get production API key from [https://backend-amber-zeta-94.vercel.app/](https://backend-amber-zeta-94.vercel.app/)
+- [ ] **Environment**: Set `environment: 'production'`
+- [ ] **Error Handling**: Implement comprehensive error handling
+- [ ] **Rate Limiting**: Handle rate limit responses gracefully
+- [ ] **Monitoring**: Set up health checks and monitoring
+- [ ] **Caching**: Understand caching behavior for your use case
+- [ ] **Gas Strategy**: Choose appropriate paymaster settings
+- [ ] **Testing**: Test wallet creation on both EVM and SVM chains
+
+### Security Best Practices
 
 ```typescript
-// For testing with ngrok tunnels
-const config = Utils.createNgrokConfig('dev-key', 'your-subdomain');
+// ✅ Good: Server-side API key
+const sdk = new NexusSDK({
+  apiKey: process.env.NEXUS_API_KEY, // Environment variable
+  environment: 'production'
+});
+
+// ❌ Bad: Client-side API key exposure
+const sdk = new NexusSDK({
+  apiKey: 'npay_your_actual_key_here', // Never do this!
+  environment: 'production'
+});
 ```
 
-## Key Features Overview
+## 📊 Monitoring & Analytics
 
-| Feature | Description | Example |
-|---------|-------------|---------|
-| **Multi-chain Wallets** | Single identity, multiple addresses | Create wallet on ETH + SOL |
-| **Gasless Transactions** | Users don't pay gas fees | `gasless: true` |
-| **Cross-chain Payments** | Send assets between different chains | ETH → SOL payment |
-| **Asset Bridging** | Move tokens between ecosystems | Bridge USDC ETH → SOL |
-| **Social Recovery** | Email/phone wallet recovery | Guardian-based recovery |
+### Basic Monitoring
 
-## Supported Chains
+```typescript
+// Health check endpoint
+app.get('/health', async (req, res) => {
+  try {
+    const health = await sdk.healthCheck();
+    res.json({
+      status: 'ok',
+      nexus: health,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      error: error.message
+    });
+  }
+});
 
-**EVM Chains:**
-- Ethereum, Polygon, Arbitrum, Base, Optimism
-- Avalanche, BSC, Fantom, Gnosis, Celo
+// SDK statistics
+app.get('/stats', (req, res) => {
+  const stats = sdk.getStats();
+  res.json(stats);
+});
+```
 
-**SVM Chains:**
-- Solana
+## 🔗 Next Steps
 
-## Next Steps
+1. **Read API Reference**: Check [API_REFERENCE.md](./API_REFERENCE.md) for complete method documentation
+2. **Explore Examples**: Look at [examples/](./examples/) for more use cases
+3. **Join Community**: Get support and share feedback
+4. **Production Deploy**: Follow the production checklist above
 
-1. **Read the full [README.md](./README.md)** for complete API reference
-2. **Check [examples/](./examples/)** for integration samples
-3. **Review [test-npm.js](./test-npm.js)** for working examples
-4. **See [NPM_PUBLISH_GUIDE.md](./NPM_PUBLISH_GUIDE.md)** for publishing
+## 📚 Additional Resources
 
-## Questions?
-
-- **GitHub**: [Issues](https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION/issues)
-- **Email**: hello@nexuspay.dev
+- **API Documentation**: [API_REFERENCE.md](./API_REFERENCE.md)
+- **Live API**: [https://backend-amber-zeta-94.vercel.app/](https://backend-amber-zeta-94.vercel.app/)
+- **GitHub**: [Repository](https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION)
+- **NPM Package**: [@nexuspay/sdk](https://www.npmjs.com/package/@nexuspay/sdk)
 
 ---
 
-**Happy building! 🚀** 
+**Need Help?** Open an issue on [GitHub](https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION/issues) or check our documentation. 
