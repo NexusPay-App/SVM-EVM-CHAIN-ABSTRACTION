@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusPay API Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #000000;
+            background: #f8f9fa;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .nav {
+            background: white;
+            box-shadow: 0 2px 4px rgba(10, 207, 242, 0.3);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 2px solid #0acff2;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: #0acff2;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: #000000;
+        }
+
+        .auth-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-info {
+            font-size: 0.9rem;
+            color: #333333;
+        }
+
+        .content {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(10, 207, 242, 0.2);
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+            border: 1px solid rgba(10, 207, 242, 0.2);
+        }
+
+        .sidebar h3 {
+            margin-bottom: 1rem;
+            color: #000000;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar ul li a {
+            color: #333333;
+            text-decoration: none;
+            padding: 0.5rem;
+            display: block;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .sidebar ul li a:hover,
+        .sidebar ul li a.active {
+            background: #0acff2;
+            color: white;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(10, 207, 242, 0.2);
+            border: 1px solid rgba(10, 207, 242, 0.2);
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section h2 {
+            color: #000000;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #0acff2;
+        }
+
+        .section h3 {
+            color: #0acff2;
+            margin: 1.5rem 0 1rem 0;
+        }
+
+        .code-block {
+            background: #000000;
+            color: #0acff2;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            border: 1px solid #0acff2;
+        }
+
+        .highlight {
+            background: #0acff2;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .endpoint {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #0acff2;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .endpoint-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .method {
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .method.post { background: #0acff2; color: white; }
+        .method.get { background: #000000; color: white; }
+        .method.put { background: #0acff2; color: white; }
+        .method.delete { background: #000000; color: white; }
+
+        .endpoint-url {
+            font-family: monospace;
+            color: #0acff2;
+            font-weight: bold;
+        }
+
+        .params-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .params-table th,
+        .params-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #0acff2;
+        }
+
+        .params-table th {
+            background: rgba(10, 207, 242, 0.1);
+            color: #0acff2;
+            font-weight: 600;
+        }
+
+        .required {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .alert.info {
+            background: rgba(10, 207, 242, 0.1);
+            border: 1px solid #0acff2;
+            color: #000000;
+        }
+
+        .alert.warning {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid #ffc107;
+            color: #000000;
+        }
+
+        .btn {
+            background: #0acff2;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #00b8d4;
+            transform: translateY(-1px);
+        }
+
+        .btn.secondary {
+            background: white;
+            color: #0acff2;
+            border: 2px solid #0acff2;
+        }
+
+        .btn.secondary:hover {
+            background: #0acff2;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                position: relative;
+                top: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <img src="/assets/logos/Landscape Logo on Black@300x.png" alt="NexusPay" style="max-width: 300px; margin-bottom: 20px;">
+            <h1>🔐 NexusPay API Documentation</h1>
+            <p>Complete guide to cross-chain wallet infrastructure</p>
+        </div>
+    </div>
+
+    <nav class="nav">
+        <div class="nav-content">
+            <div class="nav-links">
+                <a href="#getting-started">Getting Started</a>
+                <a href="#authentication">Authentication</a>
+                <a href="#endpoints">API Endpoints</a>
+                <a href="#sdk">SDK</a>
+                <a href="#examples">Examples</a>
+            </div>
+            <div class="auth-status">
+                <div id="user-info" class="user-info" style="display: none;"></div>
+                <a href="/auth-popup" class="btn" id="login-btn">Login</a>
+                <button class="btn secondary" id="logout-btn" style="display: none;" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="content">
+        <aside class="sidebar">
+            <h3>Quick Navigation</h3>
+            <ul>
+                <li><a href="#getting-started">Getting Started</a></li>
+                <li><a href="#authentication">Authentication</a></li>
+                <li><a href="#registration">User Registration</a></li>
+                <li><a href="#api-keys">API Keys</a></li>
+                <li><a href="#wallets">Wallet Management</a></li>
+                <li><a href="#payments">Payments</a></li>
+                <li><a href="#bridge">Cross-chain Bridge</a></li>
+                <li><a href="#gas-tank">Gas Tank</a></li>
+                <li><a href="#sdk-installation">SDK Installation</a></li>
+                <li><a href="#examples">Code Examples</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <section id="getting-started" class="section">
+                <h2>🚀 Getting Started</h2>
+                <p>Welcome to NexusPay, the premier cross-chain wallet infrastructure platform. Our API provides secure, scalable solutions for managing wallets across multiple blockchain networks.</p>
+                
+                <div class="alert info">
+                    <strong>New Authentication System:</strong> We've upgraded to user-based authentication with JWT tokens. Legacy API keys are still supported but will be deprecated in 6 months.
+                </div>
+
+                <h3>Quick Setup</h3>
+                <ol>
+                    <li><strong>Create Account:</strong> <a href="/auth-popup">Register here</a> for enhanced security and features</li>
+                    <li><strong>Generate API Key:</strong> Visit <a href="https://backend-amber-zeta-94.vercel.app/" target="_blank">our platform</a> to create secure API keys</li>
+                    <li><strong>Install SDK:</strong> <code class="highlight">npm install @nexuspay/sdk</code></li>
+                    <li><strong>Start Building:</strong> Follow our examples below</li>
+                </ol>
+            </section>
+
+            <section id="authentication" class="section">
+                <h2>🔐 Authentication</h2>
+                <p>NexusPay supports two authentication methods:</p>
+
+                <h3>1. JWT Token Authentication (Recommended)</h3>
+                <div class="code-block">
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                </div>
+
+                <h3>2. Legacy API Key (Deprecated)</h3>
+                <div class="code-block">
+X-API-Key: npay_1234567890abcdef...
+                </div>
+
+                <div class="alert warning">
+                    <strong>Migration Notice:</strong> API keys will be deprecated in 6 months. Please migrate to user authentication for enhanced security and features.
+                </div>
+            </section>
+
+            <section id="registration" class="section">
+                <h2>👤 User Registration</h2>
+                
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-url">/auth/register</span>
+                    </div>
+                    <p>Create a new user account with email validation.</p>
+
+                    <h4>Request Body:</h4>
+                    <table class="params-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>email</td>
+                                <td>string</td>
+                                <td class="required">Yes</td>
+                                <td>Valid email address (verified for existence)</td>
+                            </tr>
+                            <tr>
+                                <td>password</td>
+                                <td>string</td>
+                                <td class="required">Yes</td>
+                                <td>Strong password (8+ chars, mixed case, numbers, symbols)</td>
+                            </tr>
+                            <tr>
+                                <td>name</td>
+                                <td>string</td>
+                                <td class="required">Yes</td>
+                                <td>Full name (2+ characters)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Example Request:</h4>
+                    <div class="code-block">
+curl -X POST https://backend-amber-zeta-94.vercel.app/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "developer@example.com",
+    "password": "SecurePass123!",
+    "name": "John Developer"
+  }'
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-url">/auth/login</span>
+                    </div>
+                    <p>Authenticate existing user and receive JWT token.</p>
+
+                    <div class="code-block">
+curl -X POST https://backend-amber-zeta-94.vercel.app/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "developer@example.com",
+    "password": "SecurePass123!"
+  }'
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-url">/auth/google</span>
+                    </div>
+                    <p>Initiate Google OAuth authentication flow.</p>
+                </div>
+            </section>
+
+            <section id="api-keys" class="section">
+                <h2>🔑 API Key Management</h2>
+                <p>Generate secure API keys for your projects:</p>
+
+                <div class="alert info">
+                    <strong>Integration Required:</strong> API key generation is available on our main platform: 
+                    <a href="https://backend-amber-zeta-94.vercel.app/" target="_blank">https://backend-amber-zeta-94.vercel.app/</a>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-url">/api/keys/generate</span>
+                    </div>
+                    <p>Generate a new API key for your project.</p>
+
+                    <div class="code-block">
+curl -X POST https://backend-amber-zeta-94.vercel.app/api/keys/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "developer@example.com",
+    "projectName": "My DeFi App",
+    "website": "https://myapp.com"
+  }'
+                    </div>
+                </div>
+            </section>
+
+            <section id="wallets" class="section">
+                <h2>💰 Wallet Management</h2>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-url">/api/wallets</span>
+                    </div>
+                    <p>Create a new cross-chain wallet.</p>
+
+                    <div class="code-block">
+curl -X POST https://backend-amber-zeta-94.vercel.app/api/wallets \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "socialId": "user123",
+    "socialType": "discord",
+    "chain": "ethereum"
+  }'
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-url">/api/wallets/:socialId</span>
+                    </div>
+                    <p>Get wallet information for a user.</p>
+
+                    <div class="code-block">
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  https://backend-amber-zeta-94.vercel.app/api/wallets/user123
+                    </div>
+                </div>
+            </section>
+
+            <section id="payments" class="section">
+                <h2>💸 Payments</h2>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-url">/api/payments</span>
+                    </div>
+                    <p>Process cross-chain payments and transfers.</p>
+
+                    <div class="code-block">
+curl -X POST https://backend-amber-zeta-94.vercel.app/api/payments \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fromSocialId": "sender123",
+    "toSocialId": "receiver456",
+    "amount": "1.5",
+    "currency": "ETH",
+    "chain": "ethereum"
+  }'
+                    </div>
+                </div>
+            </section>
+
+            <section id="sdk-installation" class="section">
+                <h2>📦 SDK Installation</h2>
+
+                <h3>Installation</h3>
+                <div class="code-block">
+npm install @nexuspay/sdk
+                </div>
+
+                <h3>Basic Setup</h3>
+                <div class="code-block">
+import { NexusSDK } from '@nexuspay/sdk';
+
+const sdk = new NexusSDK({
+  apiKey: 'your-api-key', // or use JWT token
+  environment: 'production',
+  chains: ['ethereum', 'polygon', 'solana'],
+  endpoints: {
+    api: 'https://backend-amber-zeta-94.vercel.app'
+  }
+});
+
+await sdk.initialize();
+                </div>
+            </section>
+
+            <section id="examples" class="section">
+                <h2>💡 Code Examples</h2>
+
+                <h3>Create and Fund Wallet</h3>
+                <div class="code-block">
+// Create wallet
+const wallet = await sdk.createWallet({
+  socialId: 'user123',
+  socialType: 'discord',
+  chain: 'ethereum'
+});
+
+// Fund wallet
+await sdk.fundWallet({
+  socialId: 'user123',
+  amount: '0.1',
+  currency: 'ETH'
+});
+                </div>
+
+                <h3>Cross-chain Transfer</h3>
+                <div class="code-block">
+const transfer = await sdk.transfer({
+  fromSocialId: 'sender123',
+  toSocialId: 'receiver456',
+  amount: '1.0',
+  currency: 'USDC',
+  fromChain: 'ethereum',
+  toChain: 'polygon'
+});
+
+console.log('Transfer Hash:', transfer.transactionHash);
+                </div>
+
+                <h3>Authentication with JWT</h3>
+                <div class="code-block">
+// Login and get token
+const auth = await fetch('/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: 'user@example.com',
+    password: 'password123'
+  })
+});
+
+const { token } = await auth.json();
+
+// Use token with SDK
+const sdk = new NexusSDK({
+  token: token,
+  environment: 'production'
+});
+                </div>
+            </section>
+
+            <div class="alert success">
+                <strong>Ready to get started?</strong> 
+                <a href="/auth-popup" class="btn">Create Account</a>
+                <a href="https://backend-amber-zeta-94.vercel.app/" class="btn secondary" target="_blank">Generate API Key</a>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Check authentication status
+        window.addEventListener('load', () => {
+            const token = localStorage.getItem('nexuspay_token');
+            const user = localStorage.getItem('nexuspay_user');
+            
+            if (token && user) {
+                try {
+                    const userData = JSON.parse(user);
+                    showLoggedInState(userData);
+                } catch (error) {
+                    localStorage.removeItem('nexuspay_token');
+                    localStorage.removeItem('nexuspay_user');
+                }
+            }
+        });
+
+        function showLoggedInState(user) {
+            document.getElementById('user-info').textContent = `Welcome, ${user.name}`;
+            document.getElementById('user-info').style.display = 'block';
+            document.getElementById('login-btn').style.display = 'none';
+            document.getElementById('logout-btn').style.display = 'inline-block';
+        }
+
+        function logout() {
+            localStorage.removeItem('nexuspay_token');
+            localStorage.removeItem('nexuspay_user');
+            location.reload();
+        }
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Update active navigation link
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.section');
+            const navLinks = document.querySelectorAll('.sidebar a');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (scrollY >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

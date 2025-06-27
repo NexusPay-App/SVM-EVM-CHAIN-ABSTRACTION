@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -22,13 +22,14 @@
         }
 
         .container {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.98);
             border-radius: 20px;
             padding: 40px;
             max-width: 600px;
             width: 100%;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 20px 40px rgba(10, 207, 242, 0.2);
             backdrop-filter: blur(10px);
+            border: 1px solid rgba(10, 207, 242, 0.1);
         }
 
         .header {
@@ -37,29 +38,93 @@
         }
 
         h1 {
-            color: #333;
+            color: #000000;
             font-size: 2.5em;
             margin-bottom: 10px;
         }
 
         .subtitle {
-            color: #666;
+            color: #333333;
             font-size: 1.1em;
             margin-bottom: 20px;
         }
 
-        .security-notice {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
+        .auth-notice {
+            background: linear-gradient(135deg, #0acff2 0%, #00b8d4 100%);
+            border: 1px solid #0acff2;
             border-radius: 10px;
             padding: 15px;
             margin-bottom: 25px;
-            color: #856404;
+            color: white;
+        }
+
+        .auth-notice h3 {
+            margin-bottom: 8px;
+            color: white;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .auth-btn {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .auth-btn.primary {
+            background: #000000;
+            color: #0acff2;
+            border: 2px solid #0acff2;
+        }
+
+        .auth-btn.secondary {
+            background: white;
+            color: #0acff2;
+            border: 2px solid #0acff2;
+        }
+
+        .auth-btn:hover {
+            transform: translateY(-1px);
+            background: #0acff2;
+            color: white;
+        }
+
+        .security-notice {
+            background: rgba(10, 207, 242, 0.1);
+            border: 1px solid #0acff2;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 25px;
+            color: #000000;
         }
 
         .security-notice h3 {
             margin-bottom: 8px;
-            color: #e17055;
+            color: #0acff2;
+        }
+
+        .user-info {
+            background: linear-gradient(135deg, #0acff2 0%, #00b8d4 100%);
+            border: 1px solid #0acff2;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 25px;
+            color: white;
+        }
+
+        .user-info h3 {
+            margin-bottom: 8px;
+            color: white;
         }
 
         .form-group {
@@ -68,7 +133,7 @@
 
         label {
             display: block;
-            color: #333;
+            color: #000000;
             font-weight: 600;
             margin-bottom: 8px;
         }
@@ -86,12 +151,13 @@
 
         input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #0acff2;
+            box-shadow: 0 0 0 3px rgba(10, 207, 242, 0.1);
         }
 
         .generate-btn {
             width: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0acff2 0%, #00b8d4 100%);
             color: white;
             border: none;
             padding: 15px;
@@ -104,6 +170,7 @@
 
         .generate-btn:hover {
             transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(10, 207, 242, 0.3);
         }
 
         .generate-btn:disabled {
@@ -115,28 +182,29 @@
         .result {
             margin-top: 30px;
             padding: 20px;
-            background: #f8f9fa;
+            background: rgba(10, 207, 242, 0.1);
             border-radius: 10px;
-            border-left: 4px solid #28a745;
+            border-left: 4px solid #0acff2;
             display: none;
         }
 
         .api-key-display {
-            background: #000;
-            color: #00ff00;
+            background: #000000;
+            color: #0acff2;
             padding: 15px;
             border-radius: 8px;
             font-family: 'Courier New', monospace;
             word-break: break-all;
             margin: 10px 0;
             position: relative;
+            border: 1px solid #0acff2;
         }
 
         .copy-btn {
             position: absolute;
             top: 10px;
             right: 10px;
-            background: #007bff;
+            background: #0acff2;
             color: white;
             border: none;
             padding: 5px 10px;
@@ -145,11 +213,16 @@
             cursor: pointer;
         }
 
+        .copy-btn:hover {
+            background: #00b8d4;
+        }
+
         .endpoints {
             margin-top: 20px;
             padding: 15px;
-            background: #e9ecef;
+            background: rgba(255, 255, 255, 0.8);
             border-radius: 8px;
+            border: 1px solid rgba(10, 207, 242, 0.2);
         }
 
         .error {
@@ -164,8 +237,58 @@
         .loading {
             display: none;
             text-align: center;
-            color: #667eea;
+            color: #0acff2;
             margin-top: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .integration-info {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(10, 207, 242, 0.2);
+        }
+
+        .integration-info h3 {
+            color: #000000;
+            margin-bottom: 15px;
+        }
+
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .quick-link {
+            background: white;
+            border: 2px solid #0acff2;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            text-decoration: none;
+            color: #000000;
+            transition: all 0.2s;
+        }
+
+        .quick-link:hover {
+            background: #0acff2;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .quick-link h4 {
+            margin-bottom: 8px;
+            color: #0acff2;
+        }
+
+        .quick-link:hover h4 {
+            color: white;
         }
 
         @media (max-width: 600px) {
@@ -177,146 +300,142 @@
             h1 {
                 font-size: 2em;
             }
+
+            .auth-buttons {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <img src="/assets/logos/Landscape Logo@300x.png" alt="NexusPay" style="max-width: 300px; margin-bottom: 15px;">
             <h1>🔐 NexusPay SDK</h1>
             <div class="subtitle">Cross-Chain Wallet Infrastructure</div>
         </div>
 
-        <div class="security-notice">
-            <h3>🚨 Secure API Key Generation</h3>
-            <p><strong>Important:</strong> You must generate your API key here. Made-up or fake API keys will be rejected. 
-            Only legitimate keys generated through this form will work with the NexusPay SDK.</p>
+        <!-- Auth Section -->
+        <div id="authSection" class="auth-section">
+            <h2>🔐 Enhanced Security with User Accounts</h2>
+            <p>Create a secure account to access advanced features, better API key management, and project organization.</p>
+            
+            <div class="auth-buttons">
+                <button class="auth-btn primary" onclick="openAuthPopup()">
+                    Create Account
+                </button>
+                <button class="auth-btn secondary" onclick="openAuthPopup()">
+                    Sign In
+                </button>
+            </div>
         </div>
 
-        <form id="apiKeyForm">
-            <div class="form-group">
-                <label for="email">Email Address *</label>
-                <input type="email" id="email" name="email" required 
-                       placeholder="your@email.com">
+        <!-- Logged In Section -->
+        <div id="loggedInSection" class="logged-in-section" style="display: none;">
+            <h2>👋 Welcome back!</h2>
+            <p>You're logged in as <span id="userEmail"></span>. Access your dashboard to manage API keys and projects.</p>
+            
+            <div class="auth-buttons">
+                <button class="auth-btn primary" onclick="window.location.href='/dashboard'">
+                    📊 Go to Dashboard
+                </button>
+                <button class="auth-btn secondary" onclick="viewDocumentation()">
+                    📚 Documentation
+                </button>
+                <button class="auth-btn secondary" onclick="logout()">
+                    Sign Out
+                </button>
             </div>
-
-            <div class="form-group">
-                <label for="projectName">Project Name *</label>
-                <input type="text" id="projectName" name="projectName" required 
-                       placeholder="My Awesome DApp">
-            </div>
-
-            <div class="form-group">
-                <label for="website">Website/GitHub URL</label>
-                <input type="url" id="website" name="website" 
-                       placeholder="https://myproject.com">
-            </div>
-
-            <button type="submit" class="generate-btn">
-                Generate Secure API Key
-            </button>
-        </form>
-
-        <div class="loading">
-            <p>🔄 Generating your secure API key...</p>
         </div>
 
-        <div class="error" id="error"></div>
-
-        <div class="result" id="result">
-            <h3>✅ API Key Generated Successfully!</h3>
-            <p><strong>Your API Key:</strong></p>
-            <div class="api-key-display">
-                <span id="apiKeyText"></span>
-                <button class="copy-btn" onclick="copyApiKey()">Copy</button>
+        <!-- Integration Info -->
+        <div class="integration-info">
+            <h3>📦 Getting Started with NexusPay SDK</h3>
+            <div style="background: #000; color: #00ff00; padding: 15px; border-radius: 8px; font-family: monospace;">
+npm install @nexuspay/sdk
             </div>
             
-            <div class="endpoints">
-                <h4>🌐 API Endpoints:</h4>
-                <p><strong>Production:</strong> <code>https://backend-qtd8qjaa1-griffins-projects-4324ce43.vercel.app</code></p>
-                <p><strong>Dashboard:</strong> <a href="/dashboard.html" target="_blank">View Analytics Dashboard</a></p>
-            </div>
-
-            <div style="margin-top: 20px; padding: 15px; background: #d1ecf1; border-radius: 8px;">
-                <h4>📦 Quick Start:</h4>
-                <pre style="background: #000; color: #00ff00; padding: 10px; border-radius: 5px; overflow-x: auto;">npm install @nexuspay/sdk</pre>
-                <p style="margin-top: 10px; font-size: 14px; color: #666;">
-                    📚 <a href="https://www.npmjs.com/package/@nexuspay/sdk" target="_blank">View Documentation</a>
-                </p>
+            <div class="quick-links">
+                <a href="/documentation" class="quick-link">
+                    <h4>📚 Documentation</h4>
+                    <p>Complete API reference and guides</p>
+                </a>
+                <a href="https://backend-amber-zeta-94.vercel.app/" class="quick-link" target="_blank">
+                    <h4>🚀 Live Platform</h4>
+                    <p>Access your dashboard</p>
+                </a>
             </div>
         </div>
     </div>
 
     <script>
-        let generatedApiKey = '';
-        let generatedExample = '';
+        let currentUser = null;
 
-        document.getElementById('apiKeyForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // Check authentication status on load
+        window.addEventListener('load', () => {
+            checkAuthStatus();
+        });
+
+        function checkAuthStatus() {
+            const token = localStorage.getItem('nexuspay_token');
+            const user = localStorage.getItem('nexuspay_user');
             
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-            
-            try {
-                const response = await fetch('/api/keys/generate', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    generatedApiKey = result.apiKey;
-                    generatedExample = result.integration.example;
-                    
-                    document.getElementById('apiKeyText').textContent = result.apiKey;
-                    document.getElementById('result').style.display = 'block';
-                    
-                    // Scroll to result section
-                    document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
-                } else {
-                    alert('Error generating API key: ' + result.error);
+            if (token && user) {
+                try {
+                    currentUser = JSON.parse(user);
+                    showLoggedInState();
+                } catch (error) {
+                    localStorage.removeItem('nexuspay_token');
+                    localStorage.removeItem('nexuspay_user');
+                    showLoggedOutState();
                 }
-            } catch (error) {
-                alert('Error: ' + error.message);
+            } else {
+                showLoggedOutState();
             }
-        });
-
-        function copyApiKey() {
-            navigator.clipboard.writeText(generatedApiKey).then(() => {
-                const btn = event.target;
-                const originalText = btn.textContent;
-                btn.textContent = 'Copied!';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                }, 2000);
-            });
         }
 
-        function copyExample() {
-            navigator.clipboard.writeText(generatedExample).then(() => {
-                const btn = event.target;
-                const originalText = btn.textContent;
-                btn.textContent = 'Copied!';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                }, 2000);
-            });
+        function showLoggedInState() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('loggedInSection').style.display = 'block';
+            document.getElementById('userEmail').textContent = currentUser.email;
         }
 
-        // Smooth scrolling for navigation
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth' });
+        function showLoggedOutState() {
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('loggedInSection').style.display = 'none';
+        }
+
+        function logout() {
+            localStorage.removeItem('nexuspay_token');
+            localStorage.removeItem('nexuspay_user');
+            currentUser = null;
+            showLoggedOutState();
+        }
+
+        function openAuthPopup() {
+            const popup = window.open('/auth-popup', 'auth', 'width=500,height=600,scrollbars=yes,resizable=yes');
+            
+            // Listen for messages from the popup
+            const messageListener = (event) => {
+                if (event.origin !== window.location.origin) return;
+                
+                if (event.data.type === 'auth_success') {
+                    currentUser = event.data.user;
+                    localStorage.setItem('nexuspay_token', event.data.token);
+                    localStorage.setItem('nexuspay_user', JSON.stringify(event.data.user));
+                    
+                    showLoggedInState();
+                    popup.close();
+                    window.removeEventListener('message', messageListener);
                 }
-            });
-        });
+            };
+            
+            window.addEventListener('message', messageListener);
+        }
+
+        function viewDocumentation() {
+            window.open('/documentation', '_blank');
+        }
     </script>
 </body>
 </html> 

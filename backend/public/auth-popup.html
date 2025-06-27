@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusPay Authentication</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .auth-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(10, 207, 242, 0.3);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid rgba(10, 207, 242, 0.2);
+        }
+
+        .logo {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #0acff2 0%, #00b8d4 100%);
+            border-radius: 12px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        h1 {
+            color: #000000;
+            margin-bottom: 8px;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            color: #333333;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #000000;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #0acff2;
+            box-shadow: 0 0 0 3px rgba(10, 207, 242, 0.1);
+        }
+
+        .google-btn {
+            background: white;
+            border: 2px solid #0acff2;
+            border-radius: 8px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: #0acff2;
+            font-weight: 500;
+        }
+
+        .google-btn:hover {
+            background: #0acff2;
+            color: white;
+        }
+
+        .google-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #0acff2 0%, #00b8d4 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .divider {
+            margin: 24px 0;
+            position: relative;
+            text-align: center;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 16px;
+            color: #333333;
+            font-size: 14px;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .success {
+            background: rgba(10, 207, 242, 0.1);
+            color: #0acff2;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            border: 1px solid #0acff2;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #0acff2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toggle-form {
+            margin-top: 20px;
+            color: #333333;
+            font-size: 14px;
+        }
+
+        .toggle-form a {
+            color: #0acff2;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .toggle-form a:hover {
+            text-decoration: underline;
+        }
+
+        .email-validation {
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .email-validation.valid {
+            color: #0acff2;
+        }
+
+        .email-validation.invalid {
+            color: #c53030;
+        }
+
+        .email-validation.checking {
+            color: #0acff2;
+        }
+
+        .success-view {
+            display: none;
+            text-align: center;
+        }
+
+        .success-view.active {
+            display: block;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #0acff2;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .feature-card:hover {
+            background: #0acff2;
+            color: white;
+        }
+
+        .feature-card h3 {
+            color: #000000;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .feature-card:hover h3 {
+            color: white;
+        }
+
+        .feature-card p {
+            color: #333333;
+            font-size: 14px;
+        }
+
+        .feature-card:hover p {
+            color: white;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #0acff2 0%, #00b8d4 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin: 8px 4px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .action-btn.secondary {
+            background: white;
+            color: #0acff2;
+            border: 2px solid #0acff2;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .action-btn.secondary:hover {
+            background: #0acff2;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <!-- Authentication View -->
+        <div id="auth-view">
+            <img src="/assets/logos/Portrait Logo@300x.png" alt="NexusPay" style="max-width: 180px; margin-bottom: 20px;">
+            <h1 id="auth-title">Welcome to NexusPay</h1>
+            <p class="subtitle">Secure cross-chain wallet infrastructure</p>
+
+            <div id="message-container"></div>
+
+            <!-- Google OAuth Button -->
+            <a href="/auth/google?popup=true" class="google-btn" id="google-auth">
+                <svg class="google-icon" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+            </a>
+
+            <div class="divider">
+                <span>or</span>
+            </div>
+
+            <!-- Registration Form -->
+            <form class="auth-form" id="register-form">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required placeholder="Enter your email">
+                    <div id="email-validation" class="email-validation"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" required placeholder="Enter your full name">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required placeholder="Create a strong password">
+                </div>
+
+                <button type="submit" class="submit-btn" id="submit-btn">
+                    <span id="submit-text">Create Account</span>
+                    <span id="submit-loading" class="loading" style="display: none;"></span>
+                </button>
+            </form>
+
+            <!-- Login Form (Initially Hidden) -->
+            <form class="auth-form" id="login-form" style="display: none;">
+                <div class="form-group">
+                    <label for="login-email">Email Address</label>
+                    <input type="email" id="login-email" name="email" required placeholder="Enter your email">
+                </div>
+
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" name="password" required placeholder="Enter your password">
+                </div>
+
+                <button type="submit" class="submit-btn" id="login-btn">
+                    <span id="login-text">Sign In</span>
+                    <span id="login-loading" class="loading" style="display: none;"></span>
+                </button>
+            </form>
+
+            <div class="toggle-form">
+                <span id="toggle-text">Already have an account?</span>
+                <a href="#" id="toggle-link">Sign in here</a>
+            </div>
+        </div>
+
+        <!-- Success View -->
+        <div id="success-view" class="success-view">
+            <img src="/assets/logos/Portrait Logo@300x.png" alt="NexusPay" style="max-width: 180px; margin-bottom: 20px;">
+            <h1>Welcome to NexusPay! 🎉</h1>
+            <p class="subtitle">Your account is ready. Choose what you'd like to do next:</p>
+
+            <div class="features-grid">
+                <div class="feature-card" onclick="generateApiKey()">
+                    <h3>🔑 Generate API Key</h3>
+                    <p>Create secure API keys for your projects and applications</p>
+                </div>
+
+                <div class="feature-card" onclick="viewDocumentation()">
+                    <h3>📚 View Documentation</h3>
+                    <p>Learn how to integrate NexusPay into your applications</p>
+                </div>
+
+                <div class="feature-card" onclick="viewDashboard()">
+                    <h3>📊 Dashboard</h3>
+                    <p>Monitor your API usage and manage your projects</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 24px;">
+                <a href="https://backend-amber-zeta-94.vercel.app/" class="action-btn" target="_blank">
+                    🚀 Go to Full Platform
+                </a>
+                <button class="action-btn secondary" onclick="logout()">
+                    Sign Out
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isRegistering = true;
+        let emailValidationTimeout;
+        let currentUser = null;
+
+        // Check if user is already logged in
+        window.addEventListener('load', () => {
+            const token = localStorage.getItem('nexuspay_token');
+            const user = localStorage.getItem('nexuspay_user');
+            
+            if (token && user) {
+                try {
+                    currentUser = JSON.parse(user);
+                    showSuccessView();
+                } catch (error) {
+                    localStorage.removeItem('nexuspay_token');
+                    localStorage.removeItem('nexuspay_user');
+                }
+            }
+        });
+
+        // Toggle between register and login forms
+        document.getElementById('toggle-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            isRegistering = !isRegistering;
+            
+            const registerForm = document.getElementById('register-form');
+            const loginForm = document.getElementById('login-form');
+            const toggleText = document.getElementById('toggle-text');
+            const toggleLink = document.getElementById('toggle-link');
+            const title = document.getElementById('auth-title');
+            
+            if (isRegistering) {
+                registerForm.style.display = 'flex';
+                loginForm.style.display = 'none';
+                toggleText.textContent = 'Already have an account?';
+                toggleLink.textContent = 'Sign in here';
+                title.textContent = 'Create Account';
+            } else {
+                registerForm.style.display = 'none';
+                loginForm.style.display = 'flex';
+                toggleText.textContent = "Don't have an account?";
+                toggleLink.textContent = 'Register here';
+                title.textContent = 'Welcome Back';
+            }
+            
+            clearMessage();
+        });
+
+        // Real-time email validation
+        document.getElementById('email').addEventListener('input', (e) => {
+            const email = e.target.value;
+            const validationDiv = document.getElementById('email-validation');
+            
+            clearTimeout(emailValidationTimeout);
+            
+            if (!email) {
+                validationDiv.textContent = '';
+                return;
+            }
+            
+            validationDiv.textContent = 'Checking email...';
+            validationDiv.className = 'email-validation checking';
+            
+            emailValidationTimeout = setTimeout(async () => {
+                try {
+                    const response = await fetch('/api/validate-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.valid) {
+                        validationDiv.textContent = '✓ Email looks good';
+                        validationDiv.className = 'email-validation valid';
+                    } else {
+                        validationDiv.textContent = `✗ ${result.reason}`;
+                        validationDiv.className = 'email-validation invalid';
+                    }
+                } catch (error) {
+                    validationDiv.textContent = 'Unable to validate email';
+                    validationDiv.className = 'email-validation invalid';
+                }
+            }, 500);
+        });
+
+        // Handle registration form
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await handleAuth('/api/auth/register', 'register');
+        });
+
+        // Handle login form
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await handleAuth('/api/auth/login', 'login');
+        });
+
+        async function handleAuth(endpoint, type) {
+            const form = document.getElementById(type === 'register' ? 'register-form' : 'login-form');
+            const submitBtn = document.getElementById(type === 'register' ? 'submit-btn' : 'login-btn');
+            const submitText = document.getElementById(type === 'register' ? 'submit-text' : 'login-text');
+            const submitLoading = document.getElementById(type === 'register' ? 'submit-loading' : 'login-loading');
+            
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitText.style.display = 'none';
+            submitLoading.style.display = 'inline-block';
+            
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentUser = result.user;
+                    
+                    // Store token and user info
+                    localStorage.setItem('nexuspay_token', result.token);
+                    localStorage.setItem('nexuspay_user', JSON.stringify(result.user));
+                    
+                    showMessage(`${type === 'register' ? 'Account created' : 'Login'} successful! Redirecting to dashboard...`, 'success');
+                    
+                    // Send success message to parent window
+                    if (window.opener) {
+                        window.opener.postMessage({
+                            type: 'auth_success',
+                            user: result.user,
+                            token: result.token
+                        }, '*');
+                    }
+                    
+                    // Redirect to dashboard after a short delay
+                    setTimeout(() => {
+                        if (window.opener) {
+                            window.close();
+                        } else {
+                            window.location.href = '/dashboard';
+                        }
+                    }, 1500);
+                    
+                } else {
+                    showMessage(result.error || 'Authentication failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error. Please try again.', 'error');
+            } finally {
+                // Reset loading state
+                submitBtn.disabled = false;
+                submitText.style.display = 'inline';
+                submitLoading.style.display = 'none';
+            }
+        }
+
+        function showSuccessView() {
+            document.getElementById('auth-view').style.display = 'none';
+            document.getElementById('success-view').classList.add('active');
+        }
+
+        function showMessage(message, type) {
+            const container = document.getElementById('message-container');
+            container.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+
+        function clearMessage() {
+            document.getElementById('message-container').innerHTML = '';
+        }
+
+        // Feature functions
+        function generateApiKey() {
+            // Open the deployed backend's API key generation page
+            window.open('https://backend-amber-zeta-94.vercel.app/', '_blank');
+        }
+
+        function viewDocumentation() {
+            // Navigate to documentation (you can update this URL)
+            window.open('/documentation', '_blank');
+        }
+
+        function viewDashboard() {
+            // Navigate to dashboard
+            window.location.href = '/dashboard';
+        }
+
+        function logout() {
+            localStorage.removeItem('nexuspay_token');
+            localStorage.removeItem('nexuspay_user');
+            currentUser = null;
+            
+            // Show auth view again
+            document.getElementById('success-view').classList.remove('active');
+            document.getElementById('auth-view').style.display = 'block';
+            
+            showMessage('Logged out successfully', 'success');
+        }
+
+        // Handle Google OAuth popup
+        document.getElementById('google-auth').addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            const popup = window.open(
+                '/auth/google?popup=true',
+                'google-auth',
+                'width=500,height=600,scrollbars=yes,resizable=yes'
+            );
+            
+            const checkClosed = setInterval(() => {
+                if (popup.closed) {
+                    clearInterval(checkClosed);
+                }
+            }, 1000);
+        });
+
+        // Listen for Google OAuth messages
+        window.addEventListener('message', function(event) {
+            if (event.data.success) {
+                localStorage.setItem('nexuspay_token', event.data.token);
+                localStorage.setItem('nexuspay_user', JSON.stringify(event.data.user));
+                
+                // Send success message to parent window if it exists
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'auth_success',
+                        user: event.data.user,
+                        token: event.data.token
+                    }, '*');
+                }
+                
+                if (event.data.redirectTo === 'dashboard') {
+                    // Show success message and redirect to dashboard
+                    showSuccess(event.data.user);
+                    setTimeout(() => {
+                        if (window.opener) {
+                            window.close();
+                        } else {
+                            window.location.href = '/dashboard';
+                        }
+                    }, 2000);
+                } else {
+                    // Regular success flow
+                    showSuccess(event.data.user);
+                }
+            } else {
+                showError(event.data.error || 'Authentication failed');
+            }
+        });
+
+        function showSuccess(user) {
+            document.getElementById('auth-view').style.display = 'none';
+            document.getElementById('success-view').style.display = 'block';
+            
+            // Update success view with user info
+            document.getElementById('successUserName').textContent = user.name;
+            document.getElementById('successUserEmail').textContent = user.email;
+            
+            if (user.profilePicture) {
+                document.getElementById('successUserAvatar').src = user.profilePicture;
+                document.getElementById('successUserAvatar').style.display = 'block';
+            }
+        }
+
+        function showError(message) {
+            showMessage(message, 'error');
+        }
+    </script>
+</body>
+</html> 

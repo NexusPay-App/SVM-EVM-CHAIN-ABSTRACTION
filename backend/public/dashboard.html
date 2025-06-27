@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexusSDK Dashboard - User Activity & Analytics</title>
+    <title>NexusPay Dashboard</title>
     <style>
         * {
             margin: 0;
@@ -12,538 +12,685 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: #ffffff;
             min-height: 100vh;
-            padding: 20px;
-        }
-
-        .dashboard {
-            max-width: 1400px;
-            margin: 0 auto;
         }
 
         .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid #0acff2;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            height: 40px;
+            width: auto;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #0acff2;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .user-email {
+            font-size: 0.8rem;
+            color: #cccccc;
+        }
+
+        .logout-btn {
+            background: #0acff2;
+            color: #000000;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #08a8c7;
+            transform: translateY(-2px);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .welcome-section {
             text-align: center;
-            color: white;
-            margin-bottom: 30px;
+            margin-bottom: 3rem;
         }
 
-        .header h1 {
+        .welcome-title {
             font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #0acff2, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
+        .welcome-subtitle {
+            font-size: 1.2rem;
+            color: #cccccc;
+            margin-bottom: 2rem;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 0.5rem;
+        }
+
+        .tab {
+            padding: 1rem 2rem;
+            background: transparent;
+            border: none;
+            color: #cccccc;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .tab.active {
+            background: #0acff2;
+            color: #000000;
+        }
+
+        .tab:hover:not(.active) {
+            background: rgba(10, 207, 242, 0.2);
+            color: #0acff2;
+        }
+
+        .tab-content {
+            display: none;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(10, 207, 242, 0.3);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .action-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid rgba(10, 207, 242, 0.3);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            border-color: #0acff2;
+            box-shadow: 0 10px 30px rgba(10, 207, 242, 0.3);
+        }
+
+        .action-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .action-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #0acff2;
+        }
+
+        .action-description {
+            color: #cccccc;
+            margin-bottom: 1.5rem;
+        }
+
+        .api-key-section {
+            margin-top: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #0acff2;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid rgba(10, 207, 242, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #0acff2;
+        }
+
+        .btn {
+            background: #0acff2;
+            color: #000000;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: #08a8c7;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .api-keys-list {
+            margin-top: 2rem;
+        }
+
+        .api-key-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(10, 207, 242, 0.2);
+        }
+
+        .api-key-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .api-key-name {
+            font-weight: 600;
+            color: #0acff2;
+        }
+
+        .api-key-usage {
+            font-size: 0.9rem;
+            color: #cccccc;
+        }
+
+        .api-key-value {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            word-break: break-all;
+            margin-top: 0.5rem;
         }
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .stat-card {
-            background: white;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(10, 207, 242, 0.3);
         }
 
-        .stat-card:hover {
-            transform: translateY(-5px);
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0acff2;
+            margin-bottom: 0.5rem;
         }
 
-        .stat-card h3 {
-            color: #666;
+        .stat-label {
+            color: #cccccc;
             font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-        }
-
-        .stat-card .number {
-            font-size: 2.2rem;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .stat-card .trend {
-            font-size: 0.9rem;
-            color: #28a745;
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
-        .activity-panel, .gas-tank-panel {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        .panel-header {
-            display: flex;
-            justify-content: between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-
-        .panel-header h2 {
-            color: #333;
-            font-size: 1.4rem;
-        }
-
-        .refresh-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background 0.3s;
-        }
-
-        .refresh-btn:hover {
-            background: #5a6fd8;
-        }
-
-        .activity-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .activity-item:last-child {
-            border-bottom: none;
-        }
-
-        .activity-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-            font-size: 1.2rem;
-        }
-
-        .wallet-icon { background: #e3f2fd; color: #1976d2; }
-        .key-icon { background: #fff3e0; color: #f57c00; }
-        .payment-icon { background: #e8f5e8; color: #4caf50; }
-
-        .activity-details h4 {
-            color: #333;
-            font-size: 0.95rem;
-            margin-bottom: 4px;
-        }
-
-        .activity-details p {
-            color: #666;
-            font-size: 0.85rem;
-        }
-
-        .gas-tank-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .gas-tank-item:last-child {
-            border-bottom: none;
-        }
-
-        .chain-info h4 {
-            color: #333;
-            font-size: 0.95rem;
-            margin-bottom: 4px;
-        }
-
-        .chain-info p {
-            color: #666;
-            font-size: 0.85rem;
-        }
-
-        .balance {
-            text-align: right;
-        }
-
-        .balance .amount {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .balance .usd {
-            font-size: 0.85rem;
-            color: #666;
-        }
-
-        .charts-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-        }
-
-        .chart-panel {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
         .loading {
             text-align: center;
-            color: #666;
-            padding: 40px;
+            color: #0acff2;
+            padding: 2rem;
         }
 
         .error {
-            background: #fee;
-            color: #c33;
-            padding: 15px;
-            border-radius: 6px;
-            margin: 10px 0;
-        }
-
-        .api-key-input {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            padding: 20px;
-            background: rgba(255,255,255,0.1);
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            color: #ff6b6b;
+            padding: 1rem;
             border-radius: 8px;
+            margin-bottom: 1rem;
         }
 
-        .api-key-input input {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.9rem;
-        }
-
-        .api-key-input button {
-            padding: 10px 20px;
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
+        .success {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            color: #51cf66;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
         }
 
         @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
+            .header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
             }
-            
-            .charts-section {
-                grid-template-columns: 1fr;
+
+            .container {
+                padding: 1rem;
             }
-            
-            .stats-grid {
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab {
+                padding: 0.75rem 1rem;
+            }
+
+            .quick-actions {
                 grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <div class="dashboard">
-        <div class="header">
-            <h1>🚀 NexusSDK Dashboard</h1>
-            <p>Real-time monitoring of user activity, gas tanks, and analytics</p>
+    <div class="header">
+        <div class="logo-section">
+            <img src="/assets/logos/Landscape Logo on Black@300x.png" alt="NexusPay" class="logo">
+        </div>
+        <div class="user-section">
+            <div class="user-info">
+                <div class="user-name" id="userName">Loading...</div>
+                <div class="user-email" id="userEmail">Loading...</div>
+            </div>
+            <img src="" alt="User Avatar" class="user-avatar" id="userAvatar" style="display: none;">
+            <button class="logout-btn" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="welcome-section">
+            <h1 class="welcome-title">Welcome to Your Dashboard</h1>
+            <p class="welcome-subtitle">Manage your API keys, monitor usage, and access platform features</p>
         </div>
 
-        <div class="api-key-input">
-            <input type="text" id="apiKeyInput" placeholder="Enter your API key (e.g., local-dev-key)" value="local-dev-key">
-            <button onclick="setApiKey()">Connect</button>
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('overview')">📊 Overview</button>
+            <button class="tab" onclick="showTab('api-keys')">🔑 API Keys</button>
+            <button class="tab" onclick="showTab('analytics')">📈 Analytics</button>
+            <button class="tab" onclick="showTab('platform')">🚀 Live Platform</button>
+            <button class="tab" onclick="showTab('documentation')">📚 Documentation</button>
         </div>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>Total Wallets</h3>
-                <div class="number" id="totalWallets">-</div>
-                <div class="trend">↗ +12% this week</div>
-            </div>
-            <div class="stat-card">
-                <h3>Private Key Requests</h3>
-                <div class="number" id="privateKeyRequests">-</div>
-                <div class="trend">🔒 Tracked & Logged</div>
-            </div>
-            <div class="stat-card">
-                <h3>Gas Tank Funded</h3>
-                <div class="number" id="gasTankFunded">-</div>
-                <div class="trend">💰 ETH Total</div>
-            </div>
-            <div class="stat-card">
-                <h3>Active Companies</h3>
-                <div class="number" id="activeCompanies">-</div>
-                <div class="trend">🏢 Enterprises</div>
-            </div>
-        </div>
-
-        <div class="main-content">
-            <div class="activity-panel">
-                <div class="panel-header">
-                    <h2>📊 Recent Activity</h2>
-                    <button class="refresh-btn" onclick="loadRecentActivity()">Refresh</button>
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalApiKeys">0</div>
+                    <div class="stat-label">API Keys</div>
                 </div>
-                <div id="activityList">
-                    <div class="loading">Loading activity...</div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalRequests">0</div>
+                    <div class="stat-label">Total Requests</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="lastUsed">Never</div>
+                    <div class="stat-label">Last Used</div>
                 </div>
             </div>
 
-            <div class="gas-tank-panel">
-                <div class="panel-header">
-                    <h2>⛽ Gas Tank Status</h2>
-                    <button class="refresh-btn" onclick="loadGasTankStatus()">Refresh</button>
+            <div class="quick-actions">
+                <div class="action-card" onclick="showTab('api-keys')">
+                    <div class="action-icon">🔑</div>
+                    <div class="action-title">Generate API Key</div>
+                    <div class="action-description">Create secure API keys for your projects</div>
                 </div>
-                <div id="gasTankList">
-                    <div class="loading">Loading gas tanks...</div>
+                <div class="action-card" onclick="showTab('platform')">
+                    <div class="action-icon">🚀</div>
+                    <div class="action-title">Access Live Platform</div>
+                    <div class="action-description">Use the production NexusPay platform</div>
+                </div>
+                <div class="action-card" onclick="showTab('documentation')">
+                    <div class="action-icon">📚</div>
+                    <div class="action-title">View Documentation</div>
+                    <div class="action-description">Complete API reference and guides</div>
                 </div>
             </div>
         </div>
 
-        <div class="charts-section">
-            <div class="chart-panel">
-                <div class="panel-header">
-                    <h2>📈 Wallet Creation Trend</h2>
-                </div>
-                <div id="walletChart">
-                    <div class="loading">Chart coming soon...</div>
-                </div>
+        <!-- API Keys Tab -->
+        <div id="api-keys" class="tab-content">
+            <div class="api-key-section">
+                <h2 style="color: #0acff2; margin-bottom: 2rem;">Generate New API Key</h2>
+                <div id="apiKeyError" class="error" style="display: none;"></div>
+                <div id="apiKeySuccess" class="success" style="display: none;"></div>
+                
+                <form id="apiKeyForm">
+                    <div class="form-group">
+                        <label class="form-label" for="projectName">Project Name *</label>
+                        <input type="text" id="projectName" class="form-input" placeholder="My Awesome Project" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="website">Website/GitHub URL</label>
+                        <input type="url" id="website" class="form-input" placeholder="https://github.com/username/project">
+                    </div>
+                    <button type="submit" class="btn" id="generateBtn">
+                        🔑 Generate API Key
+                    </button>
+                </form>
             </div>
 
-            <div class="chart-panel">
-                <div class="panel-header">
-                    <h2>💸 Gas Usage Analytics</h2>
+            <div class="api-keys-list">
+                <h2 style="color: #0acff2; margin-bottom: 1.5rem;">Your API Keys</h2>
+                <div id="apiKeysList">
+                    <div class="loading">Loading your API keys...</div>
                 </div>
-                <div id="gasChart">
-                    <div class="loading">Chart coming soon...</div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="analytics" class="tab-content">
+            <h2 style="color: #0acff2; margin-bottom: 2rem;">📈 Usage Analytics</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="analyticsRequests">0</div>
+                    <div class="stat-label">API Requests This Month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="analyticsKeys">0</div>
+                    <div class="stat-label">Active API Keys</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="analyticsUptime">99.9%</div>
+                    <div class="stat-label">Platform Uptime</div>
+                </div>
+            </div>
+            <p style="color: #cccccc; text-align: center; margin-top: 2rem;">
+                📊 Detailed analytics dashboard coming soon! Track your API usage, performance metrics, and more.
+            </p>
+        </div>
+
+        <!-- Live Platform Tab -->
+        <div id="platform" class="tab-content">
+            <h2 style="color: #0acff2; margin-bottom: 2rem;">🚀 Live Platform Access</h2>
+            <div class="action-card" style="max-width: 600px; margin: 0 auto;">
+                <div class="action-icon">🌐</div>
+                <div class="action-title">Production API Endpoint</div>
+                <div class="action-description">Access the live NexusPay platform for production use</div>
+                <div style="margin: 1.5rem 0;">
+                    <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; font-family: monospace;">
+                        https://backend-amber-zeta-94.vercel.app
+                    </div>
+                </div>
+                <button class="btn" onclick="window.open('https://backend-amber-zeta-94.vercel.app', '_blank')">
+                    🚀 Open Live Platform
+                </button>
+            </div>
+        </div>
+
+        <!-- Documentation Tab -->
+        <div id="documentation" class="tab-content">
+            <h2 style="color: #0acff2; margin-bottom: 2rem;">📚 API Documentation</h2>
+            <div class="quick-actions">
+                <div class="action-card" onclick="window.open('/documentation', '_blank')">
+                    <div class="action-icon">📖</div>
+                    <div class="action-title">Complete API Reference</div>
+                    <div class="action-description">Detailed documentation with examples</div>
+                </div>
+                <div class="action-card" onclick="window.open('https://github.com/nexuspay/sdk', '_blank')">
+                    <div class="action-icon">💻</div>
+                    <div class="action-title">SDK Documentation</div>
+                    <div class="action-description">JavaScript/TypeScript SDK guides</div>
+                </div>
+                <div class="action-card" onclick="window.open('/documentation#examples', '_blank')">
+                    <div class="action-icon">⚡</div>
+                    <div class="action-title">Quick Start Guide</div>
+                    <div class="action-description">Get started in minutes</div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let currentApiKey = 'local-dev-key';
-        const API_BASE = 'http://localhost:3001';
+        let currentUser = null;
+        let userApiKeys = [];
 
-        function setApiKey() {
-            const input = document.getElementById('apiKeyInput');
-            currentApiKey = input.value.trim();
-            if (currentApiKey) {
-                loadDashboard();
-            } else {
-                alert('Please enter a valid API key');
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+        });
+
+        function checkAuth() {
+            const token = localStorage.getItem('nexuspay_token');
+            if (!token) {
+                window.location.href = '/';
+                return;
             }
-        }
 
-        async function loadDashboard() {
-            try {
-                await Promise.all([
-                    loadAnalytics(),
-                    loadRecentActivity(),
-                    loadGasTankStatus()
-                ]);
-            } catch (error) {
-                console.error('Failed to load dashboard:', error);
-                showError('Failed to load dashboard data');
-            }
-        }
-
-        async function loadAnalytics() {
-            try {
-                const response = await fetch(`${API_BASE}/api/analytics/usage`, {
-                    headers: {
-                        'X-API-Key': currentApiKey
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Analytics API error: ${response.status}`);
+            // Fetch user profile
+            fetch('/api/user/profile', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
                 }
-
-                const data = await response.json();
-                
-                document.getElementById('totalWallets').textContent = data.metrics.totalWallets || '0';
-                document.getElementById('privateKeyRequests').textContent = data.metrics.privateKeyRequests || '0';
-                document.getElementById('gasTankFunded').textContent = data.metrics.gasTankTotalFunded || '0.0';
-                document.getElementById('activeCompanies').textContent = data.metrics.activeCompanies || '0';
-                
-            } catch (error) {
-                console.error('Analytics loading error:', error);
-                showError('Failed to load analytics');
-            }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentUser = data.user;
+                    updateUserInterface();
+                    loadApiKeys();
+                } else {
+                    localStorage.removeItem('nexuspay_token');
+                    window.location.href = '/';
+                }
+            })
+            .catch(error => {
+                console.error('Auth check failed:', error);
+                localStorage.removeItem('nexuspay_token');
+                window.location.href = '/';
+            });
         }
 
-        async function loadRecentActivity() {
-            const activityList = document.getElementById('activityList');
+        function updateUserInterface() {
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('userEmail').textContent = currentUser.email;
             
-            // Simulate recent activity based on our test data
-            const activities = [
-                {
-                    type: 'wallet',
-                    title: 'New Wallet Created',
-                    description: 'gamer1@playearn.com • Unified EVM Address',
-                    time: '2 minutes ago',
-                    icon: '👤'
-                },
-                {
-                    type: 'key',
-                    title: 'Private Key Accessed',
-                    description: 'PlayEarn • NFT minting transaction',
-                    time: '5 minutes ago',
-                    icon: '🔐'
-                },
-                {
-                    type: 'payment',
-                    title: 'Fee Payment Processed',
-                    description: '0.005 ETH • Transaction sponsored',
-                    time: '8 minutes ago',
-                    icon: '💸'
-                },
-                {
-                    type: 'wallet',
-                    title: 'Cross-Chain Wallet Deployed',
-                    description: '+1234567890 • EVM + Solana',
-                    time: '12 minutes ago',
-                    icon: '🌉'
-                },
-                {
-                    type: 'payment',
-                    title: 'Gas Tank Funded',
-                    description: 'PlayEarn • 10.0 ETH added',
-                    time: '15 minutes ago',
-                    icon: '⛽'
-                }
-            ];
+            if (currentUser.profilePicture) {
+                const avatar = document.getElementById('userAvatar');
+                avatar.src = currentUser.profilePicture;
+                avatar.style.display = 'block';
+            }
 
-            activityList.innerHTML = activities.map(activity => `
-                <div class="activity-item">
-                    <div class="activity-icon ${activity.type}-icon">
-                        ${activity.icon}
+            // Update stats
+            document.getElementById('totalApiKeys').textContent = currentUser.apiKeys.length;
+            
+            const totalRequests = currentUser.apiKeys.reduce((sum, key) => sum + key.usageCount, 0);
+            document.getElementById('totalRequests').textContent = totalRequests;
+            document.getElementById('analyticsRequests').textContent = totalRequests;
+            document.getElementById('analyticsKeys').textContent = currentUser.apiKeys.length;
+
+            const lastUsed = currentUser.apiKeys
+                .filter(key => key.lastUsed)
+                .sort((a, b) => new Date(b.lastUsed) - new Date(a.lastUsed))[0];
+            
+            if (lastUsed) {
+                document.getElementById('lastUsed').textContent = new Date(lastUsed.lastUsed).toLocaleDateString();
+            }
+        }
+
+        function loadApiKeys() {
+            const apiKeysList = document.getElementById('apiKeysList');
+            
+            if (currentUser.apiKeys.length === 0) {
+                apiKeysList.innerHTML = '<p style="color: #cccccc; text-align: center;">No API keys generated yet. Create your first API key above!</p>';
+                return;
+            }
+
+            apiKeysList.innerHTML = currentUser.apiKeys.map(key => `
+                <div class="api-key-item">
+                    <div class="api-key-header">
+                        <div class="api-key-name">${key.projectName}</div>
+                        <div class="api-key-usage">Used ${key.usageCount} times</div>
                     </div>
-                    <div class="activity-details">
-                        <h4>${activity.title}</h4>
-                        <p>${activity.description} • ${activity.time}</p>
+                    <div style="color: #cccccc; font-size: 0.9rem; margin-bottom: 0.5rem;">
+                        Created: ${new Date(key.createdAt).toLocaleDateString()}
+                        ${key.website ? ` • Website: ${key.website}` : ''}
                     </div>
+                    <div class="api-key-value">${key.keyId}</div>
                 </div>
             `).join('');
         }
 
-        async function loadGasTankStatus() {
-            const gasTankList = document.getElementById('gasTankList');
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
             
-            try {
-                // Try to load real gas tank data
-                const response = await fetch(`${API_BASE}/api/companies/playearn-xyz/gas-tank`, {
-                    headers: {
-                        'X-API-Key': currentApiKey
-                    }
-                });
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
 
-                if (response.ok) {
-                    const data = await response.json();
-                    const chains = ['ethereum', 'polygon', 'arbitrum', 'solana'];
+        // API Key Generation
+        document.getElementById('apiKeyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const projectName = document.getElementById('projectName').value;
+            const website = document.getElementById('website').value;
+            const token = localStorage.getItem('nexuspay_token');
+            
+            const generateBtn = document.getElementById('generateBtn');
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '🔄 Generating...';
+            
+            fetch('/api/keys/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ projectName, website })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('apiKeySuccess').innerHTML = `
+                        <strong>API Key Generated Successfully!</strong><br>
+                        <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 4px; margin-top: 1rem; font-family: monospace; word-break: break-all;">
+                            ${data.apiKey}
+                        </div>
+                        <p style="margin-top: 1rem; font-size: 0.9rem;">⚠️ Save this key securely. You won't be able to see it again!</p>
+                    `;
+                    document.getElementById('apiKeySuccess').style.display = 'block';
+                    document.getElementById('apiKeyError').style.display = 'none';
                     
-                    gasTankList.innerHTML = chains.map(chain => {
-                        const tankData = data.gasTanks[chain] || { balance: '0', totalFunded: '0', totalSpent: '0' };
-                        const balance = parseFloat(tankData.balance);
-                        const usdValue = balance * (chain === 'solana' ? 20 : 2000); // Mock USD conversion
-                        
-                        return `
-                            <div class="gas-tank-item">
-                                <div class="chain-info">
-                                    <h4>${chain.charAt(0).toUpperCase() + chain.slice(1)}</h4>
-                                    <p>Funded: ${tankData.totalFunded} • Spent: ${tankData.totalSpent}</p>
-                                </div>
-                                <div class="balance">
-                                    <div class="amount">${balance.toFixed(4)} ${chain === 'solana' ? 'SOL' : 'ETH'}</div>
-                                    <div class="usd">$${usdValue.toFixed(2)}</div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
+                    // Reset form
+                    document.getElementById('apiKeyForm').reset();
+                    
+                    // Refresh user data
+                    checkAuth();
                 } else {
-                    throw new Error('Gas tank API not available');
+                    document.getElementById('apiKeyError').textContent = data.error || 'Failed to generate API key';
+                    document.getElementById('apiKeyError').style.display = 'block';
+                    document.getElementById('apiKeySuccess').style.display = 'none';
                 }
-            } catch (error) {
-                console.error('Gas tank loading error:', error);
-                // Show sample data
-                gasTankList.innerHTML = `
-                    <div class="gas-tank-item">
-                        <div class="chain-info">
-                            <h4>Ethereum</h4>
-                            <p>Funded: 10.0 • Spent: 0.005</p>
-                        </div>
-                        <div class="balance">
-                            <div class="amount">9.995 ETH</div>
-                            <div class="usd">$19,990.00</div>
-                        </div>
-                    </div>
-                    <div class="gas-tank-item">
-                        <div class="chain-info">
-                            <h4>Polygon</h4>
-                            <p>Ready for funding</p>
-                        </div>
-                        <div class="balance">
-                            <div class="amount">0.000 MATIC</div>
-                            <div class="usd">$0.00</div>
-                        </div>
-                    </div>
-                    <div class="gas-tank-item">
-                        <div class="chain-info">
-                            <h4>Solana</h4>
-                            <p>Ready for funding</p>
-                        </div>
-                        <div class="balance">
-                            <div class="amount">0.000 SOL</div>
-                            <div class="usd">$0.00</div>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        function showError(message) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error';
-            errorDiv.textContent = message;
-            document.querySelector('.dashboard').insertBefore(errorDiv, document.querySelector('.stats-grid'));
-            
-            setTimeout(() => {
-                errorDiv.remove();
-            }, 5000);
-        }
-
-        // Auto-refresh every 30 seconds
-        setInterval(() => {
-            loadDashboard();
-        }, 30000);
-
-        // Load dashboard on page load
-        window.addEventListener('load', () => {
-            loadDashboard();
+            })
+            .catch(error => {
+                console.error('API key generation failed:', error);
+                document.getElementById('apiKeyError').textContent = 'Network error. Please try again.';
+                document.getElementById('apiKeyError').style.display = 'block';
+            })
+            .finally(() => {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '🔑 Generate API Key';
+            });
         });
+
+        function logout() {
+            localStorage.removeItem('nexuspay_token');
+            window.location.href = '/';
+        }
     </script>
 </body>
 </html> 
