@@ -42,7 +42,18 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
+
+// Add security headers to fix Cross-Origin-Opener-Policy
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  next();
+});
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -109,7 +120,7 @@ const validateApiKey = async (req, res, next) => {
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({
+  res.json({ 
     status: 'healthy',
     timestamp: new Date().toISOString(),
     service: 'nexuspay-api',
@@ -175,7 +186,7 @@ app.post('/api/auth/register', async (req, res) => {
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
-
+    
     res.json({
       success: true,
       message: 'Account created successfully',
@@ -186,10 +197,10 @@ app.post('/api/auth/register', async (req, res) => {
         name: user.name
       }
     });
-
+    
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({
+    res.status(500).json({ 
       error: 'Failed to create account'
     });
   }
@@ -199,7 +210,7 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-
+    
     if (!email || !password) {
       return res.status(400).json({
         error: 'Email and password are required'
@@ -232,7 +243,7 @@ app.post('/api/auth/login', async (req, res) => {
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
-
+    
     res.json({
       success: true,
       message: 'Login successful',
@@ -243,10 +254,10 @@ app.post('/api/auth/login', async (req, res) => {
         name: user.name
       }
     });
-
+    
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({
+    res.status(500).json({ 
       error: 'Login failed'
     });
   }
@@ -345,7 +356,7 @@ app.get('/auth/google/callback', async (req, res) => {
     res.send(`
       <script>
         window.opener.postMessage({ 
-          success: true, 
+      success: true,
           user: {
             id: '${user._id}',
             email: '${user.email}',
@@ -358,7 +369,7 @@ app.get('/auth/google/callback', async (req, res) => {
         window.close();
       </script>
     `);
-
+    
   } catch (error) {
     console.error('Google OAuth error:', error);
     res.send(`
@@ -377,7 +388,7 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-
+    
     res.json({
       success: true,
       user: {
@@ -431,7 +442,7 @@ app.post('/api/keys/generate', authenticateToken, async (req, res) => {
     });
 
     await user.save();
-
+    
     res.json({
       success: true,
       apiKey,
@@ -442,10 +453,10 @@ app.post('/api/keys/generate', authenticateToken, async (req, res) => {
         createdAt: new Date().toISOString()
       }
     });
-
+    
   } catch (error) {
     console.error('API key generation error:', error);
-    res.status(500).json({
+    res.status(500).json({ 
       error: 'Failed to generate API key',
       code: 'GENERATION_FAILED'
     });
@@ -485,10 +496,10 @@ app.use('*', (req, res) => {
 
 // For local development
 if (require.main === module) {
-  app.listen(port, () => {
-    console.log(`🚀 NexusPay API running on port ${port}`);
-  });
+app.listen(port, () => {
+  console.log(`🚀 NexusPay API running on port ${port}`);
+});
 }
 
 // For Vercel
-module.exports = app;
+module.exports = app; 

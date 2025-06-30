@@ -633,38 +633,42 @@
                 'width=500,height=600,scrollbars=yes,resizable=yes'
             );
             
-            const checkClosed = setInterval(() => {
-                if (popup.closed) {
-                    clearInterval(checkClosed);
-                }
-            }, 1000);
+            // Don't check popup.closed as it causes COOP errors
+            // Instead rely on message passing
         });
 
         // Listen for Google OAuth messages
         window.addEventListener('message', function(event) {
+            // Only accept messages from same origin
+            if (event.origin !== window.location.origin) return;
+            
             if (event.data.success) {
                 localStorage.setItem('nexuspay_token', event.data.token);
                 localStorage.setItem('nexuspay_user', JSON.stringify(event.data.user));
                 
                 // Send success message to parent window if it exists
-                if (window.opener) {
-                    window.opener.postMessage({
-                        type: 'auth_success',
-                        user: event.data.user,
-                        token: event.data.token
-                    }, '*');
+                try {
+                    if (window.opener && !window.opener.closed) {
+                        window.opener.postMessage({
+                            type: 'auth_success',
+                            user: event.data.user,
+                            token: event.data.token
+                        }, window.location.origin);
+                        
+                        // Close popup after successful communication
+                        setTimeout(() => window.close(), 500);
+                        return;
+                    }
+                } catch (e) {
+                    console.log('Could not communicate with parent window, redirecting...');
                 }
                 
+                // If no parent window or communication failed, redirect to dashboard
                 if (event.data.redirectTo === 'dashboard') {
-                    // Show success message and redirect to dashboard
                     showSuccess(event.data.user);
                     setTimeout(() => {
-                        if (window.opener) {
-                            window.close();
-                        } else {
-                            window.location.href = '/dashboard';
-                        }
-                    }, 2000);
+                        window.location.href = '/dashboard';
+                    }, 1500);
                 } else {
                     // Regular success flow
                     showSuccess(event.data.user);
