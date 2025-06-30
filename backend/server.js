@@ -314,6 +314,17 @@ app.get('/auth/google/callback', async (req, res) => {
     }
 
     // Exchange code for token and get user info
+    const protocol = req.get('x-forwarded-proto') || req.protocol;
+    const host = req.get('host');
+    const redirectUri = `${protocol}://${host}/auth/google/callback`;
+    
+    // Add detailed logging for debugging
+    console.log('OAuth Callback Debug:');
+    console.log('- x-forwarded-proto:', req.get('x-forwarded-proto'));
+    console.log('- req.protocol:', req.protocol);
+    console.log('- host:', host);
+    console.log('- final redirectUri:', redirectUri);
+    
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -322,7 +333,7 @@ app.get('/auth/google/callback', async (req, res) => {
         client_secret: process.env.GOOGLE_CLIENT_SECRET,
         code,
         grant_type: 'authorization_code',
-        redirect_uri: `${req.protocol}://${req.get('host')}/auth/google/callback`
+        redirect_uri: redirectUri
       })
     });
 
