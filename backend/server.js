@@ -118,9 +118,24 @@ const validateApiKey = async (req, res, next) => {
   }
 };
 
+// Debug endpoint for Vercel deployment issues
+app.get('/debug/env', (req, res) => {
+  res.json({
+    nodeEnv: process.env.NODE_ENV,
+    hasMongoUri: !!process.env.MONGODB_URI,
+    mongoUriPreview: process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 20) + '...' : null,
+    hasGoogleClientId: !!process.env.GOOGLE_CLIENT_ID,
+    googleClientIdPreview: process.env.GOOGLE_CLIENT_ID ? process.env.GOOGLE_CLIENT_ID.substring(0, 20) + '...' : null,
+    hasGoogleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+    hasJwtSecret: !!process.env.JWT_SECRET,
+    mongoConnectionState: mongoose.connection.readyState,
+    mongoStates: { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' }
+  });
+});
+
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     service: 'nexuspay-api',
@@ -476,6 +491,25 @@ app.post('/api/wallets', validateApiKey, (req, res) => {
       id: req.user._id,
       email: req.user.email
     } : null
+  });
+});
+
+// Debug endpoint for Vercel deployment issues
+app.get('/debug/env', (req, res) => {
+  res.json({
+    nodeEnv: process.env.NODE_ENV,
+    hasMongoUri: !!process.env.MONGODB_URI,
+    mongoUriLength: process.env.MONGODB_URI ? process.env.MONGODB_URI.length : 0,
+    hasGoogleClientId: !!process.env.GOOGLE_CLIENT_ID,
+    hasGoogleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+    hasJwtSecret: !!process.env.JWT_SECRET,
+    mongoConnectionState: mongoose.connection.readyState,
+    mongoConnectionStates: {
+      0: 'disconnected',
+      1: 'connected', 
+      2: 'connecting',
+      3: 'disconnecting'
+    }
   });
 });
 
