@@ -627,11 +627,15 @@
         document.getElementById('google-auth').addEventListener('click', (e) => {
             e.preventDefault();
             
+            console.log('Starting Google OAuth...');
+            
             const popup = window.open(
-                '/auth/google?popup=true',
+                '/auth/google',
                 'google-auth',
                 'width=500,height=600,scrollbars=yes,resizable=yes'
             );
+            
+            console.log('Popup opened:', popup);
             
             // Don't check popup.closed as it causes COOP errors
             // Instead rely on message passing
@@ -639,16 +643,23 @@
 
         // Listen for Google OAuth messages
         window.addEventListener('message', function(event) {
+            console.log('Received message:', event.data, 'from:', event.origin);
+            
             // Only accept messages from same origin
-            if (event.origin !== window.location.origin) return;
+            if (event.origin !== window.location.origin) {
+                console.log('Message rejected - wrong origin');
+                return;
+            }
             
             if (event.data.success) {
+                console.log('Authentication successful!');
                 localStorage.setItem('nexuspay_token', event.data.token);
                 localStorage.setItem('nexuspay_user', JSON.stringify(event.data.user));
                 
                 // Send success message to parent window if it exists
                 try {
                     if (window.opener && !window.opener.closed) {
+                        console.log('Sending success to parent window');
                         window.opener.postMessage({
                             type: 'auth_success',
                             user: event.data.user,
@@ -660,11 +671,12 @@
                         return;
                     }
                 } catch (e) {
-                    console.log('Could not communicate with parent window, redirecting...');
+                    console.log('Could not communicate with parent window:', e);
                 }
                 
                 // If no parent window or communication failed, redirect to dashboard
                 if (event.data.redirectTo === 'dashboard') {
+                    console.log('Showing success view');
                     showSuccess(event.data.user);
                     setTimeout(() => {
                         window.location.href = '/dashboard';
@@ -674,6 +686,7 @@
                     showSuccess(event.data.user);
                 }
             } else {
+                console.log('Authentication failed:', event.data.error);
                 showError(event.data.error || 'Authentication failed');
             }
         });
