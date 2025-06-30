@@ -328,8 +328,13 @@ app.get('/auth/google/callback', async (req, res) => {
 
     const tokenData = await tokenResponse.json();
     
+    // Add detailed logging for debugging
+    console.log('Token response status:', tokenResponse.status);
+    console.log('Token data received:', JSON.stringify(tokenData, null, 2));
+    
     if (!tokenData.access_token) {
-      throw new Error('Failed to get access token');
+      console.error('No access token in response. Full response:', tokenData);
+      throw new Error(`Failed to get access token: ${tokenData.error || 'Unknown error'}`);
     }
 
     // Get user info from Google
