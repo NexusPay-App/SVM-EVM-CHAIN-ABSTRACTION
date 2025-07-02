@@ -28,10 +28,10 @@ async function main() {
     console.log("✅ WalletFactory deployed to:", walletFactory.address);
 
     // 3. Deploy Paymaster
-    console.log("3️⃣ Deploying Paymaster...");
-    const Paymaster = await ethers.getContractFactory("Paymaster");
-    const paymaster = await Paymaster.deploy(entryPoint.address);
-    await paymaster.deployed();
+      console.log("3️⃣ Deploying Paymaster...");
+  const Paymaster = await ethers.getContractFactory("Paymaster");
+  const paymaster = await Paymaster.deploy(entryPoint.address, deployer.address);
+  await paymaster.deployed();
     console.log("✅ Paymaster deployed to:", paymaster.address);
 
     // 4. Create test wallet

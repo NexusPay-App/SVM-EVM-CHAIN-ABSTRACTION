@@ -1,0 +1,13 @@
+{
+  "chainId": "11155111",
+  "network": "sepolia",
+  "masterPaymaster": "0x7E9896Ed5491F473ab24E407E48e36cb08D6759a",
+  "factory": "0x6092a28Fa2D1c4005d68cd0c4bcdd64F3b4621a2",
+  "deployer": "0x20491a33f07B3E5bEDb847c7350332b85B479F08",
+  "deploymentBlock": 8675615,
+  "deploymentCost": "0.01413916",
+  "estimatedProxyGas": "30000",
+  "estimatedProxyCostETH": "0.0006",
+  "estimatedProxyCostUSD": "1.50",
+  "timestamp": "2025-07-02T10:57:04.651Z"
+}

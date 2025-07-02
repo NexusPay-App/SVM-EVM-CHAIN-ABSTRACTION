@@ -22,6 +22,26 @@ STRATEGY.md
 ROADMAP.md
 TODO.md
 
+# Internal Project Documentation & Tickets
+tickets/
+TICKET-*.md
+*COMPLETION-SUMMARY.md
+PROJECT_RESTRUCTURE_TICKETS.md
+TICKET-*-AUDIT-REPORT.md
+
+# Backend Configuration & Secrets
+backend/.env*
+backend/deployer-config.txt
+backend/config/local-*.js
+backend/real-wallet-registry.json
+backend/contracts/evm/deployments/unknown-*.json
+
+# Database & Migration Files
+backend/database/migrations/
+backend/database/seeds/
+*.sql.backup
+database-backup-*.sql
+
 # Development Environment
 .vscode/
 .idea/

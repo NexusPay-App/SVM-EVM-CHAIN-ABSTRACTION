@@ -26,6 +26,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .logo-section {
@@ -85,7 +88,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 2rem;
         }
@@ -109,6 +112,140 @@
             font-size: 1.2rem;
             color: #cccccc;
             margin-bottom: 2rem;
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .paymaster-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(10, 207, 242, 0.3);
+        }
+
+        .paymaster-title {
+            font-weight: 600;
+            color: #0acff2;
+            margin-bottom: 1rem;
+        }
+
+        .paymaster-wallets {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .paymaster-wallet {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(10, 207, 242, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .wallet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .wallet-chain {
+            font-weight: 600;
+            color: #0acff2;
+            text-transform: capitalize;
+        }
+
+        .wallet-balance {
+            font-weight: 600;
+            color: #51cf66;
+        }
+
+        .wallet-address {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #cccccc;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0.5rem;
+            border-radius: 4px;
+            word-break: break-all;
+            margin-bottom: 0.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .wallet-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .deployment-info {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .deployment-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #0acff2;
+            margin-bottom: 0.5rem;
+        }
+
+        .deployment-hash {
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            color: #888;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0.3rem 0.5rem;
+            border-radius: 4px;
+            word-break: break-all;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(10, 207, 242, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: #0acff2;
+            box-shadow: 0 10px 30px rgba(10, 207, 242, 0.2);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #0acff2;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #cccccc;
+            font-size: 0.9rem;
+            font-weight: 500;
         }
 
         .tabs {
@@ -143,59 +280,384 @@
 
         .tab-content {
             display: none;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            padding: 2rem;
-            border: 1px solid rgba(10, 207, 242, 0.3);
         }
 
         .tab-content.active {
             display: block;
         }
 
-        .quick-actions {
+        .projects-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
             gap: 2rem;
-            margin-bottom: 3rem;
+            margin-bottom: 2rem;
         }
 
-        .action-card {
+        .project-card {
             background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(10, 207, 242, 0.3);
             border-radius: 16px;
             padding: 2rem;
-            text-align: center;
-            border: 1px solid rgba(10, 207, 242, 0.3);
             transition: all 0.3s ease;
-            cursor: pointer;
+            position: relative;
+            overflow: hidden;
         }
 
-        .action-card:hover {
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #0acff2, #ffffff);
+        }
+
+        .project-card:hover {
             transform: translateY(-5px);
             border-color: #0acff2;
-            box-shadow: 0 10px 30px rgba(10, 207, 242, 0.3);
+            box-shadow: 0 20px 40px rgba(10, 207, 242, 0.3);
         }
 
-        .action-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-
-        .action-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: #0acff2;
-        }
-
-        .action-description {
-            color: #cccccc;
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 1.5rem;
         }
 
-        .api-key-section {
-            margin-top: 2rem;
+        .project-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #0acff2;
+            margin-bottom: 0.5rem;
+        }
+
+        .project-id {
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            color: #888;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            border: 1px solid rgba(10, 207, 242, 0.3);
+        }
+
+        .project-description {
+            color: #cccccc;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .project-chains {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .chain-badge {
+            background: linear-gradient(135deg, rgba(10, 207, 242, 0.2), rgba(10, 207, 242, 0.1));
+            color: #0acff2;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            border: 1px solid rgba(10, 207, 242, 0.3);
+        }
+
+        .paymaster-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(10, 207, 242, 0.3);
+        }
+
+        .paymaster-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .paymaster-title {
+            font-weight: 600;
+            color: #0acff2;
+            margin-bottom: 1rem;
+        }
+
+        .paymaster-wallets {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .paymaster-wallet {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(10, 207, 242, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .wallet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .wallet-chain {
+            font-weight: 600;
+            color: #0acff2;
+            text-transform: capitalize;
+        }
+
+        .wallet-balance {
+            font-weight: 600;
+            color: #51cf66;
+        }
+
+        .wallet-address {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #cccccc;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0.5rem;
+            border-radius: 4px;
+            word-break: break-all;
+            margin-bottom: 0.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .wallet-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: #0acff2;
+            color: #000000;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .btn:hover {
+            background: #08a8c7;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(10, 207, 242, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(10, 207, 242, 0.2);
+            border-color: #0acff2;
+        }
+
+        .btn-small {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.75rem;
+        }
+
+        .deployment-info {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .deployment-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #0acff2;
+            margin-bottom: 0.5rem;
+        }
+
+        .deployment-hash {
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            color: #888;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0.3rem 0.5rem;
+            border-radius: 4px;
+            word-break: break-all;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* API Keys Section Styles */
+        .api-keys-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(10, 207, 242, 0.3);
+        }
+
+        .api-keys-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .api-keys-title {
+            font-weight: 600;
+            color: #0acff2;
+        }
+
+        .api-keys-list {
+            display: grid;
+            gap: 0.8rem;
+        }
+
+        .api-key-item {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(10, 207, 242, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .api-key-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .api-key-name {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .api-key-type {
+            background: rgba(10, 207, 242, 0.2);
+            color: #0acff2;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .api-key-preview-container {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .api-key-preview {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #cccccc;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0.5rem;
+            border-radius: 4px;
+            word-break: break-all;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            flex: 1;
+        }
+
+        .api-key-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #888;
+            margin-bottom: 0.8rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .api-key-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: #ef4444;
+        }
+
+        .no-api-keys {
+            text-align: center;
+            color: #888;
+            font-style: italic;
+            padding: 2rem;
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .project-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            margin: 5% auto;
+            padding: 2rem;
+            border: 1px solid #0acff2;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0acff2;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #0acff2;
         }
 
         .form-group {
@@ -211,115 +673,23 @@
 
         .form-input {
             width: 100%;
-            padding: 1rem;
-            border: 2px solid rgba(10, 207, 242, 0.3);
-            border-radius: 8px;
+            padding: 0.75rem;
             background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(10, 207, 242, 0.3);
+            border-radius: 8px;
             color: #ffffff;
             font-size: 1rem;
-            transition: border-color 0.3s ease;
         }
 
         .form-input:focus {
             outline: none;
             border-color: #0acff2;
-        }
-
-        .btn {
-            background: #0acff2;
-            color: #000000;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn:hover {
-            background: #08a8c7;
-            transform: translateY(-2px);
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .api-keys-list {
-            margin-top: 2rem;
-        }
-
-        .api-key-item {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            border: 1px solid rgba(10, 207, 242, 0.2);
-        }
-
-        .api-key-header {
-            display: flex;
-            justify-content: between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .api-key-name {
-            font-weight: 600;
-            color: #0acff2;
-        }
-
-        .api-key-usage {
-            font-size: 0.9rem;
-            color: #cccccc;
-        }
-
-        .api-key-value {
-            font-family: 'Courier New', monospace;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 0.5rem;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            word-break: break-all;
-            margin-top: 0.5rem;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 1.5rem;
-            text-align: center;
-            border: 1px solid rgba(10, 207, 242, 0.3);
-        }
-
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #0acff2;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            color: #cccccc;
-            font-size: 0.9rem;
+            box-shadow: 0 0 0 2px rgba(10, 207, 242, 0.2);
         }
 
         .loading {
             text-align: center;
-            color: #0acff2;
+            color: #888;
             padding: 2rem;
         }
 
@@ -341,27 +711,86 @@
             margin-bottom: 1rem;
         }
 
-        @media (max-width: 768px) {
-            .header {
-                padding: 1rem;
-                flex-direction: column;
-                gap: 1rem;
-            }
+        .no-projects {
+            text-align: center;
+            padding: 3rem;
+            color: #cccccc;
+        }
 
+        .no-projects-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .create-project-btn {
+            background: linear-gradient(135deg, #0acff2, #08a8c7);
+            color: #000000;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .create-project-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(10, 207, 242, 0.4);
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            color: #cccccc;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-label:hover {
+            background: rgba(10, 207, 242, 0.1);
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #0acff2;
+        }
+
+        @media (max-width: 768px) {
             .container {
                 padding: 1rem;
             }
-
-            .tabs {
-                flex-direction: column;
-            }
-
-            .tab {
-                padding: 0.75rem 1rem;
-            }
-
-            .quick-actions {
+            
+            .projects-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .dashboard-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .header {
+                padding: 1rem;
+            }
+            
+            .welcome-title {
+                font-size: 2rem;
             }
         }
     </style>
@@ -369,164 +798,127 @@
 <body>
     <div class="header">
         <div class="logo-section">
-            <img src="/assets/logos/Landscape Logo on Black@300x.png" alt="NexusPay" class="logo">
+            <img src="/assets/logos/Landscape Logo@300x.png" alt="NexusPay" class="logo">
         </div>
         <div class="user-section">
+            <img id="userAvatar" alt="User Avatar" class="user-avatar" style="display: none;">
             <div class="user-info">
-                <div class="user-name" id="userName">Loading...</div>
-                <div class="user-email" id="userEmail">Loading...</div>
+                <div id="userName" class="user-name">Loading...</div>
+                <div id="userEmail" class="user-email">Loading...</div>
             </div>
-            <img src="" alt="User Avatar" class="user-avatar" id="userAvatar" style="display: none;">
-            <button class="logout-btn" onclick="logout()">Sign Out</button>
+            <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
     </div>
 
     <div class="container">
         <div class="welcome-section">
-            <h1 class="welcome-title">Welcome to Your Dashboard</h1>
-            <p class="welcome-subtitle">Manage your API keys, monitor usage, and access platform features</p>
+            <h1 class="welcome-title">NexusPay Dashboard</h1>
+            <p class="welcome-subtitle">Manage your blockchain infrastructure and paymaster wallets</p>
+        </div>
+
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <div id="totalProjects" class="stat-number">0</div>
+                <div class="stat-label">Total Projects</div>
+            </div>
+            <div class="stat-card">
+                <div id="totalPaymasters" class="stat-number">0</div>
+                <div class="stat-label">Active Paymasters</div>
+            </div>
+            <div class="stat-card">
+                <div id="totalBalance" class="stat-number">$0</div>
+                <div class="stat-label">Total Balance</div>
+            </div>
+            <div class="stat-card">
+                <div id="totalApiKeys" class="stat-number">0</div>
+                <div class="stat-label">API Keys</div>
+            </div>
         </div>
 
         <div class="tabs">
-            <button class="tab active" onclick="showTab('overview')">📊 Overview</button>
-            <button class="tab" onclick="showTab('api-keys')">🔑 API Keys</button>
-            <button class="tab" onclick="showTab('analytics')">📈 Analytics</button>
-            <button class="tab" onclick="showTab('platform')">🚀 Live Platform</button>
-            <button class="tab" onclick="showTab('documentation')">📚 Documentation</button>
+            <button class="tab active" onclick="showTab('projects')">Projects</button>
+            <button class="tab" onclick="showTab('create')">Create Project</button>
+            <button class="tab" onclick="showTab('analytics')">Analytics</button>
         </div>
 
-        <!-- Overview Tab -->
-        <div id="overview" class="tab-content active">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number" id="totalApiKeys">0</div>
-                    <div class="stat-label">API Keys</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="totalRequests">0</div>
-                    <div class="stat-label">Total Requests</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="lastUsed">Never</div>
-                    <div class="stat-label">Last Used</div>
-                </div>
-            </div>
-
-            <div class="quick-actions">
-                <div class="action-card" onclick="showTab('api-keys')">
-                    <div class="action-icon">🔑</div>
-                    <div class="action-title">Generate API Key</div>
-                    <div class="action-description">Create secure API keys for your projects</div>
-                </div>
-                <div class="action-card" onclick="showTab('platform')">
-                    <div class="action-icon">🚀</div>
-                    <div class="action-title">Access Live Platform</div>
-                    <div class="action-description">Use the production NexusPay platform</div>
-                </div>
-                <div class="action-card" onclick="showTab('documentation')">
-                    <div class="action-icon">📚</div>
-                    <div class="action-title">View Documentation</div>
-                    <div class="action-description">Complete API reference and guides</div>
-                </div>
+        <div id="projectsTab" class="tab-content active">
+            <div id="projectsList" class="projects-grid">
+                <div class="loading">Loading projects...</div>
             </div>
         </div>
 
-        <!-- API Keys Tab -->
-        <div id="api-keys" class="tab-content">
-            <div class="api-key-section">
-                <h2 style="color: #0acff2; margin-bottom: 2rem;">Generate New API Key</h2>
-                <div id="apiKeyError" class="error" style="display: none;"></div>
-                <div id="apiKeySuccess" class="success" style="display: none;"></div>
+        <div id="createTab" class="tab-content">
+            <div style="max-width: 600px; margin: 0 auto; background: rgba(255, 255, 255, 0.1); padding: 2rem; border-radius: 16px; border: 1px solid rgba(10, 207, 242, 0.3);">
+                <h3 style="color: #0acff2; margin-bottom: 2rem; text-align: center;">Create New Project</h3>
                 
-                <form id="apiKeyForm">
+                <div id="createError" class="error" style="display: none;"></div>
+                <div id="createSuccess" class="success" style="display: none;"></div>
+                
+                <form id="createProjectForm">
                     <div class="form-group">
-                        <label class="form-label" for="projectName">Project Name *</label>
-                        <input type="text" id="projectName" class="form-input" placeholder="My Awesome Project" required>
+                        <label class="form-label">Project Name *</label>
+                        <input type="text" id="projectName" class="form-input" required placeholder="Enter project name">
                     </div>
+                    
                     <div class="form-group">
-                        <label class="form-label" for="website">Website/GitHub URL</label>
-                        <input type="url" id="website" class="form-input" placeholder="https://github.com/username/project">
+                        <label class="form-label">Description</label>
+                        <input type="text" id="projectDescription" class="form-input" placeholder="Brief project description">
                     </div>
-                    <button type="submit" class="btn" id="generateBtn">
-                        🔑 Generate API Key
+                    
+                    <div class="form-group">
+                        <label class="form-label">Website</label>
+                        <input type="url" id="projectWebsite" class="form-input" placeholder="https://your-website.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Supported Blockchains *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="chains" value="ethereum"> Ethereum
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="chains" value="arbitrum"> Arbitrum
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="chains" value="solana"> Solana
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="create-project-btn" id="createBtn">
+                        <span>🚀</span> Create Project & Deploy Paymasters
                     </button>
                 </form>
             </div>
-
-            <div class="api-keys-list">
-                <h2 style="color: #0acff2; margin-bottom: 1.5rem;">Your API Keys</h2>
-                <div id="apiKeysList">
-                    <div class="loading">Loading your API keys...</div>
-                </div>
-            </div>
         </div>
 
-        <!-- Analytics Tab -->
-        <div id="analytics" class="tab-content">
-            <h2 style="color: #0acff2; margin-bottom: 2rem;">📈 Usage Analytics</h2>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number" id="analyticsRequests">0</div>
-                    <div class="stat-label">API Requests This Month</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="analyticsKeys">0</div>
-                    <div class="stat-label">Active API Keys</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="analyticsUptime">99.9%</div>
-                    <div class="stat-label">Platform Uptime</div>
-                </div>
-            </div>
-            <p style="color: #cccccc; text-align: center; margin-top: 2rem;">
-                📊 Detailed analytics dashboard coming soon! Track your API usage, performance metrics, and more.
-            </p>
-        </div>
-
-        <!-- Live Platform Tab -->
-        <div id="platform" class="tab-content">
-            <h2 style="color: #0acff2; margin-bottom: 2rem;">🚀 Live Platform Access</h2>
-            <div class="action-card" style="max-width: 600px; margin: 0 auto;">
-                <div class="action-icon">🌐</div>
-                <div class="action-title">Production API Endpoint</div>
-                <div class="action-description">Access the live NexusPay platform for production use</div>
-                <div style="margin: 1.5rem 0;">
-                    <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; font-family: monospace;">
-                        https://backend-amber-zeta-94.vercel.app
-                    </div>
-                </div>
-                <button class="btn" onclick="window.open('https://backend-amber-zeta-94.vercel.app', '_blank')">
-                    🚀 Open Live Platform
-                </button>
+        <div id="analyticsTab" class="tab-content">
+            <div style="text-align: center; padding: 3rem; color: #cccccc;">
+                <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;">📊</div>
+                <h3>Analytics Dashboard</h3>
+                <p>Detailed analytics and usage statistics coming soon...</p>
             </div>
         </div>
+    </div>
 
-        <!-- Documentation Tab -->
-        <div id="documentation" class="tab-content">
-            <h2 style="color: #0acff2; margin-bottom: 2rem;">📚 API Documentation</h2>
-            <div class="quick-actions">
-                <div class="action-card" onclick="window.open('/documentation', '_blank')">
-                    <div class="action-icon">📖</div>
-                    <div class="action-title">Complete API Reference</div>
-                    <div class="action-description">Detailed documentation with examples</div>
-                </div>
-                <div class="action-card" onclick="window.open('https://github.com/nexuspay/sdk', '_blank')">
-                    <div class="action-icon">💻</div>
-                    <div class="action-title">SDK Documentation</div>
-                    <div class="action-description">JavaScript/TypeScript SDK guides</div>
-                </div>
-                <div class="action-card" onclick="window.open('/documentation#examples', '_blank')">
-                    <div class="action-icon">⚡</div>
-                    <div class="action-title">Quick Start Guide</div>
-                    <div class="action-description">Get started in minutes</div>
-                </div>
+    <!-- Funding Modal -->
+    <div id="fundingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Fund Paymaster Wallet</h2>
+                <span class="close" onclick="closeFundingModal()">&times;</span>
+            </div>
+            <div id="fundingContent">
+                <!-- Content will be populated by JavaScript -->
             </div>
         </div>
     </div>
 
     <script>
         let currentUser = null;
-        let userApiKeys = [];
+        let userProjects = [];
+        let projectPaymasters = {};
+        let projectApiKeys = {};
 
         // Check authentication on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -540,7 +932,6 @@
                 return;
             }
 
-            // Fetch user profile
             fetch('/api/user/profile', {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -551,7 +942,7 @@
                 if (data.success) {
                     currentUser = data.user;
                     updateUserInterface();
-                    loadApiKeys();
+                    loadProjects();
                 } else {
                     localStorage.removeItem('nexuspay_token');
                     window.location.href = '/';
@@ -568,50 +959,212 @@
             document.getElementById('userName').textContent = currentUser.name;
             document.getElementById('userEmail').textContent = currentUser.email;
             
-            if (currentUser.profilePicture) {
+            if (currentUser.profile_picture) {
                 const avatar = document.getElementById('userAvatar');
-                avatar.src = currentUser.profilePicture;
+                avatar.src = currentUser.profile_picture;
                 avatar.style.display = 'block';
-            }
-
-            // Update stats
-            document.getElementById('totalApiKeys').textContent = currentUser.apiKeys.length;
-            
-            const totalRequests = currentUser.apiKeys.reduce((sum, key) => sum + key.usageCount, 0);
-            document.getElementById('totalRequests').textContent = totalRequests;
-            document.getElementById('analyticsRequests').textContent = totalRequests;
-            document.getElementById('analyticsKeys').textContent = currentUser.apiKeys.length;
-
-            const lastUsed = currentUser.apiKeys
-                .filter(key => key.lastUsed)
-                .sort((a, b) => new Date(b.lastUsed) - new Date(a.lastUsed))[0];
-            
-            if (lastUsed) {
-                document.getElementById('lastUsed').textContent = new Date(lastUsed.lastUsed).toLocaleDateString();
             }
         }
 
-        function loadApiKeys() {
-            const apiKeysList = document.getElementById('apiKeysList');
+        function loadProjects() {
+            const token = localStorage.getItem('nexuspay_token');
             
-            if (currentUser.apiKeys.length === 0) {
-                apiKeysList.innerHTML = '<p style="color: #cccccc; text-align: center;">No API keys generated yet. Create your first API key above!</p>';
+            fetch('/api/projects', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.success && data.data && Array.isArray(data.data.projects)) {
+                    userProjects = data.data.projects;
+                    loadAllPaymasterData();
+                } else {
+                    userProjects = [];
+                    displayProjects();
+                    updateStats();
+                }
+            })
+            .catch(error => {
+                console.error('Error loading projects:', error);
+                userProjects = [];
+                displayProjects();
+                updateStats();
+            });
+        }
+
+        async function loadAllPaymasterData() {
+            const token = localStorage.getItem('nexuspay_token');
+            
+            for (const project of userProjects) {
+                try {
+                    const projectId = project.id || project.project_id;
+                    
+                    // Load paymaster balances
+                    const balanceResponse = await fetch(`/api/projects/${projectId}/paymaster/balance`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (balanceResponse.ok) {
+                        const balanceData = await balanceResponse.json();
+                        if (balanceData.success) {
+                            projectPaymasters[projectId] = balanceData.data;
+                        }
+                    }
+                    
+                    // Load paymaster addresses
+                    const addressResponse = await fetch(`/api/projects/${projectId}/paymaster/addresses`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (addressResponse.ok) {
+                        const addressData = await addressResponse.json();
+                        if (addressData.success && projectPaymasters[projectId]) {
+                            projectPaymasters[projectId].addresses = addressData.data.addresses;
+                        }
+                    }
+
+                    // Load API keys
+                    const apiKeysResponse = await fetch(`/api/projects/${projectId}/api-keys`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (apiKeysResponse.ok) {
+                        const apiKeysData = await apiKeysResponse.json();
+                        if (apiKeysData.success) {
+                            projectApiKeys[projectId] = apiKeysData.data;
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error loading project data for ${projectId}:`, error);
+                }
+            }
+            
+            displayProjects();
+            updateStats();
+        }
+
+        function displayProjects() {
+            const projectsList = document.getElementById('projectsList');
+            
+            if (!userProjects || userProjects.length === 0) {
+                projectsList.innerHTML = `
+                    <div class="no-projects">
+                        <div class="no-projects-icon">📁</div>
+                        <h3>No Projects Yet</h3>
+                        <p>Create your first project to get started with NexusPay</p>
+                        <button class="create-project-btn" onclick="showTab('create')">
+                            <span>🚀</span> Create Your First Project
+                        </button>
+                    </div>
+                `;
                 return;
             }
 
-            apiKeysList.innerHTML = currentUser.apiKeys.map(key => `
-                <div class="api-key-item">
-                    <div class="api-key-header">
-                        <div class="api-key-name">${key.projectName}</div>
-                        <div class="api-key-usage">Used ${key.usageCount} times</div>
+            projectsList.innerHTML = userProjects.map(project => {
+                const paymasterData = projectPaymasters[project.id] || {};
+                const totalPaymasters = project.chains ? project.chains.length : 0;
+                
+                return `
+                    <div class="project-card">
+                        <div class="project-header">
+                            <div>
+                                <div class="project-name">${project.name}</div>
+                                <div class="project-id">${project.id}</div>
+                            </div>
+                        </div>
+                        
+                        ${project.description ? `<div class="project-description">${project.description}</div>` : ''}
+                        
+                        <div class="project-chains">
+                            ${project.chains.map(chain => `<span class="chain-badge">${chain}</span>`).join('')}
+                        </div>
+                        
+                        <div class="paymaster-section">
+                            <div class="paymaster-title">💳 Paymaster Wallets (${totalPaymasters})</div>
+                            <div class="paymaster-wallets">
+                                ${project.chains.map(chain => {
+                                    const chainData = paymasterData.balances ? paymasterData.balances.find(b => b.chain === chain) : null;
+                                    const address = paymasterData.addresses ? paymasterData.addresses[chain] : 'Loading...';
+                                    const balance = chainData ? `${chainData.balance} ${chainData.symbol}` : 'Loading...';
+                                    
+                                    return `
+                                        <div class="paymaster-wallet">
+                                            <div class="wallet-header">
+                                                <div class="wallet-chain">${chain}</div>
+                                                <div class="wallet-balance">${balance}</div>
+                                            </div>
+                                            <div class="wallet-address">${address}</div>
+                                            <div class="wallet-actions">
+                                                <button class="btn btn-small" onclick="fundWallet('${project.id}', '${chain}')">
+                                                    💰 Fund Wallet
+                                                </button>
+                                                <button class="btn-secondary btn btn-small" onclick="copyAddress('${address}')">
+                                                    📋 Copy
+                                                </button>
+                                                <button class="btn-secondary btn btn-small" onclick="refreshBalance('${project.id}', '${chain}')">
+                                                    🔄 Refresh
+                                                </button>
+                                            </div>
+                                            ${chainData && chainData.deployment_tx ? `
+                                                <div class="deployment-info">
+                                                    <div class="deployment-title">Deployment Transaction:</div>
+                                                    <div class="deployment-hash">${chainData.deployment_tx}</div>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="api-keys-section">
+                            <div class="api-keys-header">
+                                <div class="api-keys-title">🔑 API Keys (${projectApiKeys[project.id] ? projectApiKeys[project.id].api_keys.length : 0}/3)</div>
+                                <button class="btn btn-small" onclick="createApiKey('${project.id}')" ${projectApiKeys[project.id] && projectApiKeys[project.id].api_keys.length >= 3 ? 'disabled' : ''}>
+                                    ➕ New Key
+                                </button>
+                            </div>
+                            <div class="api-keys-list">
+                                ${projectApiKeys[project.id] && projectApiKeys[project.id].api_keys.length > 0 ? 
+                                    projectApiKeys[project.id].api_keys.map(apiKey => `
+                                        <div class="api-key-item">
+                                            <div class="api-key-header">
+                                                <div class="api-key-name">${apiKey.name}</div>
+                                                <div class="api-key-type">${apiKey.type}</div>
+                                            </div>
+                                            <div class="api-key-preview-container">
+                                                <div class="api-key-preview" id="key-${apiKey.id}" title="${apiKey.key_preview}">${apiKey.key_preview}</div>
+                                                <button class="btn-secondary btn btn-small" onclick="toggleKeyVisibility('${project.id}', '${apiKey.id}', this)">
+                                                    👁️ Show
+                                                </button>
+                                            </div>
+                                            <div class="api-key-info">
+                                                <span class="api-key-created">Created: ${new Date(apiKey.createdAt).toLocaleDateString()}</span>
+                                                <span class="api-key-last-used">${apiKey.last_used ? 'Last used: ' + new Date(apiKey.last_used).toLocaleDateString() : 'Never used'}</span>
+                                            </div>
+                                            <div class="api-key-actions">
+                                                <button class="btn-secondary btn btn-small" onclick="copyFullApiKey('${project.id}', '${apiKey.id}', this)">
+                                                    📋 Copy Full Key
+                                                </button>
+                                                <button class="btn-danger btn btn-small" onclick="deleteApiKey('${project.id}', '${apiKey.id}', '${apiKey.name}')">
+                                                    🗑️ Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    `).join('') 
+                                    : '<div class="no-api-keys">No API keys created yet. Create your first API key to start integrating.</div>'
+                                }
+                            </div>
+                        </div>
+                        
+                        <div class="project-stats">
+                            <span>Created: ${new Date(project.createdAt).toLocaleDateString()}</span>
+                            ${project.website ? `<a href="${project.website}" target="_blank" style="color: #0acff2;">🌐 Website</a>` : ''}
+                        </div>
                     </div>
-                    <div style="color: #cccccc; font-size: 0.9rem; margin-bottom: 0.5rem;">
-                        Created: ${new Date(key.createdAt).toLocaleDateString()}
-                        ${key.website ? ` • Website: ${key.website}` : ''}
-                    </div>
-                    <div class="api-key-value">${key.keyId}</div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function showTab(tabName) {
@@ -626,70 +1179,1162 @@
             });
             
             // Show selected tab content
-            document.getElementById(tabName).classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
             
             // Add active class to clicked tab
             event.target.classList.add('active');
         }
 
-        // API Key Generation
-        document.getElementById('apiKeyForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        function fundWallet(projectId, chain) {
+            const project = userProjects.find(p => p.id === projectId);
+            const paymasterData = projectPaymasters[projectId];
+            const address = paymasterData && paymasterData.addresses ? paymasterData.addresses[chain] : 'Unknown';
             
-            const projectName = document.getElementById('projectName').value;
-            const website = document.getElementById('website').value;
+            const modal = document.getElementById('fundingModal');
+            const content = document.getElementById('fundingContent');
+            
+            content.innerHTML = `
+                <div style="margin-bottom: 1.5rem;">
+                    <p><strong>Project:</strong> ${project.name}</p>
+                    <p><strong>Chain:</strong> ${chain.charAt(0).toUpperCase() + chain.slice(1)}</p>
+                    <p><strong>Wallet Address:</strong></p>
+                    <div style="font-family: monospace; background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 8px; word-break: break-all; margin-top: 0.5rem;">
+                        ${address}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Amount to Fund</label>
+                    <input type="number" step="0.001" min="0" id="fundAmount" class="form-input" placeholder="Enter amount">
+                    <small style="color: #888; font-size: 0.8rem; margin-top: 0.5rem; display: block;">
+                        Send ${chain === 'solana' ? 'SOL' : 'ETH'} to fund gas fees
+                    </small>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button class="btn" onclick="executeFunding('${projectId}', '${chain}')">
+                        💰 Fund Wallet
+                    </button>
+                    <button class="btn-secondary btn" onclick="closeFundingModal()">
+                        Cancel
+                    </button>
+                </div>
+                
+                <div style="margin-top: 2rem; padding: 1rem; background: rgba(255,255,0,0.1); border-radius: 8px; border: 1px solid rgba(255,255,0,0.3);">
+                    <p style="color: #ffd43b; font-size: 0.9rem;">
+                        <strong>💡 Tip:</strong> You can also send tokens directly to this address from any wallet that supports ${chain === 'solana' ? 'Solana' : 'Ethereum'}.
+                    </p>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        function closeFundingModal() {
+            document.getElementById('fundingModal').style.display = 'none';
+        }
+
+        function executeFunding(projectId, chain) {
+            const amount = document.getElementById('fundAmount').value;
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            
+            // This would integrate with a payment processor or wallet connection
+            alert(`Funding feature coming soon! You can manually send ${amount} ${chain === 'solana' ? 'SOL' : 'ETH'} to the wallet address.`);
+            closeFundingModal();
+        }
+
+        function copyAddress(address) {
+            navigator.clipboard.writeText(address).then(() => {
+                // Show temporary success message
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        function refreshBalance(projectId) {
             const token = localStorage.getItem('nexuspay_token');
             
-            const generateBtn = document.getElementById('generateBtn');
-            generateBtn.disabled = true;
-            generateBtn.innerHTML = '🔄 Generating...';
+            fetch(`/api/projects/${projectId}/paymaster/refresh-balance`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadAllPaymasterData(); // Reload all data
+                    
+                    // Show success feedback
+                    const btn = event.target;
+                    const originalText = btn.textContent;
+                    btn.textContent = '✅ Updated';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                    }, 2000);
+                } else {
+                    alert('Failed to refresh balance');
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing balance:', error);
+                alert('Error refreshing balance');
+            });
+        }
+
+        // Create project form handling
+        document.getElementById('createProjectForm').addEventListener('submit', function(e) {
+            e.preventDefault();
             
-            fetch('/api/keys/generate', {
+            const name = document.getElementById('projectName').value.trim();
+            const description = document.getElementById('projectDescription').value.trim();
+            const website = document.getElementById('projectWebsite').value.trim();
+            const chains = Array.from(document.querySelectorAll('input[name="chains"]:checked')).map(cb => cb.value);
+            
+            if (!name) {
+                showError('Project name is required');
+                return;
+            }
+            
+            if (chains.length === 0) {
+                showError('Please select at least one blockchain');
+                return;
+            }
+            
+            const btn = document.getElementById('createBtn');
+            btn.disabled = true;
+            btn.textContent = '🚀 Creating Project...';
+            
+            const token = localStorage.getItem('nexuspay_token');
+            
+            fetch('/api/projects', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ projectName, website })
+                body: JSON.stringify({
+                    name,
+                    description: description || undefined,
+                    website: website || undefined,
+                    chains
+                })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    document.getElementById('apiKeySuccess').innerHTML = `
-                        <strong>API Key Generated Successfully!</strong><br>
-                        <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 4px; margin-top: 1rem; font-family: monospace; word-break: break-all;">
-                            ${data.apiKey}
-                        </div>
-                        <p style="margin-top: 1rem; font-size: 0.9rem;">⚠️ Save this key securely. You won't be able to see it again!</p>
-                    `;
-                    document.getElementById('apiKeySuccess').style.display = 'block';
-                    document.getElementById('apiKeyError').style.display = 'none';
-                    
-                    // Reset form
-                    document.getElementById('apiKeyForm').reset();
-                    
-                    // Refresh user data
-                    checkAuth();
+                    showSuccess('Project created successfully! Paymasters are being deployed...');
+                    document.getElementById('createProjectForm').reset();
+                    setTimeout(() => {
+                        loadProjects();
+                        showTab('projects');
+                    }, 2000);
                 } else {
-                    document.getElementById('apiKeyError').textContent = data.error || 'Failed to generate API key';
-                    document.getElementById('apiKeyError').style.display = 'block';
-                    document.getElementById('apiKeySuccess').style.display = 'none';
+                    showError(data.error ? data.error.message : 'Failed to create project');
                 }
             })
             .catch(error => {
-                console.error('API key generation failed:', error);
-                document.getElementById('apiKeyError').textContent = 'Network error. Please try again.';
-                document.getElementById('apiKeyError').style.display = 'block';
+                console.error('Error creating project:', error);
+                showError('Network error occurred');
             })
             .finally(() => {
-                generateBtn.disabled = false;
-                generateBtn.innerHTML = '🔑 Generate API Key';
+                btn.disabled = false;
+                btn.innerHTML = '<span>🚀</span> Create Project & Deploy Paymasters';
             });
         });
+
+        function showError(message) {
+            const errorDiv = document.getElementById('createError');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('createSuccess');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 5000);
+        }
 
         function logout() {
             localStorage.removeItem('nexuspay_token');
             window.location.href = '/';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('fundingModal');
+            if (event.target === modal) {
+                closeFundingModal();
+            }
+        }
+
+        // Enhanced functions for paymaster management
+        async function loadAllPaymasterData() {
+            const token = localStorage.getItem('nexuspay_token');
+            
+            for (const project of userProjects) {
+                try {
+                    const projectId = project.id || project.project_id;
+                    
+                    // Load paymaster balances
+                    const balanceResponse = await fetch(`/api/projects/${projectId}/paymaster/balance`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (balanceResponse.ok) {
+                        const balanceData = await balanceResponse.json();
+                        if (balanceData.success) {
+                            projectPaymasters[projectId] = balanceData.data;
+                        }
+                    }
+                    
+                    // Load paymaster addresses
+                    const addressResponse = await fetch(`/api/projects/${projectId}/paymaster/addresses`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (addressResponse.ok) {
+                        const addressData = await addressResponse.json();
+                        if (addressData.success && projectPaymasters[projectId]) {
+                            projectPaymasters[projectId].addresses = addressData.data.addresses;
+                        }
+                    }
+
+                    // Load API keys
+                    const apiKeysResponse = await fetch(`/api/projects/${projectId}/api-keys`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (apiKeysResponse.ok) {
+                        const apiKeysData = await apiKeysResponse.json();
+                        if (apiKeysData.success) {
+                            projectApiKeys[projectId] = apiKeysData.data;
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error loading project data for ${projectId}:`, error);
+                }
+            }
+            
+            displayProjects();
+            updateStats();
+        }
+
+        function displayProjects() {
+            const projectsList = document.getElementById('projectsList');
+            
+            if (!userProjects || !Array.isArray(userProjects) || userProjects.length === 0) {
+                projectsList.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: #cccccc;">
+                        <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;">📁</div>
+                        <h3>No Projects Yet</h3>
+                        <p>Create your first project to get started with NexusPay</p>
+                        <button class="create-project-btn" onclick="showTab('create')">
+                            <span>🚀</span> Create Your First Project
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            projectsList.innerHTML = userProjects.map(project => {
+                const projectId = project.id || project.project_id;
+                const paymasterData = projectPaymasters[projectId] || {};
+                
+                return `
+                <div class="project-card">
+                    <div class="project-header">
+                        <div>
+                            <div class="project-name">${project.name || 'Unnamed Project'}</div>
+                            <div class="project-id">${projectId || 'No ID'}</div>
+                        </div>
+                    </div>
+                    
+                    ${project.description ? `<div class="project-description">${project.description}</div>` : ''}
+                    
+                    <div class="project-chains">
+                        ${(project.chains || []).map(chain => `<span class="chain-badge">${chain}</span>`).join('')}
+                    </div>
+                    
+                    <div class="paymaster-section">
+                        <div class="paymaster-title">💳 Paymaster Wallets (${project.chains ? project.chains.length : 0})</div>
+                        <div class="paymaster-wallets">
+                            ${(project.chains || []).map(chain => {
+                                const chainData = paymasterData.balances ? paymasterData.balances.find(b => b.chain === chain) : null;
+                                const address = paymasterData.addresses ? paymasterData.addresses[chain] : 'Loading...';
+                                const balance = chainData ? `${parseFloat(chainData.balance || 0).toFixed(4)} ${chainData.symbol || 'ETH'}` : 'Loading...';
+                                const balanceUSD = chainData && chainData.balance_usd ? `($${parseFloat(chainData.balance_usd).toFixed(2)})` : '';
+                                
+                                return `
+                                    <div class="paymaster-wallet">
+                                        <div class="wallet-header">
+                                            <div class="wallet-chain">${chain}</div>
+                                            <div class="wallet-balance">${balance} ${balanceUSD}</div>
+                                        </div>
+                                        <div class="wallet-address" title="${address}">${address}</div>
+                                        <div class="wallet-actions">
+                                            <button class="btn btn-small" onclick="fundWallet('${projectId}', '${chain}', '${address}')">
+                                                💰 Fund
+                                            </button>
+                                            <button class="btn-secondary btn btn-small" onclick="copyAddress('${address}')">
+                                                📋 Copy
+                                            </button>
+                                            <button class="btn-secondary btn btn-small" onclick="refreshBalance('${projectId}')">
+                                                🔄 Refresh
+                                            </button>
+                                        </div>
+                                        ${chainData && chainData.deployment_tx ? `
+                                            <div class="deployment-info">
+                                                <div class="deployment-title">📊 Deployment Transaction:</div>
+                                                <div class="deployment-hash" title="${chainData.deployment_tx}">
+                                                    <a href="${getExplorerLink(chain, chainData.deployment_tx)}" target="_blank" style="color: #0acff2; text-decoration: none;">
+                                                        ${chainData.deployment_tx.substring(0, 10)}...${chainData.deployment_tx.substring(chainData.deployment_tx.length - 8)}
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="project-actions" style="margin-bottom: 1rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
+                        <button class="btn-secondary btn btn-small" onclick="manageProjectSettings('${projectId}', '${project.name}')">
+                            ⚙️ Settings
+                        </button>
+                    </div>
+                    
+                    <div class="api-keys-section">
+                        <div class="api-keys-header">
+                            <div class="api-keys-title">🔑 API Keys (${projectApiKeys[projectId] ? projectApiKeys[projectId].api_keys.length : 0}/3)</div>
+                            <button class="btn btn-small" onclick="createApiKey('${projectId}')" ${projectApiKeys[projectId] && projectApiKeys[projectId].api_keys.length >= 3 ? 'disabled' : ''}>
+                                ➕ New Key
+                            </button>
+                        </div>
+                        <div class="api-keys-list">
+                            ${projectApiKeys[projectId] && projectApiKeys[projectId].api_keys.length > 0 ? 
+                                projectApiKeys[projectId].api_keys.map(apiKey => `
+                                    <div class="api-key-item">
+                                        <div class="api-key-header">
+                                            <div class="api-key-name">${apiKey.name}</div>
+                                            <div class="api-key-type">${apiKey.type}</div>
+                                        </div>
+                                        <div class="api-key-preview-container">
+                                            <div class="api-key-preview" id="key-${apiKey.id}" title="${apiKey.key_preview}">${apiKey.key_preview}</div>
+                                            <button class="btn-secondary btn btn-small" onclick="toggleKeyVisibility('${projectId}', '${apiKey.id}', this)">
+                                                👁️ Show
+                                            </button>
+                                        </div>
+                                        <div class="api-key-info">
+                                            <span class="api-key-created">Created: ${new Date(apiKey.createdAt).toLocaleDateString()}</span>
+                                            <span class="api-key-last-used">${apiKey.last_used_at ? 'Last used: ' + new Date(apiKey.last_used_at).toLocaleDateString() : 'Never used'}</span>
+                                            <span class="api-key-usage">Usage: ${apiKey.usage_count || 0} requests</span>
+                                        </div>
+                                        <div class="api-key-security-info" style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                            ${apiKey.ip_whitelist && apiKey.ip_whitelist.length > 0 ? 
+                                                `<span style="background: rgba(81, 207, 102, 0.2); color: #51cf66; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; border: 1px solid #51cf66;">
+                                                    🛡️ IP Protected (${apiKey.ip_whitelist.length})
+                                                </span>` : 
+                                                `<span style="background: rgba(255, 199, 95, 0.2); color: #ffc75f; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; border: 1px solid #ffc75f;">
+                                                    🌐 No IP Restrictions
+                                                </span>`
+                                            }
+                                            <span style="background: rgba(10, 207, 242, 0.2); color: #0acff2; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; border: 1px solid #0acff2;">
+                                                ${apiKey.permissions ? apiKey.permissions.length : 3} permissions
+                                            </span>
+                                            ${apiKey.status === 'rotated' ? 
+                                                `<span style="background: rgba(255, 199, 95, 0.2); color: #ffc75f; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; border: 1px solid #ffc75f;">
+                                                    🔄 Recently Rotated
+                                                </span>` : ''
+                                            }
+                                        </div>
+                                        <div class="api-key-actions">
+                                            <button class="btn-secondary btn btn-small" onclick="copyFullApiKey('${projectId}', '${apiKey.id}', this)">
+                                                📋 Copy Full Key
+                                            </button>
+                                            <button class="btn btn-small" onclick="showUsageAnalytics('${projectId}', '${apiKey.id}', '${apiKey.name}')">
+                                                📊 Usage
+                                            </button>
+                                            <button class="btn btn-small" onclick="manageIPWhitelist('${projectId}', '${apiKey.id}', '${apiKey.name}')">
+                                                🛡️ IP Whitelist
+                                            </button>
+                                            <button class="btn btn-small" onclick="rotateApiKey('${projectId}', '${apiKey.id}', '${apiKey.name}')">
+                                                🔄 Rotate
+                                            </button>
+                                            <button class="btn-danger btn btn-small" onclick="deleteApiKey('${projectId}', '${apiKey.id}', '${apiKey.name}')">
+                                                🗑️ Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                `).join('') 
+                                : '<div class="no-api-keys">No API keys created yet. Create your first API key to start integrating.</div>'
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="project-stats">
+                        <span>Created: ${project.createdAt || project.created_at ? new Date(project.createdAt || project.created_at).toLocaleDateString() : 'Unknown'}</span>
+                        ${project.website ? `<span>• <a href="${project.website}" target="_blank" style="color: #0acff2;">🌐 Website</a></span>` : ''}
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        function updateStats() {
+            document.getElementById('totalProjects').textContent = userProjects.length;
+            
+            let totalPaymasters = 0;
+            let totalBalanceUSD = 0;
+            let totalApiKeys = 0;
+            
+            userProjects.forEach(project => {
+                const projectId = project.id || project.project_id;
+                
+                totalPaymasters += project.chains ? project.chains.length : 0;
+                
+                const paymasterData = projectPaymasters[projectId];
+                if (paymasterData && paymasterData.balances) {
+                    paymasterData.balances.forEach(balance => {
+                        totalBalanceUSD += parseFloat(balance.balance_usd) || 0;
+                    });
+                }
+
+                const apiKeyData = projectApiKeys[projectId];
+                if (apiKeyData && apiKeyData.api_keys) {
+                    totalApiKeys += apiKeyData.api_keys.length;
+                }
+            });
+            
+            document.getElementById('totalPaymasters').textContent = totalPaymasters;
+            document.getElementById('totalBalance').textContent = `$${totalBalanceUSD.toFixed(2)}`;
+            document.getElementById('totalApiKeys').textContent = totalApiKeys;
+        }
+
+        function getExplorerLink(chain, txHash) {
+            const explorers = {
+                ethereum: `https://sepolia.etherscan.io/tx/${txHash}`,
+                arbitrum: `https://sepolia.arbiscan.io/tx/${txHash}`,
+                solana: `https://explorer.solana.com/tx/${txHash}?cluster=devnet`
+            };
+            return explorers[chain] || '#';
+        }
+
+        // API Key Management Functions
+        function createApiKey(projectId) {
+            const keyName = prompt('Enter a name for this API key:');
+            if (!keyName || !keyName.trim()) {
+                return;
+            }
+
+            const keyType = prompt('Enter key type (dev, production, restricted):', 'production');
+            const validTypes = ['dev', 'production', 'restricted'];
+            if (!validTypes.includes(keyType)) {
+                alert('Invalid key type. Must be dev, production, or restricted');
+                return;
+            }
+
+            const token = localStorage.getItem('nexuspay_token');
+            
+            fetch(`/api/projects/${projectId}/api-keys`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    name: keyName.trim(),
+                    type: keyType,
+                    permissions: ['wallets:create', 'wallets:deploy', 'wallets:read']
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`API Key created successfully!\n\nKey: ${data.data.api_key.key}\n\n⚠️ WARNING: Save this key securely - it won't be shown again!`);
+                    loadAllPaymasterData(); // Reload to show new key
+                } else {
+                    alert(`Failed to create API key: ${data.error ? data.error.message : 'Unknown error'}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error creating API key:', error);
+                alert('Error creating API key');
+            });
+        }
+
+        function copyFullApiKey(projectId, keyId, buttonElement) {
+            const token = localStorage.getItem('nexuspay_token');
+            const originalText = buttonElement.textContent;
+            
+            // Show loading state
+            buttonElement.textContent = '⏳ Loading...';
+            buttonElement.disabled = true;
+            
+            fetch(`/api/projects/${projectId}/api-keys/${keyId}/reveal`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Copy the full API key to clipboard
+                    navigator.clipboard.writeText(data.data.key).then(() => {
+                        buttonElement.textContent = '✅ Copied!';
+                        setTimeout(() => {
+                            buttonElement.textContent = originalText;
+                            buttonElement.disabled = false;
+                        }, 2000);
+                    }).catch(() => {
+                        alert('Failed to copy to clipboard. Please try again.');
+                        buttonElement.textContent = originalText;
+                        buttonElement.disabled = false;
+                    });
+                } else {
+                    alert(`Failed to get API key: ${data.error ? data.error.message : 'Unknown error'}`);
+                    buttonElement.textContent = originalText;
+                    buttonElement.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error revealing API key:', error);
+                alert('Error retrieving API key');
+                buttonElement.textContent = originalText;
+                buttonElement.disabled = false;
+            });
+        }
+
+        function toggleKeyVisibility(projectId, keyId, buttonElement) {
+            const keyPreviewElement = document.getElementById(`key-${keyId}`);
+            const token = localStorage.getItem('nexuspay_token');
+            
+            // If currently showing preview, fetch and show full key
+            if (buttonElement.textContent.includes('Show')) {
+                const originalText = buttonElement.textContent;
+                buttonElement.textContent = '⏳ Loading...';
+                buttonElement.disabled = true;
+                
+                // Store original preview for later restoration
+                if (!keyPreviewElement.dataset.originalPreview) {
+                    keyPreviewElement.dataset.originalPreview = keyPreviewElement.textContent;
+                }
+                
+                fetch(`/api/projects/${projectId}/api-keys/${keyId}/reveal`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        keyPreviewElement.textContent = data.data.key;
+                        keyPreviewElement.title = data.data.key;
+                        buttonElement.textContent = '🙈 Hide';
+                        buttonElement.disabled = false;
+                    } else {
+                        alert(`Failed to get API key: ${data.error ? data.error.message : 'Unknown error'}`);
+                        buttonElement.textContent = originalText;
+                        buttonElement.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error revealing API key:', error);
+                    alert('Error retrieving API key');
+                    buttonElement.textContent = originalText;
+                    buttonElement.disabled = false;
+                });
+            } else {
+                // Currently showing full key, switch back to preview
+                const originalPreview = keyPreviewElement.dataset.originalPreview;
+                keyPreviewElement.textContent = originalPreview;
+                keyPreviewElement.title = originalPreview;
+                buttonElement.textContent = '👁️ Show';
+            }
+        }
+
+        function deleteApiKey(projectId, keyId, keyName) {
+            if (!confirm(`Are you sure you want to delete the API key "${keyName}"?\n\nThis action cannot be undone and will immediately revoke access for this key.`)) {
+                return;
+            }
+
+            const token = localStorage.getItem('nexuspay_token');
+            
+            fetch(`/api/projects/${projectId}/api-keys/${keyId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('API key deleted successfully');
+                    loadAllPaymasterData(); // Reload to remove deleted key
+                } else {
+                    alert(`Failed to delete API key: ${data.error ? data.error.message : 'Unknown error'}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting API key:', error);
+                alert('Error deleting API key');
+            });
+        }
+
+        function rotateApiKey(projectId, keyId, keyName) {
+            if (!confirm(`Rotate API key "${keyName}"?\n\n⚠️ This will generate a new key and the old key will expire in 24 hours.\n\nMake sure to update your applications with the new key within 24 hours.`)) {
+                return;
+            }
+
+            const token = localStorage.getItem('nexuspay_token');
+            
+            fetch(`/api/projects/${projectId}/api-keys/${keyId}/rotate`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`API Key rotated successfully!\n\n🔑 NEW KEY: ${data.data.new_key}\n\n⏰ Old key expires: ${new Date(data.data.old_key_expires).toLocaleString()}\n\n⚠️ UPDATE YOUR APPLICATIONS WITHIN 24 HOURS!\n\nSave this key securely - it won't be shown again!`);
+                    loadAllPaymasterData(); // Reload to show new key
+                } else {
+                    alert(`Failed to rotate API key: ${data.error ? data.error.message : 'Unknown error'}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error rotating API key:', error);
+                alert('Error rotating API key');
+            });
+        }
+
+        function showUsageAnalytics(projectId, keyId, keyName) {
+            const token = localStorage.getItem('nexuspay_token');
+            
+            // Show loading modal
+            const modal = document.createElement('div');
+            modal.id = 'usageAnalyticsModal';
+            modal.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center;" onclick="closeUsageModal(event)">
+                    <div style="background: #1a1a1a; border: 2px solid #0acff2; border-radius: 12px; padding: 2rem; max-width: 600px; width: 90%; max-height: 80%; overflow-y: auto;" onclick="event.stopPropagation()">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3 style="color: #0acff2; margin: 0;">📊 Usage Analytics: ${keyName}</h3>
+                            <button onclick="closeUsageModal()" style="background: #0acff2; color: black; border: none; border-radius: 6px; padding: 0.5rem 1rem; cursor: pointer;">✕ Close</button>
+                        </div>
+                        <div id="usage-content" style="color: #ffffff;">
+                            <div style="text-align: center; padding: 2rem;">
+                                <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
+                                <div>Loading usage analytics...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            fetch(`/api/projects/${projectId}/api-keys/${keyId}/usage`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const usage = data.data.usage;
+                    document.getElementById('usage-content').innerHTML = `
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                            <div style="background: rgba(10, 207, 242, 0.1); border: 1px solid #0acff2; border-radius: 8px; padding: 1rem; text-align: center;">
+                                <div style="font-size: 1.5rem; font-weight: 600; color: #0acff2;">${usage.total_requests.toLocaleString()}</div>
+                                <div style="color: #cccccc; font-size: 0.9rem;">Total Requests</div>
+                            </div>
+                            <div style="background: rgba(81, 207, 102, 0.1); border: 1px solid #51cf66; border-radius: 8px; padding: 1rem; text-align: center;">
+                                <div style="font-size: 1.5rem; font-weight: 600; color: #51cf66;">${usage.requests_today.toLocaleString()}</div>
+                                <div style="color: #cccccc; font-size: 0.9rem;">Requests Today</div>
+                            </div>
+                            <div style="background: rgba(255, 199, 95, 0.1); border: 1px solid #ffc75f; border-radius: 8px; padding: 1rem; text-align: center;">
+                                <div style="font-size: 1.5rem; font-weight: 600; color: #ffc75f;">${usage.average_requests_per_day.toLocaleString()}</div>
+                                <div style="color: #cccccc; font-size: 0.9rem;">Avg/Day</div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                            <h4 style="color: #0acff2; margin-bottom: 1rem;">📈 Rate Limiting</h4>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span>Rate Limit:</span>
+                                <span style="color: #51cf66;">${usage.rate_limit_per_hour.toLocaleString()}/hour</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span>Remaining:</span>
+                                <span style="color: #51cf66;">${usage.rate_limit_remaining.toLocaleString()}</span>
+                            </div>
+                            <div style="background: rgba(51, 207, 102, 0.2); height: 8px; border-radius: 4px; overflow: hidden;">
+                                <div style="background: #51cf66; height: 100%; width: ${(usage.rate_limit_remaining / usage.rate_limit_per_hour * 100)}%; transition: width 0.3s ease;"></div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1rem;">
+                            <h4 style="color: #0acff2; margin-bottom: 1rem;">📅 Last 7 Days</h4>
+                            <div style="display: grid; gap: 0.5rem;">
+                                ${usage.last_7_days.map(day => `
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 4px;">
+                                        <span>${new Date(day.date).toLocaleDateString()}</span>
+                                        <span style="color: #0acff2; font-weight: 600;">${day.requests.toLocaleString()} requests</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); color: #cccccc; font-size: 0.9rem;">
+                            <strong>Created:</strong> ${new Date(usage.created_at).toLocaleString()}<br>
+                            <strong>Last Used:</strong> ${usage.last_used ? new Date(usage.last_used).toLocaleString() : 'Never'}
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('usage-content').innerHTML = `
+                        <div style="text-align: center; padding: 2rem; color: #ff6b6b;">
+                            <div style="font-size: 2rem; margin-bottom: 1rem;">❌</div>
+                            <div>Failed to load usage analytics</div>
+                            <div style="font-size: 0.9rem; color: #cccccc; margin-top: 0.5rem;">${data.error ? data.error.message : 'Unknown error'}</div>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading usage analytics:', error);
+                document.getElementById('usage-content').innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #ff6b6b;">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">❌</div>
+                        <div>Error loading usage analytics</div>
+                    </div>
+                `;
+            });
+        }
+
+        function closeUsageModal(event) {
+            // If event is provided, only close if clicking on the backdrop (not the modal content)
+            if (event && event.target !== event.currentTarget) {
+                return;
+            }
+            
+            const modal = document.getElementById('usageAnalyticsModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function manageIPWhitelist(projectId, keyId, keyName) {
+            const token = localStorage.getItem('nexuspay_token');
+            
+            // Show loading modal
+            const modal = document.createElement('div');
+            modal.id = 'ipWhitelistModal';
+            modal.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center;" onclick="closeIPWhitelistModal(event)">
+                    <div style="background: #1a1a1a; border: 2px solid #0acff2; border-radius: 12px; padding: 2rem; max-width: 600px; width: 90%; max-height: 80%; overflow-y: auto;" onclick="event.stopPropagation()">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3 style="color: #0acff2; margin: 0;">🛡️ IP Whitelist: ${keyName}</h3>
+                            <button onclick="closeIPWhitelistModal()" style="background: #0acff2; color: black; border: none; border-radius: 6px; padding: 0.5rem 1rem; cursor: pointer;">✕ Close</button>
+                        </div>
+                        <div id="ip-whitelist-content" style="color: #ffffff;">
+                            <div style="text-align: center; padding: 2rem;">
+                                <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
+                                <div>Loading IP whitelist...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Load current IP whitelist
+            fetch(`/api/projects/${projectId}/api-keys/${keyId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const apiKey = data.data.api_key;
+                    const whitelist = apiKey.ip_whitelist || [];
+                    
+                    document.getElementById('ip-whitelist-content').innerHTML = `
+                        <div style="margin-bottom: 1.5rem;">
+                            <div style="color: #cccccc; margin-bottom: 1rem;">
+                                Add IP addresses or CIDR ranges (e.g., 192.168.1.1 or 192.168.1.0/24) that are allowed to use this API key.
+                                Leave empty to allow access from any IP address.
+                            </div>
+                            
+                            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                                <input type="text" id="newIPInput" placeholder="Enter IP address or CIDR range" 
+                                       style="flex: 1; padding: 0.5rem; background: rgba(255,255,255,0.1); border: 1px solid #0acff2; border-radius: 4px; color: #ffffff;">
+                                <button onclick="addIPToWhitelist('${projectId}', '${keyId}')" 
+                                        style="background: #0acff2; color: black; border: none; border-radius: 4px; padding: 0.5rem 1rem; cursor: pointer;">
+                                    ➕ Add
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1rem;">
+                            <h4 style="color: #0acff2; margin-bottom: 1rem;">📋 Current Whitelist (${whitelist.length} entries)</h4>
+                            <div id="whitelist-entries">
+                                ${whitelist.length > 0 ? whitelist.map((ip, index) => `
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 4px; margin-bottom: 0.5rem;">
+                                        <span style="font-family: 'Courier New', monospace; color: #51cf66;">${ip}</span>
+                                        <button onclick="removeIPFromWhitelist('${projectId}', '${keyId}', '${ip}')" 
+                                                style="background: #ff6b6b; color: white; border: none; border-radius: 4px; padding: 0.25rem 0.5rem; cursor: pointer; font-size: 0.8rem;">
+                                            🗑️ Remove
+                                        </button>
+                                    </div>
+                                `).join('') : '<div style="text-align: center; color: #cccccc; padding: 1rem;">No IP restrictions - API key can be used from any IP address</div>'}
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 1rem; padding: 1rem; background: rgba(255, 199, 95, 0.1); border: 1px solid #ffc75f; border-radius: 8px; color: #ffc75f; font-size: 0.9rem;">
+                            ⚠️ <strong>Security Note:</strong> IP whitelisting adds an extra layer of security. Only requests from whitelisted IP addresses will be accepted.
+                            Make sure to include all necessary IP addresses before saving.
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('ip-whitelist-content').innerHTML = `
+                        <div style="text-align: center; padding: 2rem; color: #ff6b6b;">
+                            <div style="font-size: 2rem; margin-bottom: 1rem;">❌</div>
+                            <div>Failed to load IP whitelist</div>
+                            <div style="font-size: 0.9rem; color: #cccccc; margin-top: 0.5rem;">${data.error ? data.error.message : 'Unknown error'}</div>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading IP whitelist:', error);
+                document.getElementById('ip-whitelist-content').innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #ff6b6b;">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">❌</div>
+                        <div>Error loading IP whitelist</div>
+                    </div>
+                `;
+            });
+        }
+
+        function addIPToWhitelist(projectId, keyId) {
+            const ipInput = document.getElementById('newIPInput');
+            const ipAddress = ipInput.value.trim();
+            
+            if (!ipAddress) {
+                alert('Please enter an IP address or CIDR range');
+                return;
+            }
+            
+            // Basic IP validation
+            const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\/[0-9]{1,2})?$/;
+            if (!ipRegex.test(ipAddress)) {
+                alert('Please enter a valid IP address or CIDR range (e.g., 192.168.1.1 or 192.168.1.0/24)');
+                return;
+            }
+            
+            const token = localStorage.getItem('nexuspay_token');
+            
+            fetch(`/api/projects/${projectId}/api-keys/${keyId}/whitelist`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    ip: ipAddress
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    ipInput.value = '';
+                    // Reload the whitelist
+                    manageIPWhitelist(projectId, keyId, 'API Key');
+                } else {
+                    alert(`Failed to add IP to whitelist: ${data.error ? data.error.message : 'Unknown error'}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error adding IP to whitelist:', error);
+                alert('Error adding IP to whitelist');
+            });
+        }
+
+        function removeIPFromWhitelist(projectId, keyId, ipAddress) {
+            if (!confirm(`Remove ${ipAddress} from the whitelist?`)) {
+                return;
+            }
+            
+            const token = localStorage.getItem('nexuspay_token');
+            
+            fetch(`/api/projects/${projectId}/api-keys/${keyId}/whitelist`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    ip: ipAddress
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the whitelist
+                    manageIPWhitelist(projectId, keyId, 'API Key');
+                } else {
+                    alert(`Failed to remove IP from whitelist: ${data.error ? data.error.message : 'Unknown error'}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error removing IP from whitelist:', error);
+                alert('Error removing IP from whitelist');
+            });
+        }
+
+        function closeIPWhitelistModal(event) {
+            // If event is provided, only close if clicking on the backdrop (not the modal content)
+            if (event && event.target !== event.currentTarget) {
+                return;
+            }
+            
+            const modal = document.getElementById('ipWhitelistModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function manageProjectSettings(projectId, projectName) {
+            const token = localStorage.getItem('nexuspay_token');
+            
+            // Show loading modal
+            const modal = document.createElement('div');
+            modal.id = 'projectSettingsModal';
+            modal.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center;" onclick="closeProjectSettingsModal(event)">
+                    <div style="background: #1a1a1a; border: 2px solid #0acff2; border-radius: 12px; padding: 2rem; max-width: 600px; width: 90%; max-height: 80%; overflow-y: auto;" onclick="event.stopPropagation()">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3 style="color: #0acff2; margin: 0;">⚙️ Project Settings: ${projectName}</h3>
+                            <button onclick="closeProjectSettingsModal()" style="background: #0acff2; color: black; border: none; border-radius: 6px; padding: 0.5rem 1rem; cursor: pointer;">✕ Close</button>
+                        </div>
+                        <div id="project-settings-content" style="color: #ffffff;">
+                            <div style="text-align: center; padding: 2rem;">
+                                <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
+                                <div>Loading project settings...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Load current project settings
+            fetch(`/api/projects/${projectId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const project = data.data.project;
+                    
+                    document.getElementById('project-settings-content').innerHTML = `
+                        <form id="projectSettingsForm" onsubmit="updateProjectSettings('${projectId}', event)" style="display: grid; gap: 1.5rem;">
+                            
+                            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1rem;">
+                                <h4 style="color: #0acff2; margin-bottom: 1rem;">📝 Project Information</h4>
+                                
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="display: block; margin-bottom: 0.5rem; color: #cccccc;">Project Name</label>
+                                    <input type="text" id="projectName" value="${project.name}" required
+                                           style="width: 100%; padding: 0.5rem; background: rgba(255,255,255,0.1); border: 1px solid #0acff2; border-radius: 4px; color: #ffffff;">
+                                </div>
+                                
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="display: block; margin-bottom: 0.5rem; color: #cccccc;">Description</label>
+                                    <textarea id="projectDescription" rows="3" placeholder="Optional project description"
+                                              style="width: 100%; padding: 0.5rem; background: rgba(255,255,255,0.1); border: 1px solid #0acff2; border-radius: 4px; color: #ffffff; resize: vertical;">${project.description || ''}</textarea>
+                                </div>
+                                
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="display: block; margin-bottom: 0.5rem; color: #cccccc;">Website URL</label>
+                                    <input type="url" id="projectWebsite" value="${project.website || ''}" placeholder="https://example.com"
+                                           style="width: 100%; padding: 0.5rem; background: rgba(255,255,255,0.1); border: 1px solid #0acff2; border-radius: 4px; color: #ffffff;">
+                                </div>
+                            </div>
+                            
+                            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1rem;">
+                                <h4 style="color: #0acff2; margin-bottom: 1rem;">⛓️ Blockchain Settings</h4>
+                                
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="display: block; margin-bottom: 0.5rem; color: #cccccc;">Supported Chains</label>
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.5rem;">
+                                        ${['ethereum', 'arbitrum', 'solana', 'polygon', 'optimism', 'base'].map(chain => `
+                                            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 4px; cursor: pointer;">
+                                                <input type="checkbox" name="chains" value="${chain}" ${project.chains && project.chains.includes(chain) ? 'checked' : ''}
+                                                       style="margin: 0;">
+                                                <span style="text-transform: capitalize; font-size: 0.9rem;">${chain}</span>
+                                            </label>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1rem;">
+                                <h4 style="color: #0acff2; margin-bottom: 1rem;">🔧 Advanced Settings</h4>
+                                
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                        <input type="checkbox" id="paymasterEnabled" ${project.settings?.paymasterEnabled !== false ? 'checked' : ''}
+                                               style="margin: 0;">
+                                        <span>Enable Paymaster (Gas Sponsorship)</span>
+                                    </label>
+                                    <div style="font-size: 0.8rem; color: #cccccc; margin-top: 0.25rem; margin-left: 1.5rem;">
+                                        When enabled, the project can sponsor gas fees for user transactions
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                        <input type="checkbox" id="analyticsEnabled" ${project.settings?.analyticsEnabled !== false ? 'checked' : ''}
+                                               style="margin: 0;">
+                                        <span>Enable Analytics & Monitoring</span>
+                                    </label>
+                                    <div style="font-size: 0.8rem; color: #cccccc; margin-top: 0.25rem; margin-left: 1.5rem;">
+                                        Track API usage, transaction volumes, and performance metrics
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="display: block; margin-bottom: 0.5rem; color: #cccccc;">Rate Limiting (requests per hour)</label>
+                                    <select id="rateLimitTier" style="width: 100%; padding: 0.5rem; background: rgba(255,255,255,0.1); border: 1px solid #0acff2; border-radius: 4px; color: #ffffff;">
+                                        <option value="basic" ${project.settings?.rateLimitTier === 'basic' ? 'selected' : ''}>Basic (1,000/hour)</option>
+                                        <option value="standard" ${project.settings?.rateLimitTier === 'standard' ? 'selected' : ''}>Standard (5,000/hour)</option>
+                                        <option value="premium" ${project.settings?.rateLimitTier === 'premium' ? 'selected' : ''}>Premium (10,000/hour)</option>
+                                        <option value="enterprise" ${project.settings?.rateLimitTier === 'enterprise' ? 'selected' : ''}>Enterprise (50,000/hour)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                                <button type="button" onclick="closeProjectSettingsModal()" 
+                                        style="background: rgba(255,255,255,0.1); color: #ffffff; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 0.75rem 1.5rem; cursor: pointer;">
+                                    Cancel
+                                </button>
+                                <button type="submit" 
+                                        style="background: #0acff2; color: black; border: none; border-radius: 6px; padding: 0.75rem 1.5rem; cursor: pointer; font-weight: 600;">
+                                    💾 Save Settings
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; color: #cccccc; font-size: 0.9rem;">
+                                <span>Project ID: <code style="background: rgba(255,255,255,0.1); padding: 0.2rem 0.5rem; border-radius: 3px;">${projectId}</code></span>
+                                <span>Created: ${new Date(project.createdAt || project.created_at).toLocaleString()}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('project-settings-content').innerHTML = `
+                        <div style="text-align: center; padding: 2rem; color: #ff6b6b;">
+                            <div style="font-size: 2rem; margin-bottom: 1rem;">❌</div>
+                            <div>Failed to load project settings</div>
+                            <div style="font-size: 0.9rem; color: #cccccc; margin-top: 0.5rem;">${data.error ? data.error.message : 'Unknown error'}</div>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading project settings:', error);
+                document.getElementById('project-settings-content').innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #ff6b6b;">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">❌</div>
+                        <div>Error loading project settings</div>
+                    </div>
+                `;
+            });
+        }
+
+        function updateProjectSettings(projectId, event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const selectedChains = Array.from(document.querySelectorAll('input[name="chains"]:checked')).map(cb => cb.value);
+            
+            const updateData = {
+                name: document.getElementById('projectName').value.trim(),
+                description: document.getElementById('projectDescription').value.trim(),
+                website: document.getElementById('projectWebsite').value.trim(),
+                chains: selectedChains,
+                settings: {
+                    paymasterEnabled: document.getElementById('paymasterEnabled').checked,
+                    analyticsEnabled: document.getElementById('analyticsEnabled').checked,
+                    rateLimitTier: document.getElementById('rateLimitTier').value
+                }
+            };
+            
+            if (!updateData.name) {
+                alert('Project name is required');
+                return;
+            }
+            
+            if (selectedChains.length === 0) {
+                alert('Please select at least one blockchain');
+                return;
+            }
+            
+            const token = localStorage.getItem('nexuspay_token');
+            
+            fetch(`/api/projects/${projectId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(updateData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Project settings updated successfully!');
+                    closeProjectSettingsModal();
+                    // Reload the dashboard to show updated settings
+                    loadAllPaymasterData();
+                } else {
+                    alert(`Failed to update project settings: ${data.error ? data.error.message : 'Unknown error'}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error updating project settings:', error);
+                alert('Error updating project settings');
+            });
+        }
+
+        function closeProjectSettingsModal(event) {
+            // If event is provided, only close if clicking on the backdrop (not the modal content)
+            if (event && event.target !== event.currentTarget) {
+                return;
+            }
+            
+            const modal = document.getElementById('projectSettingsModal');
+            if (modal) {
+                modal.remove();
+            }
         }
     </script>
 </body>

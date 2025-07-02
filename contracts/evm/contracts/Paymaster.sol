@@ -1,353 +1,292 @@
-pragma solidity ^0.8.20;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
 
-import "./interfaces/IUserOperation.sol";
 import "./interfaces/IPaymaster.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import "./interfaces/IUserOperation.sol";
 
 /**
- * @title Paymaster
- * @dev ERC-4337 compatible paymaster with flexible policy engine
+ * @title NexusPay Paymaster
+ * @dev EIP-4337 compliant paymaster contract that sponsors gas fees for user transactions
  */
-contract Paymaster is IPaymaster, Ownable, ReentrancyGuard {
-    using ECDSA for bytes32;
-    using MessageHashUtils for bytes32;
+contract Paymaster is IPaymaster {
 
-    // Constants
-    uint256 public constant STAKE_MINIMUM = 1 ether;
-    uint256 public constant UNSTAKE_DELAY_SEC = 1 days;
-    uint256 private constant VALID_TIMESTAMP_OFFSET = 20;
-    uint256 private constant SIGNATURE_OFFSET = 84;
-
-    // State variables
-    address public immutable entryPoint;
-    mapping(address => bool) public whitelist;
-    mapping(address => uint256) public userSpendLimits;
-    mapping(address => uint256) public userSpentAmounts;
-    mapping(bytes32 => bool) public processedOperations;
+    address public entryPoint;
+    address public owner;
+    mapping(address => bool) public authorizedSpenders;
+    mapping(address => uint256) public spendingLimits; // Per-address daily spending limits
+    mapping(address => uint256) public dailySpent; // Track daily spending per address
+    mapping(address => uint256) public lastResetDay; // Track last reset day for spending limits
     
-    uint256 public globalSpendLimit = 10 ether;
+    uint256 public totalDeposit;
     uint256 public totalSpent;
-    bool public paymasterEnabled = true;
+    bool public paused;
+    bool private initialized;
 
-    // Events
-    event UserOpSponsored(
-        bytes32 indexed userOpHash,
-        address indexed sender,
-        uint256 actualGasCost
-    );
-    event WhitelistUpdated(address indexed user, bool whitelisted);
-    event UserLimitUpdated(address indexed user, uint256 newLimit);
-    event PaymasterConfigUpdated(uint256 newGlobalLimit, bool enabled);
+    event PaymasterDeposit(address indexed sender, uint256 amount);
+    event PaymasterWithdraw(address indexed recipient, uint256 amount);
+    event UserOperationSponsored(address indexed sender, uint256 actualGasCost);
+    event SpendingLimitSet(address indexed spender, uint256 limit);
+    event AuthorizedSpenderAdded(address indexed spender);
+    event AuthorizedSpenderRemoved(address indexed spender);
+    event PaymasterPaused();
+    event PaymasterUnpaused();
 
-    // Custom errors
-    error OnlyEntryPoint();
-    error PaymasterDisabled();
-    error UserNotWhitelisted();
-    error SpendLimitExceeded();
-    error InvalidSignature();
-    error OperationAlreadyProcessed();
-    error PostOpReverted();
-
-    /**
-     * @dev Constructor
-     * @param _entryPoint Address of the EntryPoint contract
-     */
-    constructor(address _entryPoint) Ownable(msg.sender) {
-        entryPoint = _entryPoint;
-    }
-
-    /**
-     * @dev Modifier to restrict access to EntryPoint
-     */
-    modifier onlyEntryPoint() {
-        if (msg.sender != entryPoint) revert OnlyEntryPoint();
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner");
         _;
     }
 
+    modifier onlyEntryPoint() {
+        require(msg.sender == address(entryPoint), "Only EntryPoint");
+        _;
+    }
+
+    modifier whenNotPaused() {
+        require(!paused, "Paymaster is paused");
+        _;
+    }
+
+    constructor() {
+        // Disable initializers for implementation contract
+        initialized = true;
+    }
+
     /**
-     * @dev Validate paymaster user operation
-     * @param userOp User operation to validate
+     * @notice Initialize the paymaster (for proxy contracts)
+     * @param _entryPoint EntryPoint contract address
+     * @param _owner Owner of the paymaster
+     */
+    function initialize(address _entryPoint, address _owner) external {
+        require(!initialized, "Already initialized");
+        require(_entryPoint != address(0), "Invalid entryPoint");
+        require(_owner != address(0), "Invalid owner");
+        
+        initialized = true;
+        entryPoint = _entryPoint;
+        owner = _owner;
+        paused = false;
+    }
+
+    /**
+     * @dev Validate paymaster user operation (EIP-4337)
+     * @param userOp The user operation to validate
      * @param userOpHash Hash of the user operation
-     * @param maxCost Maximum cost that could be paid by this paymaster
-     * @return context Paymaster context for post-operation
-     * @return validationData Validation result
+     * @param maxCost Maximum cost that can be charged
+     * @return context Data to be passed to postOp
+     * @return validationData Packed validation data (authorizer, validUntil, validAfter)
      */
     function validatePaymasterUserOp(
         IUserOperation.UserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 maxCost
-    ) external override onlyEntryPoint returns (bytes memory context, uint256 validationData) {
-        if (!paymasterEnabled) {
-            revert PaymasterDisabled();
-        }
-
-        // Check if operation was already processed
-        if (processedOperations[userOpHash]) {
-            revert OperationAlreadyProcessed();
-        }
-
-        // Parse paymaster data
-        (
-            uint48 validUntil,
-            uint48 validAfter,
-            bytes memory signature
-        ) = _parsePaymasterAndData(userOp.paymasterAndData);
-
-        // Validate signature and timestamp
-        if (!_validateSignature(userOp, userOpHash, signature)) {
-            return ("", 1); // Signature validation failed
-        }
-
-        // Check time validity
-        if (validUntil != 0 && block.timestamp > validUntil) {
-            return ("", 1); // Time validation failed
-        }
-        if (validAfter != 0 && block.timestamp < validAfter) {
-            return ("", 1); // Time validation failed
-        }
-
-        // Policy validation
-        if (!_validatePolicy(userOp.sender, maxCost)) {
-            return ("", 1); // Policy validation failed
-        }
-
-        // Mark operation as processed
-        processedOperations[userOpHash] = true;
-
-        // Update spending tracking
-        userSpentAmounts[userOp.sender] += maxCost;
-        totalSpent += maxCost;
-
-        // Create context for post-operation
-        context = abi.encode(
-            userOp.sender,
-            maxCost,
-            userOpHash
-        );
-
-        // Pack validation data
-        validationData = _packValidationData(false, validUntil, validAfter);
+    ) external override onlyEntryPoint whenNotPaused returns (bytes memory context, uint256 validationData) {
+        // Basic validation - check if we have enough deposit
+        require(getDeposit() >= maxCost, "Insufficient deposit");
         
-        return (context, validationData);
+        address sender = userOp.sender;
+        
+        // Check if sender is authorized (optional - can be set to allow all)
+        bool isAuthorized = authorizedSpenders[sender] || authorizedSpenders[address(0)]; // address(0) means allow all
+        require(isAuthorized, "Sender not authorized");
+        
+        // Check spending limits
+        uint256 currentDay = block.timestamp / 1 days;
+        if (lastResetDay[sender] < currentDay) {
+            dailySpent[sender] = 0;
+            lastResetDay[sender] = currentDay;
+        }
+        
+        uint256 limit = spendingLimits[sender];
+        if (limit > 0) {
+            require(dailySpent[sender] + maxCost <= limit, "Daily spending limit exceeded");
+        }
+
+        // Return success validation
+        return (abi.encode(sender, maxCost), 0);
     }
 
     /**
-     * @dev Post-operation hook called after user operation execution
-     * @param mode Post-operation mode (opSucceeded, opReverted, postOpReverted)
-     * @param context Context data from validatePaymasterUserOp
-     * @param actualGasCost Actual gas cost of the operation
+     * @dev Post-operation handler (EIP-4337)
+     * @param mode Whether the operation succeeded or reverted
+     * @param context Data from validatePaymasterUserOp
+     * @param actualGasCost Actual gas cost paid
      */
     function postOp(
         PostOpMode mode,
         bytes calldata context,
         uint256 actualGasCost
     ) external override onlyEntryPoint {
-        (address sender, uint256 maxCost, bytes32 userOpHash) = abi.decode(
-            context,
-            (address, uint256, bytes32)
-        );
-
-        if (mode == PostOpMode.postOpReverted) {
-            revert PostOpReverted();
-        }
-
-        // Adjust spending amounts based on actual cost
-        uint256 overspent = maxCost > actualGasCost ? maxCost - actualGasCost : 0;
-        if (overspent > 0) {
-            userSpentAmounts[sender] -= overspent;
-            totalSpent -= overspent;
-        }
-
-        emit UserOpSponsored(userOpHash, sender, actualGasCost);
-    }
-
-    /**
-     * @dev Parse paymaster and data field
-     * @param paymasterAndData Packed paymaster data
-     * @return validUntil Timestamp until which the operation is valid
-     * @return validAfter Timestamp after which the operation is valid
-     * @return signature Paymaster signature
-     */
-    function _parsePaymasterAndData(
-        bytes calldata paymasterAndData
-    ) internal pure returns (uint48 validUntil, uint48 validAfter, bytes memory signature) {
-        if (paymasterAndData.length < SIGNATURE_OFFSET) {
-            return (0, 0, "");
-        }
-
-        validUntil = uint48(bytes6(paymasterAndData[VALID_TIMESTAMP_OFFSET:VALID_TIMESTAMP_OFFSET + 6]));
-        validAfter = uint48(bytes6(paymasterAndData[VALID_TIMESTAMP_OFFSET + 6:VALID_TIMESTAMP_OFFSET + 12]));
-        signature = paymasterAndData[SIGNATURE_OFFSET:];
-    }
-
-    /**
-     * @dev Validate paymaster signature
-     * @param userOp User operation
-     * @param userOpHash Hash of user operation
-     * @param signature Paymaster signature
-     * @return Whether signature is valid
-     */
-    function _validateSignature(
-        IUserOperation.UserOperation calldata userOp,
-        bytes32 userOpHash,
-        bytes memory signature
-    ) internal view returns (bool) {
-        bytes32 hash = keccak256(abi.encode(
-            userOpHash,
-            userOp.sender,
-            userOp.nonce
-        )).toEthSignedMessageHash();
+        (address sender, uint256 maxCost) = abi.decode(context, (address, uint256));
         
-        address signer = hash.recover(signature);
-        return signer == owner();
-    }
-
-    /**
-     * @dev Validate spending policy
-     * @param sender User address
-     * @param cost Operation cost
-     * @return Whether policy allows the operation
-     */
-    function _validatePolicy(address sender, uint256 cost) internal view returns (bool) {
-        // Check whitelist
-        if (!whitelist[sender]) {
-            return false;
+        // Update spending tracking
+        dailySpent[sender] += actualGasCost;
+        totalSpent += actualGasCost;
+        
+        emit UserOperationSponsored(sender, actualGasCost);
+        
+        // Handle failed operations if needed
+        if (mode == PostOpMode.postOpReverted) {
+            // Could implement refund logic here
         }
+    }
 
-        // Check user spending limit
-        uint256 userLimit = userSpendLimits[sender];
-        if (userLimit > 0 && userSpentAmounts[sender] + cost > userLimit) {
-            return false;
+    /**
+     * @dev Deposit funds to the paymaster
+     */
+    function deposit() public payable {
+        require(msg.value > 0, "Must deposit some ETH");
+        (bool success,) = entryPoint.call{value: msg.value}(abi.encodeWithSignature("depositTo(address)", address(this)));
+        totalDeposit += msg.value;
+        emit PaymasterDeposit(msg.sender, msg.value);
+    }
+
+    /**
+     * @dev Get current deposit balance
+     */
+    function getDeposit() public view returns (uint256) {
+        (bool success, bytes memory data) = entryPoint.staticcall(abi.encodeWithSignature("balanceOf(address)", address(this)));
+        if (success && data.length >= 32) {
+            return abi.decode(data, (uint256));
         }
-
-        // Check global spending limit
-        if (totalSpent + cost > globalSpendLimit) {
-            return false;
-        }
-
-        return true;
+        return 0;
     }
 
     /**
-     * @dev Pack validation data according to ERC-4337
-     * @param sigFailed Whether signature validation failed
-     * @param validUntil Valid until timestamp
-     * @param validAfter Valid after timestamp
-     * @return Packed validation data
-     */
-    function _packValidationData(
-        bool sigFailed,
-        uint48 validUntil,
-        uint48 validAfter
-    ) internal pure returns (uint256) {
-        return uint256(validUntil) << 160 | uint256(validAfter) << 208 | (sigFailed ? 1 : 0);
-    }
-
-    // Admin functions
-    
-    /**
-     * @dev Add or remove user from whitelist
-     * @param user User address
-     * @param whitelisted Whether to whitelist the user
-     */
-    function setWhitelist(address user, bool whitelisted) external onlyOwner {
-        whitelist[user] = whitelisted;
-        emit WhitelistUpdated(user, whitelisted);
-    }
-
-    /**
-     * @dev Set spending limit for a user
-     * @param user User address
-     * @param limit New spending limit
-     */
-    function setUserSpendLimit(address user, uint256 limit) external onlyOwner {
-        userSpendLimits[user] = limit;
-        emit UserLimitUpdated(user, limit);
-    }
-
-    /**
-     * @dev Update paymaster configuration
-     * @param newGlobalLimit New global spending limit
-     * @param enabled Whether paymaster is enabled
-     */
-    function updateConfig(uint256 newGlobalLimit, bool enabled) external onlyOwner {
-        globalSpendLimit = newGlobalLimit;
-        paymasterEnabled = enabled;
-        emit PaymasterConfigUpdated(newGlobalLimit, enabled);
-    }
-
-    /**
-     * @dev Reset spending amounts (emergency function)
-     */
-    function resetSpending() external onlyOwner {
-        totalSpent = 0;
-        // Note: Individual user spending amounts need to be reset individually if needed
-    }
-
-    /**
-     * @dev Reset user spending amount
-     * @param user User address
-     */
-    function resetUserSpending(address user) external onlyOwner {
-        userSpentAmounts[user] = 0;
-    }
-
-    /**
-     * @dev Withdraw ETH from paymaster
-     * @param to Withdrawal address
+     * @dev Withdraw funds from the paymaster (owner only)
+     * @param recipient Address to receive the funds
      * @param amount Amount to withdraw
      */
-    function withdraw(address payable to, uint256 amount) external onlyOwner nonReentrant {
-        require(address(this).balance >= amount, "Insufficient balance");
-        (bool success,) = to.call{value: amount}("");
-        require(success, "Withdrawal failed");
+    function withdraw(address payable recipient, uint256 amount) external onlyOwner {
+        require(recipient != address(0), "Invalid recipient");
+        require(amount <= getDeposit(), "Insufficient balance");
+        
+        (bool success,) = entryPoint.call(abi.encodeWithSignature("withdrawTo(address,uint256)", recipient, amount));
+        require(success, "EntryPoint withdraw failed");
+        emit PaymasterWithdraw(recipient, amount);
     }
 
-    // View functions
+    /**
+     * @dev Add stake to EntryPoint (required for paymaster operation)
+     * @param unstakeDelay Delay before stake can be withdrawn
+     */
+    function addStake(uint32 unstakeDelay) external payable onlyOwner {
+        (bool success,) = entryPoint.call{value: msg.value}(abi.encodeWithSignature("addStake(uint32)", unstakeDelay));
+        require(success, "EntryPoint addStake failed");
+    }
 
     /**
-     * @dev Get user spending information
-     * @param user User address
-     * @return limit User spending limit
-     * @return spent Amount spent by user
-     * @return isWhitelisted Whether user is whitelisted
+     * @dev Unlock stake (first step of withdrawal)
      */
-    function getUserInfo(address user) external view returns (
-        uint256 limit,
-        uint256 spent,
-        bool isWhitelisted
-    ) {
-        return (userSpendLimits[user], userSpentAmounts[user], whitelist[user]);
+    function unlockStake() external onlyOwner {
+        (bool success,) = entryPoint.call(abi.encodeWithSignature("unlockStake()"));
+        require(success, "EntryPoint unlockStake failed");
+    }
+
+    /**
+     * @dev Withdraw stake (after unlock delay)
+     * @param recipient Address to receive the stake
+     */
+    function withdrawStake(address payable recipient) external onlyOwner {
+        (bool success,) = entryPoint.call(abi.encodeWithSignature("withdrawStake(address)", recipient));
+        require(success, "EntryPoint withdrawStake failed");
+    }
+
+    /**
+     * @dev Set spending limit for an address
+     * @param spender Address to set limit for
+     * @param limit Daily spending limit (0 = no limit)
+     */
+    function setSpendingLimit(address spender, uint256 limit) external onlyOwner {
+        spendingLimits[spender] = limit;
+        emit SpendingLimitSet(spender, limit);
+    }
+
+    /**
+     * @dev Add authorized spender
+     * @param spender Address to authorize (use address(0) to allow all)
+     */
+    function addAuthorizedSpender(address spender) external onlyOwner {
+        authorizedSpenders[spender] = true;
+        emit AuthorizedSpenderAdded(spender);
+    }
+
+    /**
+     * @dev Remove authorized spender
+     * @param spender Address to remove authorization
+     */
+    function removeAuthorizedSpender(address spender) external onlyOwner {
+        authorizedSpenders[spender] = false;
+        emit AuthorizedSpenderRemoved(spender);
+    }
+
+    /**
+     * @dev Pause the paymaster
+     */
+    function pause() external onlyOwner {
+        paused = true;
+        emit PaymasterPaused();
+    }
+
+    /**
+     * @dev Unpause the paymaster
+     */
+    function unpause() external onlyOwner {
+        paused = false;
+        emit PaymasterUnpaused();
+    }
+
+    /**
+     * @dev Transfer ownership
+     * @param newOwner New owner address
+     */
+    function transferOwnership(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "Invalid new owner");
+        owner = newOwner;
     }
 
     /**
      * @dev Get paymaster statistics
-     * @return totalLimit Global spending limit
-     * @return totalSpentAmount Total amount spent
-     * @return enabled Whether paymaster is enabled
      */
-    function getPaymasterStats() external view returns (
-        uint256 totalLimit,
+    function getStats() external view returns (
+        uint256 currentDeposit,
+        uint256 totalDeposited,
         uint256 totalSpentAmount,
-        bool enabled
+        bool isPaused,
+        uint256 stakInfo
     ) {
-        return (globalSpendLimit, totalSpent, paymasterEnabled);
+        return (
+            getDeposit(),
+            totalDeposit,
+            totalSpent,
+            paused,
+            0 // Simplified - would need to call getDepositInfo on EntryPoint
+        );
     }
 
     /**
-     * @dev Deposit ETH to paymaster
+     * @dev Emergency withdraw (in case of contract issues)
      */
-    function deposit() external payable {
-        // ETH deposited for gas sponsorship
+    function emergencyWithdraw() external onlyOwner {
+        uint256 balance = getDeposit();
+        if (balance > 0) {
+            (bool success,) = entryPoint.call(abi.encodeWithSignature("withdrawTo(address,uint256)", payable(owner), balance));
+            require(success, "Emergency withdraw failed");
+        }
     }
 
     /**
-     * @dev Receive ETH function
+     * @dev Receive ETH and automatically deposit to EntryPoint
      */
     receive() external payable {
-        // Accept ETH deposits
+        if (msg.value > 0) {
+            deposit();
+        }
+    }
+
+    /**
+     * @dev Fallback function
+     */
+    fallback() external payable {
+        revert("Function not found");
     }
 } 

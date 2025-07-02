@@ -7,39 +7,56 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// Import new models and middleware
+const AuthMiddleware = require('./middleware/auth');
+const ProjectAuthMiddleware = require('./middleware/project-auth');
+const UsageTracker = require('./middleware/usageTracker');
+const RateLimiter = require('./middleware/rateLimiter');
+
+// Import routes
+const authRoutes = require('./routes/auth');
+const projectRoutes = require('./routes/projects');
+const projectAPIKeyRoutes = require('./routes/project-api-keys');
+const paymasterRoutes = require('./routes/paymaster');
+const transactionRoutes = require('./routes/transactions');
+
+// Import models (User model now comes from models/User.js)
+const User = require('./models/User');
+
 const app = express();
 const port = process.env.PORT || 3001;
 
+// Set encryption key if not set
+if (!process.env.ENCRYPTION_KEY) {
+  process.env.ENCRYPTION_KEY = 'development_encryption_key_change_in_production';
+  console.log('⚠️ Using default encryption key - set ENCRYPTION_KEY in production');
+}
+
+// Set master seed if not set
+if (!process.env.MASTER_SEED) {
+  process.env.MASTER_SEED = 'development_master_seed_change_in_production';
+  console.log('⚠️ Using default master seed - set MASTER_SEED in production');
+}
+
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/nexuspay', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => {
-  console.log('✅ Connected to MongoDB');
+const dbConnection = require('./database/connection');
+dbConnection.connect().then(() => {
+  console.log('✅ Connected to MongoDB via connection manager');
 }).catch(err => {
   console.error('❌ MongoDB connection error:', err);
+  
+  // Fallback to direct connection for development
+  mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/nexuspay', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  }).then(() => {
+    console.log('✅ Connected to MongoDB (fallback)');
+  }).catch(fallbackErr => {
+    console.error('❌ MongoDB fallback connection error:', fallbackErr);
+  });
 });
 
-// User Schema
-const userSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  password: { type: String }, // Optional for Google OAuth users
-  googleId: { type: String }, // For Google OAuth users
-  profilePicture: { type: String },
-  apiKeys: [{
-    keyId: String,
-    projectName: String,
-    website: String,
-    createdAt: { type: Date, default: Date.now },
-    usageCount: { type: Number, default: 0 },
-    lastUsed: Date
-  }],
-  createdAt: { type: Date, default: Date.now },
-  lastLogin: { type: Date, default: Date.now }
-});
-
-const User = mongoose.model('User', userSchema);
+// User model is now imported from models/User.js
 
 // Middleware
 app.use(cors({
@@ -57,7 +74,17 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// JWT Authentication Middleware
+// Add usage tracking for API endpoints (after express.json)
+app.use('/api', UsageTracker.trackAPIUsage());
+
+// Use the new authentication routes
+app.use('/api/auth', authRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/projects', projectAPIKeyRoutes);
+app.use('/api/projects', paymasterRoutes);
+app.use('/api/projects', transactionRoutes);
+
+// Legacy JWT Authentication Middleware (for backward compatibility)
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -75,8 +102,11 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// API key validation (now requires user authentication)
-const validateApiKey = async (req, res, next) => {
+// Project-based API key validation (new system)
+const validateApiKey = ProjectAuthMiddleware.validateProjectAPIKey;
+
+// Legacy API key validation (for backward compatibility with old keys)
+const validateLegacyApiKey = async (req, res, next) => {
   const apiKey = req.headers['x-api-key'] || req.query.apikey;
   
   if (!apiKey) {
@@ -92,8 +122,13 @@ const validateApiKey = async (req, res, next) => {
     return next();
   }
 
+  // Check if this is a new project-based API key
+  if (apiKey.startsWith('npay_proj_')) {
+    return ProjectAuthMiddleware.validateProjectAPIKey(req, res, next);
+  }
+
   try {
-    // Find user with this API key
+    // Legacy: Find user with this API key in old format
     const user = await User.findOne({ 'apiKeys.keyId': apiKey });
     
     if (!user) {
@@ -111,6 +146,7 @@ const validateApiKey = async (req, res, next) => {
 
     req.apiKey = apiKey;
     req.user = user;
+    req.isLegacyKey = true;
     next();
   } catch (error) {
     console.error('API key validation error:', error);
@@ -356,7 +392,7 @@ app.get('/auth/google/callback', async (req, res) => {
     let user = await User.findOne({ 
       $or: [
         { email: googleUser.email },
-        { googleId: googleUser.id }
+        { google_id: googleUser.id }
       ]
     });
 
@@ -365,34 +401,31 @@ app.get('/auth/google/callback', async (req, res) => {
       user = new User({
         email: googleUser.email,
         name: googleUser.name,
-        googleId: googleUser.id,
-        profilePicture: googleUser.picture
+        google_id: googleUser.id,
+        profile_picture: googleUser.picture,
+        auth_provider: 'google'
       });
       await user.save();
     } else {
       // Update existing user
-      user.googleId = googleUser.id;
-      user.profilePicture = googleUser.picture;
-      user.lastLogin = new Date();
+      user.google_id = googleUser.id;
+      user.profile_picture = googleUser.picture;
+      user.last_login = new Date();
       await user.save();
     }
 
     // Generate JWT
-    const token = jwt.sign(
-      { userId: user._id, email: user.email },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '24h' }
-    );
+    const token = AuthMiddleware.generateToken(user);
 
     res.send(`
       <script>
         window.opener.postMessage({ 
       success: true,
           user: {
-            id: '${user._id}',
+            id: '${user.id}',
             email: '${user.email}',
             name: '${user.name}',
-            profilePicture: '${user.profilePicture || ''}'
+            profilePicture: '${user.profile_picture || ''}'
           },
           token: '${token}',
           redirectTo: 'dashboard'
@@ -415,27 +448,15 @@ app.get('/auth/google/callback', async (req, res) => {
 // Get user profile (authenticated)
 app.get('/api/user/profile', authenticateToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select('-password');
+    const user = await User.findOne({ id: req.user.id }).select('-password_hash');
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
     
     res.json({
       success: true,
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        profilePicture: user.profilePicture,
-        apiKeys: user.apiKeys.map(key => ({
-          keyId: key.keyId,
-          projectName: key.projectName,
-          website: key.website,
-          createdAt: key.createdAt,
-          usageCount: key.usageCount,
-          lastUsed: key.lastUsed
-        }))
-      }
+      user: user.toJSON(),
+      message: 'This endpoint is deprecated. Please use the new auth system: GET /api/auth/me'
     });
   } catch (error) {
     console.error('Profile fetch error:', error);
@@ -443,59 +464,97 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
   }
 });
 
-// API key generation (requires authentication)
+// DEPRECATED: Legacy API key generation - Use project-based API keys instead
 app.post('/api/keys/generate', authenticateToken, async (req, res) => {
-  try {
-    const { projectName, website } = req.body;
-    
-    if (!projectName) {
-      return res.status(400).json({
-        error: 'Project name is required',
-        code: 'MISSING_FIELDS'
+  res.status(400).json({
+    success: false,
+    error: {
+      code: 'ENDPOINT_DEPRECATED',
+      message: 'This endpoint is deprecated. Please create a project first, then generate API keys for the project.',
+      details: 'Use POST /api/projects to create a project, then POST /api/projects/:projectId/api-keys to generate API keys',
+      migration_guide: {
+        step1: 'Create a project: POST /api/projects',
+        step2: 'Generate API key: POST /api/projects/:projectId/api-keys',
+        max_keys_per_project: 3
+      }
+    }
+});  });
+const apiKeyRateLimit = RateLimiter.createAPIKeyRateLimit();
+
+app.post('/api/projects/:projectId/wallets', 
+  apiKeyRateLimit,
+  ProjectAuthMiddleware.validateProjectAPIKey, 
+  ProjectAuthMiddleware.requirePermission('wallets:create'), 
+  async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { socialId, socialType, chains, paymasterEnabled } = req.body;
+      
+      // Use project context from middleware
+      console.log(`Creating wallet for project: ${req.project.name} (${projectId})`);
+      
+      // Validate input
+      if (!socialId || !socialType) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'MISSING_PARAMETERS',
+            message: 'socialId and socialType are required'
+          }
+        });
+      }
+
+      const WalletGenerator = require('./services/walletGenerator');
+      
+      // Generate wallet for the specified chains
+      const walletChains = chains || req.project.chains;
+      const wallets = {};
+      
+      for (const chain of walletChains) {
+        try {
+          const chainCategory = WalletGenerator.getChainCategory(chain);
+          const wallet = WalletGenerator.generatePaymasterWallet(socialId, chainCategory);
+          wallets[chain] = {
+            address: wallet.address,
+            chain: chain,
+            category: chainCategory
+          };
+        } catch (error) {
+          console.error(`Failed to generate wallet for ${chain}:`, error);
+        }
+      }
+      
+      res.json({
+        success: true,
+        message: 'Wallets created successfully',
+        data: {
+          projectId,
+          socialId,
+          socialType,
+          wallets,
+          paymasterEnabled: paymasterEnabled !== false && req.project.settings?.paymasterEnabled,
+          project: {
+            name: req.project.name,
+            chains: req.project.chains
+          }
+        }
+      });
+      
+    } catch (error) {
+      console.error('Wallet creation error:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'WALLET_CREATION_FAILED',
+          message: 'Failed to create wallet'
+        }
       });
     }
-
-    // Generate secure API key
-    const apiKey = 'npay_' + crypto.randomBytes(32).toString('hex');
-    
-    // Find user and add API key
-    const user = await User.findById(req.user.userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    user.apiKeys.push({
-      keyId: apiKey,
-      projectName,
-      website: website || '',
-      createdAt: new Date(),
-      usageCount: 0
-    });
-
-    await user.save();
-    
-    res.json({
-      success: true,
-      apiKey,
-      message: 'API key generated successfully',
-      keyInfo: {
-        projectName,
-        website: website || '',
-        createdAt: new Date().toISOString()
-      }
-    });
-    
-  } catch (error) {
-    console.error('API key generation error:', error);
-    res.status(500).json({ 
-      error: 'Failed to generate API key',
-      code: 'GENERATION_FAILED'
-    });
   }
-});
+);
 
-// Basic wallet endpoint (requires API key)
-app.post('/api/wallets', validateApiKey, (req, res) => {
+// Legacy wallet endpoint (for backward compatibility)
+app.post('/api/wallets', validateLegacyApiKey, (req, res) => {
   res.json({
     success: true,
     message: 'Wallet endpoint working',
@@ -544,12 +603,29 @@ app.use('*', (req, res) => {
   });
 });
 
+// Initialize background services for paymaster monitoring
+const BalanceService = require('./services/balanceService');
+const PaymasterService = require('./services/paymasterService');
+const PaymasterMonitor = require('./services/paymasterMonitor');
+
+// Set up background monitoring (enhanced with automated alerts)
+const startBackgroundJobs = () => {
+  // Start the new automated monitoring system
+  PaymasterMonitor.start();
+  
+  console.log('✅ Background paymaster monitoring activated');
+};
+
 // For local development
 if (require.main === module) {
-app.listen(port, () => {
-  console.log(`🚀 NexusPay API running on port ${port}`);
-});
+  app.listen(port, () => {
+    console.log(`🚀 NexusPay API running on port ${port}`);
+    console.log(`💰 Paymaster system initialized`);
+    
+    // Start background jobs for local development
+    startBackgroundJobs();
+  });
 }
 
-// For Vercel
+// For Vercel - background jobs are handled separately in production
 module.exports = app; 
