@@ -20,9 +20,11 @@ const projectAPIKeyRoutes = require('./routes/project-api-keys');
 const paymasterRoutes = require('./routes/paymaster');
 const transactionRoutes = require('./routes/transactions');
 const chainRoutes = require('./routes/chains');
+const analyticsRoutes = require('./routes/analytics');
 
 // Import models (User model now comes from models/User.js)
 const User = require('./models/User');
+const AnalyticsService = require('./services/analyticsService');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -84,6 +86,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/projects', projectAPIKeyRoutes);
 app.use('/api/projects', paymasterRoutes);
 app.use('/api/projects', transactionRoutes);
+app.use('/api', analyticsRoutes);
 app.use('/api/chains', chainRoutes);
 
 // Legacy JWT Authentication Middleware (for backward compatibility)
@@ -521,6 +524,40 @@ app.post('/api/projects/:projectId/wallets',
             chain: chain,
             category: chainCategory
           };
+
+          // Record wallet creation in analytics
+          try {
+            await AnalyticsService.recordTransaction({
+              projectId: projectId,
+              transactionType: 'wallet_creation',
+              chain: chain,
+              walletAddress: wallet.address,
+              userIdentifier: socialId,
+              socialType: socialType,
+              txHash: null, // No tx hash for deterministic wallet creation
+              blockNumber: null,
+              gasUsed: 0,
+              gasPrice: '0',
+              gasCost: '0',
+              gasCostUsd: 0,
+              currency: WalletGenerator.getCurrencyForChain ? WalletGenerator.getCurrencyForChain(chain) : 'ETH',
+              paymasterPaid: false, // Wallet creation doesn't involve gas
+              paymasterAddress: null,
+              status: 'confirmed',
+              confirmedAt: new Date(),
+              transactionDetails: {
+                chain_category: chainCategory,
+                deterministic: true
+              },
+              metadata: {
+                paymaster_enabled: paymasterEnabled !== false && req.project.settings?.paymasterEnabled,
+                project_name: req.project.name
+              }
+            });
+          } catch (analyticsError) {
+            console.error(`Failed to record wallet creation analytics for ${chain}:`, analyticsError);
+            // Don't fail the wallet creation if analytics fails
+          }
         } catch (error) {
           console.error(`Failed to generate wallet for ${chain}:`, error);
         }

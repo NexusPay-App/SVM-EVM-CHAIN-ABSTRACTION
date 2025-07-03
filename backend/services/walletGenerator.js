@@ -56,6 +56,23 @@ class WalletGenerator {
   }
 
   /**
+   * Get currency symbol for chain
+   * @param {string} chain - Chain name
+   * @returns {string} - Currency symbol
+   */
+  getCurrencyForChain(chain) {
+    const currencyMap = {
+      ethereum: 'ETH',
+      arbitrum: 'ETH',
+      polygon: 'MATIC',
+      bsc: 'BNB',
+      solana: 'SOL',
+      eclipse: 'SOL'
+    };
+    return currencyMap[chain] || 'ETH';
+  }
+
+  /**
    * Generate Ethereum-compatible wallet from seed (works on all EVM chains)
    * @param {Buffer} seed - 32-byte seed
    * @returns {Object} - { address, privateKey }

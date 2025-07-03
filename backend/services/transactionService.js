@@ -3,6 +3,7 @@ const { Connection, PublicKey, Transaction, sendAndConfirmTransaction } = requir
 const ProjectPaymaster = require('../models/ProjectPaymaster');
 const PaymasterPayment = require('../models/PaymasterPayment');
 const WalletGenerator = require('./walletGenerator');
+const AnalyticsService = require('./analyticsService');
 
 class TransactionService {
   constructor() {
@@ -291,8 +292,9 @@ class TransactionService {
   /**
    * Record paymaster payment for analytics
    */
-  async recordPaymasterPayment({ projectId, paymaster, userWalletAddress, txResult }) {
+  async recordPaymasterPayment({ projectId, paymaster, userWalletAddress, txResult, userIdentifier, socialType }) {
     try {
+      // Record in existing PaymasterPayment model for backward compatibility
       const payment = new PaymasterPayment({
         project_id: projectId,
         paymaster_address: paymaster.contract_address || paymaster.address,
@@ -309,6 +311,35 @@ class TransactionService {
       });
 
       await payment.save();
+
+      // Record comprehensive analytics if user info is available
+      if (userIdentifier && socialType) {
+        const gasCostUsd = await this.convertToUSD(txResult.gasCost || '0', paymaster.chain);
+        
+        await AnalyticsService.recordTransaction({
+          projectId: projectId,
+          transactionType: 'paymaster_payment',
+          chain: paymaster.chain,
+          walletAddress: userWalletAddress,
+          userIdentifier: userIdentifier,
+          socialType: socialType,
+          txHash: txResult.txHash,
+          blockNumber: txResult.blockNumber,
+          gasUsed: parseInt(txResult.gasUsed || '0'),
+          gasPrice: txResult.gasPrice,
+          gasCost: ethers.formatEther(txResult.gasCost || '0'),
+          gasCostUsd: gasCostUsd,
+          currency: this.getCurrencyForChain(paymaster.chain),
+          paymasterPaid: true,
+          paymasterAddress: paymaster.contract_address || paymaster.address,
+          status: txResult.status || 'confirmed',
+          confirmedAt: new Date(),
+          transactionDetails: {
+            operation_type: 'transaction_sponsor'
+          }
+        });
+      }
+
       console.log(`✅ Recorded paymaster payment: ${txResult.txHash}`);
 
     } catch (error) {
@@ -351,6 +382,52 @@ class TransactionService {
       console.error(`❌ Failed to get paymaster status for ${projectId}:`, error);
       throw error;
     }
+  }
+
+  /**
+   * Convert gas cost to USD (simplified implementation)
+   * In production, you'd want to fetch real-time prices from an oracle
+   */
+  async convertToUSD(gasCostWei, chain) {
+    try {
+      // Simplified token prices - in production, fetch from oracle/API
+      const tokenPricesUSD = {
+        ethereum: 2000,   // ETH price
+        arbitrum: 2000,   // ARB uses ETH for gas
+        polygon: 0.8,     // MATIC price
+        bsc: 300,         // BNB price
+        solana: 20        // SOL price
+      };
+
+      const price = tokenPricesUSD[chain] || 0;
+      
+      if (chain === 'solana') {
+        // SOL has 9 decimals
+        const gasCostSol = parseFloat(gasCostWei) / 1e9;
+        return gasCostSol * price;
+      } else {
+        // EVM chains have 18 decimals
+        const gasCostEth = parseFloat(ethers.formatEther(gasCostWei));
+        return gasCostEth * price;
+      }
+    } catch (error) {
+      console.error('USD conversion error:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Get currency symbol for chain
+   */
+  getCurrencyForChain(chain) {
+    const currencyMap = {
+      ethereum: 'ETH',
+      arbitrum: 'ETH',
+      polygon: 'MATIC',
+      bsc: 'BNB',
+      solana: 'SOL'
+    };
+    return currencyMap[chain] || 'ETH';
   }
 }
 
