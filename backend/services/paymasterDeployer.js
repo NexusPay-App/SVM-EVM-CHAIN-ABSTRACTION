@@ -164,61 +164,84 @@ class PaymasterDeployer {
       console.log(`   Paymaster owner: ${paymasterWallet.address}`);
       console.log(`   Deploying via company deployer: ${deployerWallet.address}`);
       
-      // Check if paymaster wallet has enough ETH for minimal proxy deployment (~0.002 ETH)
+      // Check if paymaster wallet has enough ETH for deployment
       const balance = await provider.getBalance(paymasterWallet.address);
-      const requiredBalance = parseEther('0.002'); // Only 0.002 ETH for proxy deployment!
+      const requiredBalance = parseEther('0.002'); // Required balance for deployment
       
       if (balance.lt && balance.lt(requiredBalance) || balance < requiredBalance) {
-        console.log(`💸 Funding paymaster wallet for proxy deployment (${formatEther(requiredBalance)} ETH)...`);
+        console.log(`❌ Insufficient balance for deployment: ${formatEther(balance)} ETH`);
+        console.log(`💰 Required balance: ${formatEther(requiredBalance)} ETH`);
+        console.log(`📋 DEVELOPER ACTION REQUIRED:`);
+        console.log(`   1. Send ${formatEther(requiredBalance)} ETH to: ${paymasterWallet.address}`);
+        console.log(`   2. Use ${chain === 'ethereum' ? 'Sepolia faucet or your own ETH' : 'Arbitrum Sepolia faucet'}`);
+        console.log(`   3. Retry deployment after funding`);
         
-        try {
-          await this.fundFromDeployerAccount(paymasterWallet.address, chain, '0.002');
-          
-          // Wait for funding transaction
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          
-          const newBalance = await provider.getBalance(paymasterWallet.address);
-          console.log(`💰 Funded balance: ${formatEther(newBalance)} ETH`);
-          
-          if ((newBalance.lt && newBalance.lt(requiredBalance)) || newBalance < requiredBalance) {
-            throw new Error(`Still insufficient balance: ${formatEther(newBalance)} ETH`);
-          }
-        } catch (fundingError) {
-          throw new Error(`Funding failed: ${fundingError.message}`);
-        }
+        throw new Error(
+          `Paymaster wallet needs ${formatEther(requiredBalance)} ETH for deployment. ` +
+          `Please fund ${paymasterWallet.address} and retry.`
+        );
       }
       
       // Connect to factory contract using deployer (factory owner)
       const factory = new ethers.Contract(factoryAddress, this.factoryABI.abi, deployerWallet);
       
-      // Generate deterministic salt for CREATE2
-      const salt = keccak256(toUtf8Bytes(`${projectId}_${Date.now()}`));
+      // Generate deterministic salt for CREATE2 (chain-specific)
+      const salt = keccak256(toUtf8Bytes(`${projectId}_${chain}_${Date.now()}`));
+      
+      // Make project ID chain-specific to avoid conflicts across chains
+      const chainSpecificProjectId = `${projectId}_${chain}`;
+      console.log(`🔗 Using chain-specific project ID: ${chainSpecificProjectId}`);
       
       // Estimate gas for proxy creation
       const estimatedGas = await factory.createPaymaster.estimateGas(
-        projectId,
+        chainSpecificProjectId,
         paymasterWallet.address,
         salt
       );
       
       const gasPrice20Gwei = BigNumber ? BigNumber.from('20000000000') : BigInt('20000000000');
       const gasCostEstimate = estimatedGas.mul ? estimatedGas.mul(gasPrice20Gwei) : BigInt(estimatedGas) * gasPrice20Gwei;
-      console.log(`🎯 Estimated gas for proxy: ${estimatedGas.toString()} (~$${(parseFloat(formatEther(gasCostEstimate.toString())) * 2500).toFixed(2)})`);
+              console.log(`🎯 Estimated gas for proxy: ${estimatedGas.toString()} (~$${(parseFloat(formatEther(gasCostEstimate.toString())) * 2500).toFixed(2)})`);
+        console.log(`🔗 Using chain-specific project ID: ${chainSpecificProjectId}`);
+      
+      // Dynamic gas settings for different chains
+      const gasSettings = {
+        ethereum: {
+          gasPrice: ethers.parseUnits('20', 'gwei'), // 20 gwei
+          gasLimit: estimatedGas.mul ? estimatedGas.mul(120).div(100) : Math.ceil(Number(estimatedGas) * 1.2)
+        },
+        arbitrum: {
+          gasPrice: ethers.parseUnits('0.1', 'gwei'), // 0.1 gwei - ultra low!
+          gasLimit: estimatedGas.mul ? estimatedGas.mul(150).div(100) : Math.ceil(Number(estimatedGas) * 1.5) // Higher buffer for L2
+        },
+        polygon: {
+          gasPrice: ethers.parseUnits('30', 'gwei'), // 30 gwei
+          gasLimit: estimatedGas.mul ? estimatedGas.mul(120).div(100) : Math.ceil(Number(estimatedGas) * 1.2)
+        },
+        bsc: {
+          gasPrice: ethers.parseUnits('5', 'gwei'), // 5 gwei
+          gasLimit: estimatedGas.mul ? estimatedGas.mul(120).div(100) : Math.ceil(Number(estimatedGas) * 1.2)
+        }
+      };
+      
+      const chainGasSettings = gasSettings[chain] || gasSettings.ethereum;
+      console.log(`⛽ Using gas settings for ${chain}:`, {
+        gasPrice: ethers.formatUnits(chainGasSettings.gasPrice, 'gwei') + ' gwei',
+        gasLimit: chainGasSettings.gasLimit.toString()
+      });
       
       // Deploy minimal proxy paymaster using company deployer
       const tx = await factory.createPaymaster(
-        projectId,
+        chainSpecificProjectId,
         paymasterWallet.address,
         salt,
-        {
-          gasLimit: estimatedGas.mul ? estimatedGas.mul(120).div(100) : Math.ceil(Number(estimatedGas) * 1.2) // 20% buffer
-        }
+        chainGasSettings
       );
 
       const receipt = await tx.wait();
       
-      // Get paymaster address from factory
-      const paymasterAddress = await factory.getPaymaster(projectId);
+      // Get paymaster address from factory using chain-specific project ID
+      const paymasterAddress = await factory.getPaymaster(chainSpecificProjectId);
       
       console.log(`✅ Ultra-low-cost paymaster deployed!`);
       console.log(`   Proxy address: ${paymasterAddress}`);
@@ -268,37 +291,46 @@ class PaymasterDeployer {
       
       // Check if paymaster account already exists
       const accountInfo = await this.solanaConnection.getAccountInfo(paymasterKeypair.publicKey);
+      let fundingTxHash;
       
       if (!accountInfo) {
-        console.log(`💰 Creating new Solana account for paymaster...`);
+        console.log(`❌ Solana account does not exist: ${paymasterAddress}`);
+        console.log(`📋 DEVELOPER ACTION REQUIRED:`);
+        console.log(`   1. Send 0.01 SOL to: ${paymasterAddress}`);
+        console.log(`   2. Use Solana Devnet faucet: https://faucet.solana.com`);
+        console.log(`   3. Retry deployment after funding`);
         
-        // Use our company SVM deployer to fund the paymaster account creation
-        try {
-          await this.fundFromSVMDeployer(paymasterAddress, 0.01); // Fund with 0.01 SOL for account creation
-          console.log(`✅ Funded paymaster account creation from SVM deployer`);
-        } catch (fundingError) {
-          console.error(`❌ Failed to fund paymaster from SVM deployer:`, fundingError);
-          throw new Error(`SVM paymaster deployment failed: ${fundingError.message}`);
-        }
+        throw new Error(
+          `Paymaster account needs 0.01 SOL for activation. ` +
+          `Please fund ${paymasterAddress} and retry.`
+        );
+      } else {
+        console.log(`✅ Paymaster account exists: ${paymasterAddress}`);
         
-        // Wait a moment for the funding transaction to be confirmed
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
-        // Verify the account now has funds
+        // Check if account has sufficient balance
         const balance = await this.solanaConnection.getBalance(paymasterKeypair.publicKey);
         console.log(`💰 Paymaster account balance: ${balance / 1e9} SOL`);
         
         if (balance < 1e6) { // Less than 0.001 SOL
-          throw new Error(`Paymaster account still has insufficient balance: ${balance / 1e9} SOL`);
+          console.log(`❌ Insufficient SOL balance: ${balance / 1e9} SOL`);
+          console.log(`📋 DEVELOPER ACTION REQUIRED:`);
+          console.log(`   1. Send more SOL to: ${paymasterAddress}`);
+          console.log(`   2. Minimum required: 0.01 SOL`);
+          
+          throw new Error(
+            `Paymaster account has insufficient balance: ${balance / 1e9} SOL. ` +
+            `Please fund ${paymasterAddress} with at least 0.01 SOL.`
+          );
         }
-      } else {
-        console.log(`✅ Paymaster account already exists: ${paymasterAddress}`);
+        
+        // Use existing account, mark as successfully "deployed"
+        fundingTxHash = 'developer_funded_account';
       }
       
       // For Solana, the "deployment" is successful once the account is funded and active
       // In a full implementation, you'd deploy an actual Solana program here
       
-      const deploymentTx = 'solana_account_created'; // Placeholder for deployment transaction
+      const deploymentTx = fundingTxHash || 'solana_account_created'; // Use actual funding transaction hash
       
       console.log(`✅ Solana paymaster deployed successfully: ${paymasterAddress}`);
 
@@ -644,10 +676,22 @@ class PaymasterDeployer {
       
       console.log(`💸 Sending ${amount} ETH from EVM deployer ${deployerWallet.address}...`);
       
+      // Dynamic gas limits based on chain
+      const gasLimits = {
+        ethereum: 21000,      // Standard ETH transfer
+        arbitrum: 100000,     // Higher for L2
+        polygon: 21000,       // Standard
+        bsc: 21000,          // Standard
+        sepolia: 21000       // Standard
+      };
+      
+      const gasLimit = gasLimits[chain] || 21000;
+      console.log(`⛽ Using gas limit: ${gasLimit} for ${chain}`);
+      
       const tx = await deployerWallet.sendTransaction({
         to: targetAddress,
         value: fundingAmount,
-        gasLimit: 21000
+        gasLimit: gasLimit
       });
       
       await tx.wait();

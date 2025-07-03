@@ -220,6 +220,65 @@ class BalanceService {
       // Format as array with chain property for dashboard compatibility
       const formattedBalances = balances.map(balance => {
         const paymaster = paymasterMap[balance.chain];
+        
+        // Get chain-specific deployment transaction hash and status
+        let chainDeploymentTx = null;
+        let chainContractAddress = null;
+        let deploymentStatus = 'unknown';
+        let fundingRequired = false;
+        let fundingInstructions = null;
+        
+        if (paymaster) {
+          // Check CHAIN-SPECIFIC deployment status first! 🎯
+          if (paymaster.deployment_results && paymaster.deployment_results[balance.chain]) {
+            const chainResult = paymaster.deployment_results[balance.chain];
+            
+            if (chainResult.error) {
+              // This specific chain failed to deploy
+              deploymentStatus = 'failed';
+            } else if (chainResult.deploymentTx && chainResult.contractAddress) {
+              // This specific chain is successfully deployed
+              deploymentStatus = 'deployed';
+              chainDeploymentTx = chainResult.deploymentTx;
+              chainContractAddress = chainResult.contractAddress;
+            } else {
+              // Chain result exists but incomplete - probably pending
+              deploymentStatus = 'pending';
+            }
+          } else {
+            // No chain-specific result - this means deployment hasn't been attempted for this chain yet
+            // Check wallet balance to determine if it needs funding
+            const chainBalance = parseFloat(balance.balance_native || 0);
+            const requiredBalance = paymaster.chain_category === 'evm' ? 0.002 : 0.01;
+            
+            if (chainBalance >= requiredBalance) {
+              // Has sufficient funds but no deployment result - probably pending deployment
+              deploymentStatus = 'pending';
+            } else {
+              // Insufficient funds - needs funding before deployment can happen
+              deploymentStatus = 'pending_funding';
+            }
+          }
+          
+          // Set funding requirements if this specific chain needs funding
+          if (deploymentStatus === 'pending_funding') {
+            fundingRequired = true;
+            const requiredAmount = paymaster.chain_category === 'evm' ? '0.002 ETH' : '0.01 SOL';
+            const faucetUrl = balance.chain === 'ethereum' 
+              ? 'https://sepoliafaucet.com' 
+              : balance.chain === 'arbitrum' 
+                ? 'https://bridge.arbitrum.io' 
+                : 'https://faucet.solana.com';
+            
+            fundingInstructions = {
+              required_amount: requiredAmount,
+              funding_address: paymaster.address,
+              faucet_url: faucetUrl,
+              instructions: `Send ${requiredAmount} to ${paymaster.address} to activate paymaster on ${balance.chain}`
+            };
+          }
+        }
+        
         return {
           chain: balance.chain,
           address: balance.address,
@@ -229,9 +288,11 @@ class BalanceService {
           balance_usd: balance.balance_usd,
           symbol: this.getChainSymbol(balance.chain),
           last_updated: balance.last_updated,
-          deployment_tx: paymaster ? paymaster.deployment_tx : null,
-          contract_address: paymaster ? paymaster.contract_address : null,
-          deployment_status: paymaster ? paymaster.deployment_status : 'unknown'
+          deployment_tx: chainDeploymentTx, // Now chain-specific! 🎯
+          contract_address: chainContractAddress, // Also chain-specific
+          deployment_status: deploymentStatus,
+          funding_required: fundingRequired,
+          funding_instructions: fundingInstructions
         };
       });
 

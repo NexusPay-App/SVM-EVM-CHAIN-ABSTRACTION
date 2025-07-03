@@ -19,6 +19,7 @@ const projectRoutes = require('./routes/projects');
 const projectAPIKeyRoutes = require('./routes/project-api-keys');
 const paymasterRoutes = require('./routes/paymaster');
 const transactionRoutes = require('./routes/transactions');
+const chainRoutes = require('./routes/chains');
 
 // Import models (User model now comes from models/User.js)
 const User = require('./models/User');
@@ -83,6 +84,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/projects', projectAPIKeyRoutes);
 app.use('/api/projects', paymasterRoutes);
 app.use('/api/projects', transactionRoutes);
+app.use('/api/chains', chainRoutes);
 
 // Legacy JWT Authentication Middleware (for backward compatibility)
 const authenticateToken = (req, res, next) => {

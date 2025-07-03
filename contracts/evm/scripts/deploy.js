@@ -27,12 +27,13 @@ async function main() {
     await walletFactory.deployed();
     console.log("✅ WalletFactory deployed to:", walletFactory.address);
 
-    // 3. Deploy Paymaster
-      console.log("3️⃣ Deploying Paymaster...");
-  const Paymaster = await ethers.getContractFactory("Paymaster");
-  const paymaster = await Paymaster.deploy(entryPoint.address, deployer.address);
-  await paymaster.deployed();
+    // 3. Deploy Paymaster (skip initialization for proxy pattern)
+    console.log("3️⃣ Deploying Paymaster...");
+    const Paymaster = await ethers.getContractFactory("Paymaster");
+    const paymaster = await Paymaster.deploy();
+    await paymaster.deployed();
     console.log("✅ Paymaster deployed to:", paymaster.address);
+    console.log("ℹ️  Note: Paymaster uses proxy pattern - initialization handled separately");
 
     // 4. Create test wallet
     console.log("4️⃣ Creating test wallet...");

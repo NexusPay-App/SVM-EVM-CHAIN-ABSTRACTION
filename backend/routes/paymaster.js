@@ -6,6 +6,7 @@ const Project = require('../models/Project');
 const AuthMiddleware = require('../middleware/auth');
 const WalletGenerator = require('../services/walletGenerator');
 const BalanceService = require('../services/balanceService');
+const PaymasterService = require('../services/paymasterService');
 
 const router = express.Router();
 
@@ -392,7 +393,6 @@ router.post('/:projectId/paymaster/retry-deployment', AuthMiddleware.authenticat
       });
     }
 
-    const PaymasterService = require('../services/paymasterService');
     const results = await PaymasterService.retryFailedDeployments(projectId);
 
     res.json({
@@ -487,6 +487,104 @@ router.post('/:projectId/paymaster/fund', AuthMiddleware.authenticateToken, asyn
       error: {
         code: 'FUND_PAYMASTER_FAILED',
         message: 'Failed to initiate paymaster funding'
+      }
+    });
+  }
+});
+
+/**
+ * @route POST /projects/:projectId/paymaster/deploy
+ * @desc Retry paymaster deployment after funding
+ * @access Private
+ */
+router.post('/:projectId/paymaster/deploy', AuthMiddleware.authenticateToken, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const userId = req.user.id;
+
+    // Validate project ownership
+    const project = await Project.findByIdAndOwner(projectId, userId);
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'PROJECT_NOT_FOUND',
+          message: 'Project not found or access denied'
+        }
+      });
+    }
+
+    // Find paymasters that need deployment
+    const paymasters = await ProjectPaymaster.find({ 
+      project_id: projectId, 
+      deployment_status: 'pending_funding' 
+    });
+
+    if (paymasters.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'NO_PENDING_PAYMASTERS',
+          message: 'No paymasters are waiting for funding. All are either deployed or failed.'
+        }
+      });
+    }
+
+    console.log(`🔄 Retrying deployment for ${paymasters.length} paymasters in project ${projectId}`);
+
+    const results = [];
+    for (const paymaster of paymasters) {
+      try {
+        console.log(`🔄 Retrying ${paymaster.chain_category.toUpperCase()} paymaster deployment...`);
+        
+        // Get wallet private key for deployment
+        const privateKey = paymaster.decryptPrivateKey();
+        
+        // Attempt deployment again
+        await PaymasterService.deploySharedPaymasterContract(paymaster, privateKey);
+        
+        results.push({
+          category: paymaster.chain_category,
+          status: 'deployed',
+          address: paymaster.address,
+          supported_chains: paymaster.supported_chains
+        });
+        
+      } catch (error) {
+        console.log(`⏳ ${paymaster.chain_category.toUpperCase()} paymaster still waiting for funding:`, error.message);
+        
+        results.push({
+          category: paymaster.chain_category,
+          status: 'pending_funding',
+          address: paymaster.address,
+          supported_chains: paymaster.supported_chains,
+          error: error.message,
+          funding_required: paymaster.chain_category === 'evm' ? '0.002 ETH' : '0.01 SOL'
+        });
+      }
+    }
+
+    const deployedCount = results.filter(r => r.status === 'deployed').length;
+    const stillPendingCount = results.filter(r => r.status === 'pending_funding').length;
+
+    res.json({
+      success: true,
+      message: `Deployment retry completed. ${deployedCount} deployed, ${stillPendingCount} still need funding.`,
+      data: {
+        results,
+        deployed: deployedCount,
+        pending_funding: stillPendingCount,
+        total: results.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Retry deployment error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'RETRY_DEPLOYMENT_FAILED',
+        message: 'Failed to retry paymaster deployment'
       }
     });
   }

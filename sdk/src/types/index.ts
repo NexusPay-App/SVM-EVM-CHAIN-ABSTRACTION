@@ -2,14 +2,10 @@
  * Core types for NexusPlatform SDK
  */
 
-// Supported blockchain networks
+// Supported blockchain networks - Only 3 chains supported
 export type SupportedChain = 
   | 'ethereum'
-  | 'polygon' 
   | 'arbitrum'
-  | 'base'
-  | 'optimism'
-  | 'avalanche'
   | 'solana';
 
 // Chain categories

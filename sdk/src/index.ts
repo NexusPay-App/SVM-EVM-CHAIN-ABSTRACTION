@@ -109,17 +109,7 @@ export type {
 export const SUPPORTED_CHAINS = {
   EVM: [
     'ethereum',
-    'polygon',
-    'arbitrum',
-    'base',
-    'optimism',
-    'avalanche',
-    'bsc',
-    'fantom',
-    'gnosis',
-    'celo',
-    'moonbeam',
-    'aurora'
+    'arbitrum'
   ] as const,
   SVM: ['solana'] as const
 } as const;

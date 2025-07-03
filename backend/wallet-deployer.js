@@ -1,5 +1,6 @@
 const { ethers } = require('ethers');
-const { blockchainManager, CONTRACTS } = require('./blockchain-integration');
+const { blockchainManager } = require('./blockchain-integration');
+const { getChainConfig } = require('./config/chains');
 
 // Deployer configuration
 const DEPLOYER_CONFIG = {

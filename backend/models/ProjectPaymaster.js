@@ -45,7 +45,7 @@ const projectPaymasterSchema = new mongoose.Schema({
   },
   deployment_status: {
     type: String,
-    enum: ['pending', 'deployed', 'failed'],
+    enum: ['pending', 'pending_funding', 'deployed', 'failed'],
     default: 'pending'
   },
   private_key_encrypted: {

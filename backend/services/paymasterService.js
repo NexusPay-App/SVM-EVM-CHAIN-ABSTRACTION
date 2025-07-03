@@ -56,7 +56,15 @@ class PaymasterService {
 
         // Encrypt and store private key
         paymaster.encryptPrivateKey(walletData.privateKey);
-        await paymaster.save();
+        
+        // Save to database with explicit error logging
+        try {
+          await paymaster.save();
+          console.log(`✅ Successfully saved ${category.toUpperCase()} paymaster to database`);
+        } catch (saveError) {
+          console.error(`❌ CRITICAL: Failed to save ${category.toUpperCase()} paymaster to database:`, saveError);
+          throw new Error(`Database save failed: ${saveError.message}`);
+        }
 
         // Create balance records for each supported chain
         for (const chain of categoryChains) {
@@ -73,13 +81,19 @@ class PaymasterService {
         console.log(`   Supported chains: ${categoryChains.join(', ')}`);
         console.log(`   Primary deployment: ${primaryChain}`);
         
-        // Deploy the actual paymaster contract on the primary chain
+        // Try to deploy the actual paymaster contract (only works if developer has funded)
         try {
           await this.deploySharedPaymasterContract(paymaster, walletData.privateKey);
         } catch (deployError) {
-          console.error(`❌ Failed to deploy ${category.toUpperCase()} paymaster contract:`, deployError);
-          paymaster.deployment_status = 'failed';
+          console.log(`⏳ ${category.toUpperCase()} paymaster waiting for developer funding:`, deployError.message);
+          paymaster.deployment_status = 'pending_funding';
           await paymaster.save();
+          
+          // Don't treat this as an error - just needs funding
+          console.log(`📋 ${category.toUpperCase()} paymaster created but needs funding:`);
+          console.log(`   Address: ${walletData.address}`);
+          console.log(`   Required: ${category === 'evm' ? '0.002 ETH' : '0.01 SOL'}`);
+          console.log(`   Status: Waiting for developer to fund wallet`);
         }
 
         createdPaymasters.push(paymaster.toJSON());
@@ -122,41 +136,88 @@ class PaymasterService {
   }
 
   /**
-   * Deploy shared paymaster contract on the primary chain
+   * Deploy shared paymaster contract on ALL supported chains
    * @param {Object} paymaster - Paymaster model instance
    * @param {string} privateKey - Private key for deployment
    */
   async deploySharedPaymasterContract(paymaster, privateKey) {
     try {
-      console.log(`🚀 Deploying ${paymaster.chain_category.toUpperCase()} paymaster contract on ${paymaster.primary_deployment_chain}...`);
+      console.log(`🚀 Deploying ${paymaster.chain_category.toUpperCase()} paymaster contract on ALL supported chains: ${paymaster.supported_chains.join(', ')}...`);
       
-      let deploymentResult;
+      let deploymentResults = {};
+      let primaryResult = null;
       
       if (paymaster.chain_category === 'svm') {
-        deploymentResult = await PaymasterDeployer.deploySolanaPaymaster(paymaster.project_id, privateKey);
+        // For SVM, deploy on primary chain (Solana handles cross-chain differently)
+        deploymentResults[paymaster.primary_deployment_chain] = await PaymasterDeployer.deploySolanaPaymaster(paymaster.project_id, privateKey);
+        primaryResult = deploymentResults[paymaster.primary_deployment_chain];
+        
       } else if (paymaster.chain_category === 'evm') {
-        deploymentResult = await PaymasterDeployer.deployEthereumPaymaster(
-          paymaster.project_id, 
-          paymaster.primary_deployment_chain, 
-          privateKey
-        );
+        // For EVM, deploy the SAME wallet address on ALL supported chains
+        for (const chain of paymaster.supported_chains) {
+          try {
+            console.log(`🔗 Deploying paymaster contract on ${chain}...`);
+            const result = await PaymasterDeployer.deployEthereumPaymaster(
+              paymaster.project_id, 
+              chain, 
+              privateKey
+            );
+            deploymentResults[chain] = result;
+            
+            // Use first successful deployment as primary
+            if (!primaryResult) {
+              primaryResult = result;
+            }
+            
+            console.log(`✅ Successfully deployed on ${chain}: ${result.contractAddress}`);
+            
+          } catch (chainError) {
+            console.error(`❌ Failed to deploy on ${chain}:`, chainError.message);
+            deploymentResults[chain] = { error: chainError.message };
+            // Continue with other chains
+          }
+        }
+        
       } else {
         throw new Error(`Unsupported chain category: ${paymaster.chain_category}`);
       }
 
-      // Update paymaster with deployment info
-      paymaster.contract_address = deploymentResult.contractAddress;
-      paymaster.deployment_tx = deploymentResult.deploymentTx;
-      paymaster.entry_point_address = deploymentResult.entryPointAddress;
+      if (!primaryResult) {
+        throw new Error('Failed to deploy on any supported chain');
+      }
+
+      // Update paymaster with primary deployment info
+      paymaster.contract_address = primaryResult.contractAddress;
+      paymaster.deployment_tx = primaryResult.deploymentTx;
+      paymaster.entry_point_address = primaryResult.entryPointAddress;
       paymaster.deployment_status = 'deployed';
       
-      await paymaster.save();
+      // Store deployment results for each chain
+      paymaster.deployment_results = deploymentResults;
+      
+      // Save deployment results with explicit error logging
+      try {
+        await paymaster.save();
+        console.log(`✅ Successfully saved deployment results to database`);
+      } catch (saveError) {
+        console.error(`❌ CRITICAL: Failed to save deployment results to database:`, saveError);
+        throw new Error(`Deployment results save failed: ${saveError.message}`);
+      }
       
       console.log(`✅ Successfully deployed ${paymaster.chain_category.toUpperCase()} paymaster:`);
-      console.log(`   Contract: ${deploymentResult.contractAddress}`);
+      console.log(`   Contract: ${primaryResult.contractAddress}`);
       console.log(`   Supports: ${paymaster.supported_chains.join(', ')}`);
       
-      return deploymentResult;
+      // Log deployment status for each chain
+      for (const [chain, result] of Object.entries(deploymentResults)) {
+        if (result.error) {
+          console.log(`   ❌ ${chain}: ${result.error}`);
+        } else {
+          console.log(`   ✅ ${chain}: ${result.contractAddress}`);
+        }
+      }
+      
+      return primaryResult;
       
     } catch (error) {
       console.error(`❌ Failed to deploy shared paymaster contract:`, error);

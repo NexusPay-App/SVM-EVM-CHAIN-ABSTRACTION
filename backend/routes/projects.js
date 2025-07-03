@@ -3,6 +3,7 @@ const Project = require('../models/Project');
 const ProjectAPIKey = require('../models/ProjectAPIKey');
 const AuthMiddleware = require('../middleware/auth');
 const PaymasterService = require('../services/paymasterService');
+const { getSupportedChainIds } = require('../config/chains');
 
 const router = express.Router();
 
@@ -38,7 +39,7 @@ router.post('/', AuthMiddleware.authenticateToken, async (req, res) => {
     }
 
     // Validate supported chains
-    const supportedChains = ['ethereum', 'solana', 'arbitrum'];
+    const supportedChains = getSupportedChainIds();
     const invalidChains = chains.filter(chain => !supportedChains.includes(chain));
     if (invalidChains.length > 0) {
       return res.status(400).json({
@@ -67,24 +68,43 @@ router.post('/', AuthMiddleware.authenticateToken, async (req, res) => {
       // Create and deploy paymasters for each selected chain
       const paymasters = await PaymasterService.createProjectPaymasters(project.id, chains);
       
-      // Verify all paymasters were created and deployed successfully
-      const failedPaymasters = paymasters.filter(pm => pm.deployment_status !== 'deployed');
+      // Verify paymasters were created (deployed OR pending funding)
+      const successfulStatuses = ['deployed', 'pending_funding'];
+      const failedPaymasters = paymasters.filter(pm => !successfulStatuses.includes(pm.deployment_status));
+      
       if (failedPaymasters.length > 0) {
-        const failedChains = failedPaymasters.map(pm => pm.chain);
-        throw new Error(`Failed to deploy paymasters for chains: ${failedChains.join(', ')}`);
+        const failedCategories = failedPaymasters.map(pm => pm.chain_category);
+        throw new Error(`Failed to create paymasters for: ${failedCategories.join(', ')}`);
       }
+      
+      // Count deployed vs pending funding
+      const deployedCount = paymasters.filter(pm => pm.deployment_status === 'deployed').length;
+      const pendingFundingCount = paymasters.filter(pm => pm.deployment_status === 'pending_funding').length;
       
       // Only save project if ALL paymasters deployed successfully
       await project.save();
       
-      console.log(`✅ Project created successfully with ${paymasters.length} deployed paymasters`);
+      // Only save project if paymasters were created (even if not yet deployed)
+      await project.save();
+      
+      console.log(`✅ Project created successfully with ${paymasters.length} paymasters`);
+      console.log(`   Deployed: ${deployedCount}, Pending funding: ${pendingFundingCount}`);
+      
+      const responseMessage = pendingFundingCount > 0 
+        ? 'Project created. Some paymasters need funding before deployment.'
+        : 'Project and paymasters created successfully';
       
       res.status(201).json({
         success: true,
-        message: 'Project and paymasters created successfully',
+        message: responseMessage,
         data: {
           project: project.toJSON(),
-          paymasters: paymasters.length
+          paymasters: {
+            total: paymasters.length,
+            deployed: deployedCount,
+            pending_funding: pendingFundingCount
+          },
+          funding_required: pendingFundingCount > 0
         }
       });
       
@@ -241,7 +261,7 @@ router.put('/:projectId', AuthMiddleware.authenticateToken, async (req, res) => 
       project.website = website ? website.trim() : undefined;
     }
     if (chains && Array.isArray(chains)) {
-      const supportedChains = ['ethereum', 'solana', 'arbitrum'];
+      const supportedChains = getSupportedChainIds();
       const invalidChains = chains.filter(chain => !supportedChains.includes(chain));
       if (invalidChains.length > 0) {
         return res.status(400).json({

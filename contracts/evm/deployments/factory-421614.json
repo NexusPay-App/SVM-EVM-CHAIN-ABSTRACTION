@@ -1,0 +1,13 @@
+{
+  "chainId": "421614",
+  "network": "arbitrum-sepolia",
+  "masterPaymaster": "0xDEdf1A6e47106420341F1A8DA43512852d969a52",
+  "factory": "0xcd2f959936eB7c61376487eEc4BEbC44f1f95554",
+  "deployer": "0x20491a33f07B3E5bEDb847c7350332b85B479F08",
+  "deploymentBlock": 169785796,
+  "deploymentCost": "0.0000754227",
+  "estimatedProxyGas": "30000",
+  "estimatedProxyCostETH": "0.000003",
+  "estimatedProxyCostUSD": "0.01",
+  "timestamp": "2025-07-03T11:37:25.912Z"
+}
