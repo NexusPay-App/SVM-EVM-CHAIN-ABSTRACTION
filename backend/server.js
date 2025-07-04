@@ -1,3 +1,7 @@
+// ===== NexusPay Backend Server =====
+// Version: 1.2.1 - Added transaction sending endpoint
+// Last updated: 2025-07-04
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
