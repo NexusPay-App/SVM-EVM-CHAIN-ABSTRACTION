@@ -34,6 +34,7 @@
     "@solana/web3.js": "^1.98.2",
     "axios": "^1.10.0",
     "bcryptjs": "^2.4.3",
+    "compression": "^1.8.0",
     "connect-mongo": "^5.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -49,11 +50,13 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.17.0",
     "mongoose": "^7.6.0",
+    "node-cache": "^5.1.2",
     "node-cron": "^4.2.0",
     "node-fetch": "^3.3.2",
     "nodemailer": "^7.0.3",
     "passport": "^0.7.0",
-    "passport-google-oauth20": "^2.0.0"
+    "passport-google-oauth20": "^2.0.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "chai": "^5.2.0",

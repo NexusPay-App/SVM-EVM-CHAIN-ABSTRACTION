@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📱 Phone Wallet Demo - Cross-Chain Transfers</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .demo-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .login-section {
+            text-align: center;
+        }
+
+        .wallet-section {
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .wallet-section.show {
+            opacity: 1;
+            max-height: 2000px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            margin-left: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loader {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .chain-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .chain-btn {
+            padding: 8px 16px;
+            border: 2px solid #e1e1e1;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .chain-btn:hover {
+            border-color: #667eea;
+        }
+
+        .chain-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .wallet-info {
+            margin-bottom: 30px;
+        }
+
+        .addresses, .balances {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .chain-balance {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .chain-balance:last-child {
+            border-bottom: none;
+        }
+
+        .chain-name {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .chain-balance-amount {
+            text-align: right;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .send-section {
+            margin-top: 20px;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .send-section.show {
+            opacity: 1;
+            max-height: 500px;
+        }
+
+        .status-messages {
+            margin-top: 20px;
+        }
+
+        .status {
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .transaction-history {
+            margin-top: 30px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .tx-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            font-size: 14px;
+        }
+
+        .tx-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .refresh-btn {
+            background: #28a745;
+            font-size: 14px;
+            padding: 8px 16px;
+            margin-left: 10px;
+        }
+
+        .refresh-btn:hover {
+            background: #218838;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .chain-selector {
+                flex-direction: column;
+            }
+            
+            .chain-btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        .sdk-status {
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: white;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .chain-balance-amount a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .chain-balance-amount a:hover {
+            text-decoration: underline;
+        }
+
+        .tx-item a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .tx-item a:hover {
+            text-decoration: underline;
+        }
+
+        .status a {
+            color: inherit;
+            text-decoration: underline;
+        }
+
+        .dev-note {
+            background: rgba(255,255,255,0.1);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: white;
+            font-size: 11px;
+            text-align: center;
+            border-left: 3px solid rgba(255,255,255,0.3);
+        }
+
+        .login-modes {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            padding: 8px 16px;
+            border: 2px solid #e1e1e1;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .mode-btn:hover {
+            border-color: #667eea;
+        }
+
+        .mode-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="demo-badge">🚀 Cross-Chain Demo</div>
+            <h1>📱 Phone Wallet</h1>
+            <p>Send funds across Ethereum, Arbitrum & Solana using just phone numbers</p>
+            <div class="dev-note">
+                🔧 Developer Note: API key is configured in the app code - users only need phone & password
+            </div>
+            <div id="sdkStatus" class="sdk-status">🔍 Loading SDK...</div>
+        </div>
+
+        <div class="card">
+            <!-- Login Section -->
+            <div id="loginSection" class="login-section">
+                <h2>🔐 Login with Phone Number</h2>
+                <p style="margin-bottom: 20px; color: #666;">
+                    Enter your phone number to create or access your cross-chain wallet
+                </p>
+                
+                <div class="login-modes">
+                    <button class="mode-btn active" data-mode="login">🔓 Login</button>
+                    <button class="mode-btn" data-mode="register">📝 Register</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phoneNumber">📱 Phone Number</label>
+                    <input type="text" id="phoneNumber" placeholder="+1234567890" />
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">🔒 Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" />
+                </div>
+                
+                <button id="loginBtn" class="btn">
+                    <span id="loginText">Login / Create Wallet</span>
+                    <div id="loginLoader" class="loader hidden"></div>
+                </button>
+            </div>
+
+            <!-- Wallet Section -->
+            <div id="walletSection" class="wallet-section">
+                <div class="wallet-info">
+                    <h2>💳 Your Wallet</h2>
+                    <div id="walletAddresses" class="addresses"></div>
+                    <div id="walletBalances" class="balances"></div>
+                    
+                    <button id="showSendBtn" class="btn">
+                        💸 Send Funds
+                    </button>
+                    <button id="refreshBtn" class="btn refresh-btn">
+                        🔄 Refresh
+                    </button>
+                </div>
+
+                <!-- Send Section -->
+                <div id="sendSection" class="send-section">
+                    <h3>💸 Send Funds</h3>
+                    <p style="margin-bottom: 15px; color: #666;">
+                        Send gasless transactions to any phone number
+                    </p>
+                    
+                    <div class="form-group">
+                        <label>🔗 Select Chain</label>
+                        <div class="chain-selector">
+                            <button class="chain-btn active" data-chain="ethereum">⟡ Ethereum</button>
+                            <button class="chain-btn" data-chain="arbitrum">🔵 Arbitrum</button>
+                            <button class="chain-btn" data-chain="solana">🌟 Solana</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="recipientPhone">📱 Recipient Phone</label>
+                        <input type="text" id="recipientPhone" placeholder="+1234567890" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="amount">💰 Amount</label>
+                        <input type="number" id="amount" placeholder="0.01" step="0.0001" />
+                    </div>
+                    
+                    <button id="sendBtn" class="btn">
+                        <span id="sendText">⚡ Send (Gasless)</span>
+                        <div id="sendLoader" class="loader hidden"></div>
+                    </button>
+                    <button id="cancelSendBtn" class="btn btn-secondary">Cancel</button>
+                </div>
+
+                <!-- Transaction History -->
+                <div id="transactionHistory" class="transaction-history hidden">
+                    <h3>📋 Transaction History</h3>
+                    <div id="txList"></div>
+                </div>
+            </div>
+
+            <!-- Status Messages -->
+            <div id="statusMessages" class="status-messages"></div>
+        </div>
+    </div>
+
+    <!-- Load configuration -->
+    <script src="config.js"></script>
+    
+    <!-- Load SDK -->
+    <script src="sdk-loader.js?v=1.2.1"></script>
+    
+    <!-- Load wallet app -->
+    <script src="wallet.js"></script>
+</body>
+</html> 

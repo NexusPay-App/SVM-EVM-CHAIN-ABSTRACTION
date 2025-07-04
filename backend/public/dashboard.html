@@ -114,6 +114,103 @@
             margin-bottom: 2rem;
         }
 
+        .developer-flow {
+            background: linear-gradient(135deg, rgba(10, 207, 242, 0.1), rgba(10, 207, 242, 0.05));
+            border: 2px solid rgba(10, 207, 242, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .flow-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #0acff2;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .flow-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .flow-step {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(10, 207, 242, 0.3);
+            border-radius: 12px;
+            padding: 1.2rem;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .flow-step:hover {
+            border-color: #0acff2;
+            transform: translateY(-2px);
+        }
+
+        .flow-step-number {
+            background: #0acff2;
+            color: #000000;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin: 0 auto 0.8rem;
+        }
+
+        .flow-step-title {
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+
+        .flow-step-desc {
+            font-size: 0.9rem;
+            color: #cccccc;
+            line-height: 1.4;
+        }
+
+        .flow-arrow {
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #0acff2;
+            font-size: 1.5rem;
+            z-index: 1;
+        }
+
+        .flow-step:last-child .flow-arrow {
+            display: none;
+        }
+
+        .flow-note {
+            background: rgba(10, 207, 242, 0.1);
+            border-left: 4px solid #0acff2;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+        }
+
+        .flow-note-title {
+            font-weight: 600;
+            color: #0acff2;
+            margin-bottom: 0.5rem;
+        }
+
+        .flow-note-text {
+            color: #cccccc;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
         .dashboard-stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1167,6 +1264,87 @@
             <p class="welcome-subtitle">Manage your blockchain infrastructure and paymaster wallets</p>
         </div>
 
+        <!-- Developer Flow Guide -->
+        <div class="developer-flow">
+            <h2 class="flow-title">🚀 5-Step Developer Integration Flow</h2>
+            <div class="flow-steps">
+                <div class="flow-step">
+                    <div class="flow-step-number">1</div>
+                    <div class="flow-step-title">Create Project</div>
+                    <div class="flow-step-desc">Set up your project with chains and settings</div>
+                    <div class="flow-arrow">→</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">2</div>
+                    <div class="flow-step-title">Deploy Paymasters</div>
+                    <div class="flow-step-desc">Fund & deploy paymaster wallets for each chain</div>
+                    <div class="flow-arrow">→</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">3</div>
+                    <div class="flow-step-title">Create API Key</div>
+                    <div class="flow-step-desc">Generate API key tied to your project</div>
+                    <div class="flow-arrow">→</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">4</div>
+                    <div class="flow-step-title">SDK Integration</div>
+                    <div class="flow-step-desc">Use API key to connect SDK to paymasters</div>
+                    <div class="flow-arrow">→</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">5</div>
+                    <div class="flow-step-title">Gasless Transactions</div>
+                    <div class="flow-step-desc">Your paymaster pays gas fees for users</div>
+                </div>
+            </div>
+            <div class="flow-note">
+                <div class="flow-note-title">💡 How it works:</div>
+                <div class="flow-note-text">
+                    Your project's paymaster wallets cover gas fees for user wallet deployments and transactions. 
+                    Users get gasless, seamless cross-chain experiences while you maintain full control.
+                </div>
+            </div>
+            
+            <!-- SDK Integration Guide -->
+            <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(10, 207, 242, 0.3); border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem;">
+                <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                    <span style="font-size: 1.5rem; margin-right: 0.5rem;">⚡</span>
+                    <h3 style="color: #0acff2; margin: 0;">Ultra-Simple SDK Integration</h3>
+                </div>
+                
+                <div style="background: rgba(0, 0, 0, 0.6); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                    <div style="color: #888; font-size: 0.9rem; margin-bottom: 0.5rem;">npm install @nexuspay/sdk</div>
+                    <div style="color: #888; font-size: 0.8rem;">Only 2 parameters needed: projectName + apiKey</div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div style="background: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 1rem;">
+                        <div style="color: #0acff2; font-weight: 600; margin-bottom: 0.5rem;">🔥 Initialize (1 line)</div>
+                        <code style="background: rgba(0, 0, 0, 0.8); color: #51cf66; padding: 0.5rem; border-radius: 4px; display: block; font-size: 0.8rem; overflow-x: auto;">
+const nexus = new NexusSDK({
+  projectName: 'YourProject',
+  apiKey: 'your_api_key'
+});
+                        </code>
+                    </div>
+                    <div style="background: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 1rem;">
+                        <div style="color: #0acff2; font-weight: 600; margin-bottom: 0.5rem;">💼 Create Wallet (1 line)</div>
+                        <code style="background: rgba(0, 0, 0, 0.8); color: #51cf66; padding: 0.5rem; border-radius: 4px; display: block; font-size: 0.8rem; overflow-x: auto;">
+const wallet = await nexus.createWallet({
+  socialId: phoneNumber,
+  socialType: 'phone'
+});
+                        </code>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1rem; text-align: center;">
+                    <span style="color: #888; font-size: 0.9rem;">🎯 That's it! Auto-gasless, cross-chain, bulletproof.</span>
+                </div>
+            </div>
+        </div>
+
         <div class="dashboard-stats">
             <div class="stat-card">
                 <div id="totalProjects" class="stat-number">0</div>
@@ -1446,34 +1624,117 @@
             }
         }
 
-        function loadProjects() {
+        async function loadProjects() {
             const token = localStorage.getItem('nexuspay_token');
             
-            fetch('/api/projects', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
+            try {
+                console.log('🚀 Loading dashboard data with optimized API...');
+                const startTime = Date.now();
+                
+                // Use the new optimized dashboard endpoint
+                const response = await fetch('/api/dashboard', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
+                
+                const data = await response.json();
+                const loadTime = Date.now() - startTime;
+                
+                console.log(`✅ Dashboard loaded in ${loadTime}ms`);
+                
+                if (data && data.success && data.data) {
+                    // Extract projects with pre-populated data
+                    userProjects = data.data.projects || [];
+                    
+                    // Pre-populate project data structures from optimized response
+                    projectApiKeys = {};
+                    projectPaymasters = {};
+                    
+                    userProjects.forEach(project => {
+                        // API Keys are already included
+                        if (project.api_keys) {
+                            projectApiKeys[project.id] = {
+                                api_keys: project.api_keys,
+                                total: project.api_keys.length,
+                                limit: 3
+                            };
+                        }
+                        
+                        // Balances and addresses are already included
+                        if (project.balances) {
+                            projectPaymasters[project.id] = {
+                                balances: project.balances,
+                                addresses: {}
+                            };
+                            
+                            // Extract addresses from balances
+                            project.balances.forEach(balance => {
+                                if (balance.address) {
+                                    projectPaymasters[project.id].addresses[balance.chain] = balance.address;
+                                }
+                            });
+                        }
+                    });
+                    
+                    // Update stats from the optimized response
+                    if (data.data.user && data.data.user.stats) {
+                        const stats = data.data.user.stats;
+                        
+                        // Update dashboard stats
+                        document.getElementById('totalProjects').textContent = stats.total_projects || 0;
+                        document.getElementById('activePaymasters').textContent = stats.active_paymasters || 0;
+                        document.getElementById('totalBalance').textContent = `$${(stats.total_balance_usd || 0).toFixed(2)}`;
+                        document.getElementById('totalApiKeys').textContent = stats.total_api_keys || 0;
+                    }
+                    
+                    displayProjects();
+                    
+                } else {
+                    console.warn('Invalid dashboard data format, falling back to old method');
+                    await loadProjectsFallback();
+                }
+                
+            } catch (error) {
+                console.error('Error loading optimized dashboard:', error);
+                console.log('🔄 Falling back to individual API calls...');
+                await loadProjectsFallback();
+            }
+        }
+
+        async function loadProjectsFallback() {
+            const token = localStorage.getItem('nexuspay_token');
+            
+            try {
+                // Fallback: Load projects first
+                const response = await fetch('/api/projects', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const data = await response.json();
+                
                 if (data && data.success && data.data && Array.isArray(data.data.projects)) {
                     userProjects = data.data.projects;
-                    loadAllPaymasterData();
+                    await loadAllPaymasterDataFallback();
                 } else {
                     userProjects = [];
                     displayProjects();
                     updateStats();
                 }
-            })
-            .catch(error => {
-                console.error('Error loading projects:', error);
+            } catch (error) {
+                console.error('Error loading projects fallback:', error);
                 userProjects = [];
                 displayProjects();
                 updateStats();
-            });
+            }
         }
 
-        async function loadAllPaymasterData() {
+        async function loadAllPaymasterDataFallback() {
             const token = localStorage.getItem('nexuspay_token');
             
             for (const project of userProjects) {

@@ -1,0 +1,27 @@
+{
+  "name": "phone-wallet-demo",
+  "version": "1.0.0",
+  "description": "Simple phone number wallet demo for cross-chain fund transfers",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 3000 -c-1",
+    "dev": "npx http-server -p 3000 -c-1 -o"
+  },
+  "dependencies": {
+    "@nexuspay/sdk": "^1.2.1"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "keywords": [
+    "wallet",
+    "phone",
+    "cross-chain",
+    "ethereum",
+    "arbitrum", 
+    "solana",
+    "demo"
+  ],
+  "author": "NexusPay",
+  "license": "MIT"
+} 

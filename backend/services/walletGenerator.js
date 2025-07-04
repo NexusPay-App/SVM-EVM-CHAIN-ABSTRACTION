@@ -41,6 +41,82 @@ class WalletGenerator {
   }
 
   /**
+   * Generate user wallet for EVM chains (smart contract deployment)
+   * @param {Object} params - { socialId, socialType, chain, salt, usePaymaster, projectId, paymasterAddress }
+   * @returns {Object} - { success, address, isDeployed, txHash, gasFees }
+   */
+  async generateUserWallet(params) {
+    try {
+      const { socialId, socialType, chain, salt, usePaymaster, projectId, paymasterAddress } = params;
+      
+      console.log(`🔗 Generating EVM user wallet for ${socialId} on ${chain}...`);
+      
+      // Generate deterministic seed for this user
+      const seedInput = `${socialId}-${socialType}-user-${projectId}-${salt}`;
+      const seed = crypto.createHash('sha256').update(seedInput).digest();
+      
+      // Generate wallet from seed
+      const wallet = this.generateEthereumWallet(seed);
+      
+      console.log(`✅ Generated EVM user wallet address: ${wallet.address}`);
+      
+      // For now, return the wallet address (would deploy smart contract in production)
+      return {
+        success: true,
+        address: wallet.address,
+        isDeployed: false, // Would be true after smart contract deployment
+        txHash: null, // Would contain deployment transaction hash
+        gasFees: 0 // Would contain actual gas fees paid by paymaster
+      };
+      
+    } catch (error) {
+      console.error('EVM user wallet generation error:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Generate user wallet for Solana (program deployment)
+   * @param {Object} params - { socialId, socialType, salt, usePaymaster, projectId, paymasterAddress }
+   * @returns {Object} - { success, address, isDeployed, txHash, gasFees }
+   */
+  async generateSolanaUserWallet(params) {
+    try {
+      const { socialId, socialType, salt, usePaymaster, projectId, paymasterAddress } = params;
+      
+      console.log(`🌟 Generating Solana user wallet for ${socialId}...`);
+      
+      // Generate deterministic seed for this user
+      const seedInput = `${socialId}-${socialType}-user-${projectId}-${salt}`;
+      const seed = crypto.createHash('sha256').update(seedInput).digest();
+      
+      // Generate wallet from seed
+      const wallet = this.generateSolanaWallet(seed);
+      
+      console.log(`✅ Generated Solana user wallet address: ${wallet.address}`);
+      
+      // For now, return the wallet address (would deploy program in production)
+      return {
+        success: true,
+        address: wallet.address,
+        isDeployed: false, // Would be true after program deployment
+        txHash: null, // Would contain deployment transaction hash
+        gasFees: 0 // Would contain actual fees paid by paymaster
+      };
+      
+    } catch (error) {
+      console.error('Solana user wallet generation error:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
    * Get chain category from specific chain name
    * @param {string} chain - Specific chain name
    * @returns {string} - Chain category ('evm' or 'svm')

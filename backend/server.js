@@ -21,6 +21,7 @@ const paymasterRoutes = require('./routes/paymaster');
 const transactionRoutes = require('./routes/transactions');
 const chainRoutes = require('./routes/chains');
 const analyticsRoutes = require('./routes/analytics');
+const walletRoutes = require('./routes/wallets');
 
 // Import models (User model now comes from models/User.js)
 const User = require('./models/User');
@@ -43,8 +44,16 @@ if (!process.env.MASTER_SEED) {
 
 // MongoDB Connection
 const dbConnection = require('./database/connection');
-dbConnection.connect().then(() => {
+dbConnection.connect().then(async () => {
   console.log('✅ Connected to MongoDB via connection manager');
+  
+  // Create optimized database indexes for lightning-fast queries
+  try {
+    await createOptimizedIndexes();
+    console.log('⚡ Database optimized for ultra-fast queries');
+  } catch (indexError) {
+    console.error('⚠️ Index creation error (non-critical):', indexError.message);
+  }
 }).catch(err => {
   console.error('❌ MongoDB connection error:', err);
   
@@ -52,8 +61,16 @@ dbConnection.connect().then(() => {
   mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/nexuspay', {
     useNewUrlParser: true,
     useUnifiedTopology: true
-  }).then(() => {
+  }).then(async () => {
     console.log('✅ Connected to MongoDB (fallback)');
+    
+    // Create indexes even in fallback mode
+    try {
+      await createOptimizedIndexes();
+      console.log('⚡ Database optimized for ultra-fast queries (fallback)');
+    } catch (indexError) {
+      console.error('⚠️ Index creation error (non-critical):', indexError.message);
+    }
   }).catch(fallbackErr => {
     console.error('❌ MongoDB fallback connection error:', fallbackErr);
   });
@@ -80,14 +97,42 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Add usage tracking for API endpoints (after express.json)
 app.use('/api', UsageTracker.trackAPIUsage());
 
+// Import optimization middleware
+const requestOptimizer = require('./middleware/requestOptimizer');
+const dashboardRoutes = require('./routes/dashboard');
+const UltraCache = require('./middleware/ultraCache');
+const { createOptimizedIndexes } = require('./database/indexes');
+
+// Apply global optimization middleware
+app.use(requestOptimizer.requestId);
+app.use(requestOptimizer.performance);
+app.use(requestOptimizer.security);
+app.use(requestOptimizer.compression);
+
+// Cache invalidation middleware for data-changing operations
+const cacheInvalidationMiddleware = (req, res, next) => {
+  const originalSend = res.send;
+  res.send = function(data) {
+    // If this was a successful POST/PUT/DELETE request, invalidate cache
+    if (['POST', 'PUT', 'DELETE'].includes(req.method) && res.statusCode < 400 && req.user?.id) {
+      UltraCache.invalidateUser(req.user.id);
+    }
+    return originalSend.call(this, data);
+  };
+  next();
+};
+
 // Use the new authentication routes
 app.use('/api/auth', authRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/projects', projectAPIKeyRoutes);
-app.use('/api/projects', paymasterRoutes);
-app.use('/api/projects', transactionRoutes);
+app.use('/api/projects', cacheInvalidationMiddleware, projectRoutes);
+app.use('/api/projects', cacheInvalidationMiddleware, projectAPIKeyRoutes);
+app.use('/api/projects', cacheInvalidationMiddleware, paymasterRoutes);
+app.use('/api/projects', cacheInvalidationMiddleware, transactionRoutes);
+app.use('/api/transactions', cacheInvalidationMiddleware, transactionRoutes);
 app.use('/api', analyticsRoutes);
 app.use('/api/chains', chainRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/wallets', cacheInvalidationMiddleware, walletRoutes);
 
 // Legacy JWT Authentication Middleware (for backward compatibility)
 const authenticateToken = (req, res, next) => {
@@ -182,6 +227,20 @@ app.get('/health', (req, res) => {
     service: 'nexuspay-api',
     version: '2.0.0',
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
+// Cache performance stats
+app.get('/debug/cache-stats', (req, res) => {
+  const cacheStats = UltraCache.getCacheStats();
+  res.json({
+    cache_performance: cacheStats,
+    cache_hit_rate: {
+      dashboard: cacheStats.dashboard.hits / (cacheStats.dashboard.hits + cacheStats.dashboard.misses) * 100 || 0,
+      statsCache: cacheStats.statsCache.hits / (cacheStats.statsCache.hits + cacheStats.statsCache.misses) * 100 || 0,
+      user: cacheStats.user.hits / (cacheStats.user.hits + cacheStats.user.misses) * 100 || 0
+    },
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -483,7 +542,9 @@ app.post('/api/keys/generate', authenticateToken, async (req, res) => {
         max_keys_per_project: 3
       }
     }
-});  });
+  });
+});
+
 const apiKeyRateLimit = RateLimiter.createAPIKeyRateLimit();
 
 app.post('/api/projects/:projectId/wallets', 
@@ -625,6 +686,70 @@ app.get('/debug/env', (req, res) => {
       3: 'disconnecting'
     }
   });
+});
+
+// Debug endpoint to check API key validation
+app.get('/debug/api-key/:apiKey', async (req, res) => {
+  try {
+    const { apiKey } = req.params;
+    
+    // Parse API key
+    const ProjectAPIKey = require('./models/ProjectAPIKey');
+    const Project = require('./models/Project');
+    
+    let keyInfo;
+    try {
+      keyInfo = ProjectAPIKey.parseAPIKey(apiKey);
+      console.log('Parsed API key:', keyInfo);
+    } catch (parseError) {
+      return res.json({
+        error: 'API key parse failed',
+        details: parseError.message,
+        apiKey: apiKey
+      });
+    }
+    
+    // Find the API key in database
+    const dbAPIKey = await ProjectAPIKey.findByKey(apiKey);
+    console.log('Database API key:', dbAPIKey ? 'found' : 'not found');
+    
+    if (dbAPIKey) {
+      console.log('API key project_id:', dbAPIKey.project_id);
+      console.log('Parsed project_id:', keyInfo.projectId);
+    }
+    
+    // Check if project exists
+    const project = await Project.findOne({
+      id: keyInfo.projectId,
+      status: 'active'
+    });
+    console.log('Project found:', project ? 'yes' : 'no');
+    
+    // Count total API keys and projects
+    const totalApiKeys = await ProjectAPIKey.countDocuments();
+    const totalProjects = await Project.countDocuments();
+    
+    res.json({
+      success: true,
+      parsed: keyInfo,
+      apiKeyFound: dbAPIKey ? true : false,
+      projectFound: project ? true : false,
+      projectIdMatch: dbAPIKey ? (dbAPIKey.project_id === keyInfo.projectId) : null,
+      totalApiKeys,
+      totalProjects,
+      dbState: {
+        apiKeyStatus: dbAPIKey ? dbAPIKey.status : null,
+        projectStatus: project ? project.status : null
+      }
+    });
+    
+  } catch (error) {
+    console.error('Debug API key error:', error);
+    res.json({
+      error: 'Debug failed',
+      details: error.message
+    });
+  }
 });
 
 // Error handling

@@ -14,12 +14,12 @@ const apiKeySchema = new mongoose.Schema({
     unique: true,
     default: () => `key_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`
   },
-  projectId: {
+  project_id: {
     type: String,
     required: true,
     index: true
   },
-  keyName: {
+  name: {
     type: String,
     required: true,
     trim: true
@@ -64,8 +64,9 @@ const apiKeySchema = new mongoose.Schema({
 
 // Static methods
 apiKeySchema.statics.generateAPIKey = function(projectId, type) {
-  const random = crypto.randomBytes(16).toString('hex');
-  return `npay_${projectId}_${type}_${random}`;
+  const keyId = crypto.randomBytes(4).toString('hex');
+  const hash = crypto.randomBytes(16).toString('hex');
+  return `npay_proj_${projectId}_${keyId}_${type}_${hash}`;
 };
 
 apiKeySchema.statics.encryptKey = function(key, projectId) {
@@ -93,28 +94,29 @@ apiKeySchema.statics.createPreview = function(key) {
 
 apiKeySchema.statics.findByProject = function(projectId) {
   return this.find({ 
-    projectId: projectId, 
+    project_id: projectId, 
     status: 'active' 
   }).sort({ createdAt: -1 });
 };
 
 apiKeySchema.statics.countActiveByProject = function(projectId) {
   return this.countDocuments({ 
-    projectId: projectId, 
+    project_id: projectId, 
     status: 'active' 
   });
 };
 
 apiKeySchema.statics.parseAPIKey = function(apiKey) {
   const parts = apiKey.split('_');
-  if (parts.length !== 4 || parts[0] !== 'npay') {
+  if (parts.length < 5 || parts[0] !== 'npay' || parts[1] !== 'proj') {
     throw new Error('Invalid API key format');
   }
   
   return {
-    projectId: parts[1] + '_' + parts[2], // proj_abc123
-    type: parts[3],
-    random: parts[4]
+    projectId: parts[2],
+    keyId: parts[3],
+    type: parts[4],
+    hash: parts.slice(5).join('_')
   };
 };
 
@@ -140,7 +142,7 @@ apiKeySchema.statics.findByKey = async function(apiKey) {
 
 // Instance methods
 apiKeySchema.methods.encryptAndStoreKey = function(key) {
-  const encrypted = this.constructor.encryptKey(key, this.projectId);
+  const encrypted = this.constructor.encryptKey(key, this.project_id);
   this.encryptedKey = encrypted.encrypted;
   this.keyIv = encrypted.iv;
   this.keyAuthTag = encrypted.authTag;
@@ -162,7 +164,7 @@ apiKeySchema.methods.decryptKey = function() {
   }
   
   const algorithm = 'aes-256-gcm';
-  const secretKey = (process.env.ENCRYPTION_KEY || 'default-key') + this.projectId;
+  const secretKey = (process.env.ENCRYPTION_KEY || 'default-key') + this.project_id;
   const keyBuffer = crypto.scryptSync(secretKey, 'salt', 32);
   const iv = Buffer.from(this.keyIv, 'hex');
   const authTag = Buffer.from(this.keyAuthTag, 'hex');
@@ -267,8 +269,8 @@ apiKeySchema.methods.toJSON = function() {
   // Map back to expected field names for API compatibility
   return {
     id: obj.keyId,
-    project_id: obj.projectId,
-    name: obj.keyName,
+    project_id: obj.project_id,
+    name: obj.name,
     key_preview: obj.keyPreview,
     type: obj.keyType,
     permissions: obj.permissions || ['wallets:create', 'wallets:deploy', 'wallets:read'],

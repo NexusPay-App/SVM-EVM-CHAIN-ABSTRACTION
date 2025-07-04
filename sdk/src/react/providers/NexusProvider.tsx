@@ -1,177 +1,235 @@
 /**
- * NexusProvider - Main React context provider
- * 
- * Provides NexusSDK context to all child components
+ * NexusProvider - Ultra-Simple Cross-Chain Wallet Provider
+ * Provides access to simplified SDK features with React state management
  */
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { NexusSDK } from '../../core/NexusSDK';
-import { NexusConfig, WalletInfo, SupportedChain } from '../../types';
+import React, { createContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import { NexusSDK, SimpleNexusConfig } from '../../core/NexusSDK.js';
+import {
+  NexusError,
+  Wallet,
+  TransactionResult,
+  WalletBalances,
+  BridgeResult,
+  PaymasterBalance,
+  AnalyticsOverview,
+  SupportedChain,
+} from '../../types/index.js';
 
-export interface NexusContextType {
-  sdk: NexusSDK | null;
-  isInitialized: boolean;
-  isLoading: boolean;
-  error: string | null;
-  currentWallet: WalletInfo | null;
-  supportedChains: SupportedChain[];
-  
-  // Methods
-  connectWallet: (socialId: string, socialType: string) => Promise<WalletInfo | null>;
-  disconnectWallet: () => void;
-  switchChain: (chain: SupportedChain) => Promise<void>;
-}
-
-const NexusContext = createContext<NexusContextType | undefined>(undefined);
-
+// Simplified provider props
 export interface NexusProviderProps {
-  config: NexusConfig;
-  children: React.ReactNode;
+  config: SimpleNexusConfig;
+  children: ReactNode;
 }
 
-/**
- * NexusProvider Component
- * 
- * @example
- * ```tsx
- * import { NexusProvider } from '@nexusplatform/sdk/react';
- * 
- * function App() {
- *   return (
- *     <NexusProvider
- *       config={{
- *         apiKey: process.env.NEXT_PUBLIC_NEXUS_API_KEY,
- *         chains: ['ethereum', 'polygon', 'solana'],
- *         features: {
- *           gasTank: true,
- *           crossChain: true,
- *           defiIntegrations: true
- *         }
- *       }}
- *     >
- *       <YourApp />
- *     </NexusProvider>
- *   );
- * }
- * ```
- */
-export function NexusProvider({ config, children }: NexusProviderProps) {
+// Simplified hook return type
+export interface UseNexusReturn {
+  sdk: NexusSDK | null;
+  isLoading: boolean;
+  error: NexusError | null;
+  
+  // Simplified wallet operations
+  createWallet: (socialId: string, socialType: string, chains?: SupportedChain[]) => Promise<Wallet>;
+  getWallet: (socialId: string, socialType: string) => Promise<Wallet>;
+  getWalletBalances: (socialId: string, socialType: string) => Promise<WalletBalances>;
+  
+  // Simplified transaction operations
+  sendTransaction: (data: {
+    socialId: string;
+    socialType: string;
+    chain: SupportedChain;
+    to: string;
+    value?: string;
+    data?: string;
+  }) => Promise<TransactionResult>;
+  
+  transferTokens: (data: {
+    socialId: string;
+    socialType: string;
+    chain: SupportedChain;
+    to: string;
+    amount: string;
+    token?: string;
+  }) => Promise<TransactionResult>;
+  
+  // Simplified cross-chain operations
+  bridgeTokens: (data: {
+    socialId: string;
+    socialType: string;
+    fromChain: SupportedChain;
+    toChain: SupportedChain;
+    amount: string;
+    token?: string;
+  }) => Promise<BridgeResult>;
+  
+  // Analytics
+  getAnalytics: (days?: number) => Promise<AnalyticsOverview>;
+  getPaymasterBalances: () => Promise<PaymasterBalance[]>;
+  
+  // Utility
+  clearError: () => void;
+}
+
+// Create the context
+export const NexusContext = createContext<UseNexusReturn | undefined>(undefined);
+
+export const NexusProvider: React.FC<NexusProviderProps> = ({ config, children }) => {
+  // State management
   const [sdk, setSdk] = useState<NexusSDK | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [currentWallet, setCurrentWallet] = useState<WalletInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<NexusError | null>(null);
 
+  // Initialize SDK
   useEffect(() => {
-    async function initializeSDK() {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        console.log('🚀 Initializing NexusSDK...');
-        
-        const nexusSDK = new NexusSDK(config);
-        await nexusSDK.initialize();
-        
-        setSdk(nexusSDK);
-        setIsInitialized(true);
-        
-        console.log('✅ NexusSDK initialized successfully');
-        
-        // Try to restore previous wallet session
-        const savedWalletId = localStorage.getItem('nexus-wallet-id');
-        if (savedWalletId) {
-          try {
-            const wallet = await nexusSDK.getWallet(savedWalletId);
-            if (wallet) {
-              setCurrentWallet(wallet);
-              console.log('🔄 Restored wallet session:', savedWalletId);
-            }
-          } catch (error) {
-            console.warn('Failed to restore wallet session:', error);
-            localStorage.removeItem('nexus-wallet-id');
-          }
-        }
-        
-      } catch (err) {
-        console.error('❌ Failed to initialize NexusSDK:', err);
-        setError(err instanceof Error ? err.message : 'Unknown error');
-      } finally {
-        setIsLoading(false);
-      }
+    try {
+      const sdkInstance = new NexusSDK(config);
+      setSdk(sdkInstance);
+    } catch (err) {
+      setError({
+        code: 'SDK_INIT_ERROR',
+        message: err instanceof Error ? err.message : 'Failed to initialize SDK',
+      });
     }
-
-    initializeSDK();
   }, [config]);
 
-  const connectWallet = async (socialId: string, socialType: string): Promise<WalletInfo | null> => {
+  // Error handling
+  const handleError = useCallback((err: any) => {
+    const nexusError: NexusError = {
+      code: err.code || 'UNKNOWN_ERROR',
+      message: err.message || 'An unknown error occurred',
+      details: err.details,
+      statusCode: err.statusCode,
+      retryable: err.retryable || false,
+      suggestions: err.suggestions || [],
+    };
+    setError(nexusError);
+    return nexusError;
+  }, []);
+
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
+  // Wrapper for async operations
+  const withLoading = useCallback(async <T,>(operation: () => Promise<T>): Promise<T> => {
     if (!sdk) {
       throw new Error('SDK not initialized');
     }
 
+    setIsLoading(true);
+    setError(null);
+
     try {
-      setIsLoading(true);
-      setError(null);
-
-      console.log(`🔐 Connecting wallet: ${socialType}:${socialId}`);
-
-      // Check if wallet already exists
-      let wallet = await sdk.getWallet(socialId);
-      
-      if (!wallet) {
-        // Create new wallet
-        wallet = await sdk.createWallet({
-          socialId,
-          socialType: socialType as any,
-          chains: config.chains,
-          paymaster: config.features?.gaslessTransactions ?? true
-        });
-      }
-
-      setCurrentWallet(wallet);
-      localStorage.setItem('nexus-wallet-id', socialId);
-      
-      console.log('✅ Wallet connected successfully');
-      return wallet;
-      
+      const result = await operation();
+      return result;
     } catch (err) {
-      console.error('❌ Failed to connect wallet:', err);
-      setError(err instanceof Error ? err.message : 'Failed to connect wallet');
-      return null;
+      const nexusError = handleError(err);
+      throw nexusError;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [sdk, handleError]);
 
-  const disconnectWallet = () => {
-    setCurrentWallet(null);
-    localStorage.removeItem('nexus-wallet-id');
-    console.log('🔌 Wallet disconnected');
-  };
+  // ==================== SIMPLIFIED WALLET OPERATIONS ====================
 
-  const switchChain = async (chain: SupportedChain): Promise<void> => {
-    if (!currentWallet) {
-      throw new Error('No wallet connected');
-    }
+  const createWallet = useCallback(
+    async (socialId: string, socialType: string, chains?: SupportedChain[]): Promise<Wallet> => {
+      return withLoading(() => sdk!.createWallet({ socialId, socialType, chains }));
+    },
+    [sdk, withLoading]
+  );
 
-    if (!currentWallet.addresses[chain]) {
-      throw new Error(`Wallet not available on ${chain}`);
-    }
+  const getWallet = useCallback(
+    async (socialId: string, socialType: string): Promise<Wallet> => {
+      return withLoading(() => sdk!.getWallet(socialId, socialType));
+    },
+    [sdk, withLoading]
+  );
 
-    // Chain switching logic would go here
-    console.log(`🔄 Switched to ${chain}`);
-  };
+  const getWalletBalances = useCallback(
+    async (socialId: string, socialType: string): Promise<WalletBalances> => {
+      return withLoading(() => sdk!.getWalletBalances(socialId, socialType));
+    },
+    [sdk, withLoading]
+  );
 
-  const contextValue: NexusContextType = {
+  // ==================== SIMPLIFIED TRANSACTION OPERATIONS ====================
+
+  const sendTransaction = useCallback(
+    async (data: {
+      socialId: string;
+      socialType: string;
+      chain: SupportedChain;
+      to: string;
+      value?: string;
+      data?: string;
+    }): Promise<TransactionResult> => {
+      return withLoading(() => sdk!.sendTransaction(data));
+    },
+    [sdk, withLoading]
+  );
+
+  const transferTokens = useCallback(
+    async (data: {
+      socialId: string;
+      socialType: string;
+      chain: SupportedChain;
+      to: string;
+      amount: string;
+      token?: string;
+    }): Promise<TransactionResult> => {
+      return withLoading(() => sdk!.transferTokens(data));
+    },
+    [sdk, withLoading]
+  );
+
+  // ==================== SIMPLIFIED CROSS-CHAIN OPERATIONS ====================
+
+  const bridgeTokens = useCallback(
+    async (data: {
+      socialId: string;
+      socialType: string;
+      fromChain: SupportedChain;
+      toChain: SupportedChain;
+      amount: string;
+      token?: string;
+    }): Promise<BridgeResult> => {
+      return withLoading(() => sdk!.bridgeTokens(data));
+    },
+    [sdk, withLoading]
+  );
+
+  // ==================== ANALYTICS & MONITORING ====================
+
+  const getAnalytics = useCallback(
+    async (days?: number): Promise<AnalyticsOverview> => {
+      return withLoading(() => sdk!.getAnalytics(days));
+    },
+    [sdk, withLoading]
+  );
+
+  const getPaymasterBalances = useCallback(
+    async (): Promise<PaymasterBalance[]> => {
+      return withLoading(() => sdk!.getPaymasterBalances());
+    },
+    [sdk, withLoading]
+  );
+
+  // ==================== CONTEXT VALUE ====================
+
+  const contextValue: UseNexusReturn = {
     sdk,
-    isInitialized,
     isLoading,
     error,
-    currentWallet,
-    supportedChains: config.chains,
-    connectWallet,
-    disconnectWallet,
-    switchChain
+    createWallet,
+    getWallet,
+    getWalletBalances,
+    sendTransaction,
+    transferTokens,
+    bridgeTokens,
+    getAnalytics,
+    getPaymasterBalances,
+    clearError,
   };
 
   return (
@@ -179,15 +237,6 @@ export function NexusProvider({ config, children }: NexusProviderProps) {
       {children}
     </NexusContext.Provider>
   );
-}
+};
 
-/**
- * Hook to use NexusSDK context
- */
-export function useNexusContext(): NexusContextType {
-  const context = useContext(NexusContext);
-  if (context === undefined) {
-    throw new Error('useNexusContext must be used within a NexusProvider');
-  }
-  return context;
-} 
+export default NexusProvider; 

@@ -1,313 +1,548 @@
 /**
- * WalletConnect Component
- * 
- * Main wallet connection component with social login support
- * The ThirdWeb alternative with cross-chain support
+ * WalletConnect - Ultimate Flexible Social Wallet Creator
+ * Support for ANY social identifier with beautiful, customizable UI
  */
 
-import React, { useState } from 'react';
-import { WalletConnectProps, SupportedChain, SocialIdType, WalletInfo } from '../../types';
+import React, { useState, useEffect } from 'react';
+import { useNexus } from '../hooks/useNexus';
+import { SupportedChain, WalletConnectProps, COMMON_SOCIAL_TYPES } from '../../types/index.js';
 
-interface WalletConnectState {
-  isConnecting: boolean;
-  showSocialOptions: boolean;
-  selectedSocialType: SocialIdType | null;
-  socialId: string;
-  error: string | null;
-}
-
-/**
- * WalletConnect Component
- * 
- * @example
- * ```tsx
- * import { WalletConnect } from '@nexusplatform/sdk/react';
- * 
- * function App() {
- *   return (
- *     <WalletConnect
- *       chains={['ethereum', 'polygon', 'solana']}
- *       onConnect={(wallet) => {
- *         console.log('Wallet connected:', wallet);
- *       }}
- *       showBalance={true}
- *       showGasTank={true}
- *     />
- *   );
- * }
- * ```
- */
-export function WalletConnect({
-  chains,
-  onConnect,
-  onDisconnect,
+export const WalletConnect: React.FC<WalletConnectProps> = ({
+  onWalletCreated,
+  onError,
+  chains = ['ethereum', 'arbitrum', 'solana'],
+  allowedSocialTypes,
+  customSocialTypes = [],
   className = '',
-  showBalance = true,
-  showGasTank = true
-}: WalletConnectProps) {
-  const [state, setState] = useState<WalletConnectState>({
-    isConnecting: false,
-    showSocialOptions: false,
-    selectedSocialType: null,
-    socialId: '',
-    error: null
-  });
+  theme = 'auto',
+}) => {
+  const { createWallet, isLoading, error, clearError } = useNexus();
+  
+  const [socialId, setSocialId] = useState('');
+  const [socialType, setSocialType] = useState('');
+  const [selectedChains, setSelectedChains] = useState<SupportedChain[]>(chains);
+  const [walletName, setWalletName] = useState('');
+  const [customSocialType, setCustomSocialType] = useState('');
+  const [isCustomType, setIsCustomType] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Mock wallet state - in real implementation this would use useNexus hook
-  const [isConnected, setIsConnected] = useState(false);
-  const [connectedWallet, setConnectedWallet] = useState<any>(null);
+  // Available social types (filtered if allowedSocialTypes is provided)
+  const availableSocialTypes = React.useMemo(() => {
+    const commonTypes = Object.entries(COMMON_SOCIAL_TYPES).map(([key, value]) => ({
+      type: value,
+      label: key.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' '),
+      placeholder: getSocialPlaceholder(value),
+    }));
 
-  const socialOptions: { type: SocialIdType; label: string; icon: string }[] = [
-    { type: 'email', label: 'Email', icon: '📧' },
-    { type: 'google', label: 'Google', icon: '🔍' },
-    { type: 'phone', label: 'Phone', icon: '📱' },
-    { type: 'twitter', label: 'Twitter', icon: '🐦' },
-    { type: 'discord', label: 'Discord', icon: '💬' },
-    { type: 'ens', label: 'ENS', icon: '🏷️' }
-  ];
+    // Add custom types
+    const allTypes = [...commonTypes, ...customSocialTypes];
 
-  const handleSocialLogin = async (socialType: SocialIdType) => {
-    setState(prev => ({ ...prev, selectedSocialType: socialType, showSocialOptions: false }));
+    // Filter if allowedSocialTypes is provided
+    if (allowedSocialTypes) {
+      return allTypes.filter(type => allowedSocialTypes.includes(type.type));
+    }
+
+    return allTypes;
+  }, [allowedSocialTypes, customSocialTypes]);
+
+  // Auto-detect theme
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>('light');
+  
+  useEffect(() => {
+    if (theme === 'auto') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      setCurrentTheme(mediaQuery.matches ? 'dark' : 'light');
+      
+      const handleChange = (e: MediaQueryListEvent) => {
+        setCurrentTheme(e.matches ? 'dark' : 'light');
+      };
+      
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    } else {
+      setCurrentTheme(theme);
+    }
+  }, [theme]);
+
+  // Get placeholder text for social types
+  function getSocialPlaceholder(type: string): string {
+    const placeholders: Record<string, string> = {
+      email: 'user@example.com',
+      twitter: '@username',
+      discord: 'username#1234',
+      telegram: '@username',
+      github: 'username',
+      instagram: '@username',
+      gameId: 'player123',
+      employeeId: 'EMP001',
+      customerId: 'CUST001',
+      ens: 'username.eth',
+      phone: '+1234567890',
+      username: 'username',
+      steamId: 'steam_username',
+      xboxGamertag: 'GamerTag',
+      userUuid: 'unique-user-id',
+    };
+    return placeholders[type] || `Enter your ${type}`;
+  }
+
+  // Handle social type change
+  const handleSocialTypeChange = (type: string) => {
+    setSocialType(type);
+    setIsCustomType(type === 'custom');
+    setSocialId('');
+    setCustomSocialType('');
   };
 
-  const handleConnect = async () => {
-    if (!state.selectedSocialType || !state.socialId.trim()) {
-      setState(prev => ({ ...prev, error: 'Please select a login method and enter your ID' }));
+  // Handle chain selection
+  const handleChainToggle = (chain: SupportedChain) => {
+    setSelectedChains(prev => 
+      prev.includes(chain) 
+        ? prev.filter(c => c !== chain)
+        : [...prev, chain]
+    );
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!socialId.trim()) {
+      onError?.({ code: 'INVALID_INPUT', message: 'Social ID is required' });
       return;
     }
 
-    setState(prev => ({ ...prev, isConnecting: true, error: null }));
+    if (!socialType && !isCustomType) {
+      onError?.({ code: 'INVALID_INPUT', message: 'Social type is required' });
+      return;
+    }
+
+    if (isCustomType && !customSocialType.trim()) {
+      onError?.({ code: 'INVALID_INPUT', message: 'Custom social type is required' });
+      return;
+    }
+
+    if (selectedChains.length === 0) {
+      onError?.({ code: 'INVALID_INPUT', message: 'At least one chain must be selected' });
+      return;
+    }
 
     try {
-      // Mock connection - in real implementation this would use the SDK
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+      clearError();
       
-      const mockWallet: WalletInfo = {
-        socialId: state.socialId,
-        socialType: state.selectedSocialType!,
-        addresses: {
-          ethereum: '0x1234...abcd',
-          polygon: '0x1234...abcd',
-          arbitrum: '0x1234...abcd',
-          base: '0x1234...abcd',
-          optimism: '0x1234...abcd',
-          avalanche: '0x1234...abcd',
-          solana: 'ABC123...XYZ'
-        },
-        createdAt: new Date().toISOString(),
-        lastUsed: new Date().toISOString(),
-        metadata: {
-          balances: {
-            ethereum: [
-              { symbol: 'ETH', balance: '1.5', usdValue: '3750.00' },
-              { symbol: 'USDC', balance: '1000.0', usdValue: '1000.00' }
-            ],
-            solana: [
-              { symbol: 'SOL', balance: '25.0', usdValue: '2500.00' }
-            ]
-          },
-          totalUsdValue: '7250.00'
-        },
-        recoverySetup: false,
-        isActive: true,
-        crossChainEnabled: true
-      };
+      const wallet = await createWallet(
+        socialId.trim(),
+        isCustomType ? customSocialType.trim() : socialType,
+        selectedChains
+      );
 
-      setConnectedWallet(mockWallet);
-      setIsConnected(true);
-      onConnect?.(mockWallet);
-
-      setState(prev => ({ 
-        ...prev, 
-        isConnecting: false,
-        showSocialOptions: false,
-        selectedSocialType: null,
-        socialId: ''
-      }));
-
-    } catch (error) {
-      setState(prev => ({ 
-        ...prev, 
-        isConnecting: false, 
-        error: error instanceof Error ? error.message : 'Connection failed' 
-      }));
+      onWalletCreated?.(wallet);
+      
+      // Reset form
+      setSocialId('');
+      setSocialType('');
+      setWalletName('');
+      setCustomSocialType('');
+      setIsCustomType(false);
+      setShowAdvanced(false);
+      
+    } catch (err: any) {
+      onError?.(err);
     }
   };
 
-  const handleDisconnect = () => {
-    setIsConnected(false);
-    setConnectedWallet(null);
-    onDisconnect?.();
-    setState({
-      isConnecting: false,
-      showSocialOptions: false,
-      selectedSocialType: null,
-      socialId: '',
-      error: null
-    });
+  // Get chain display name
+  const getChainDisplayName = (chain: SupportedChain) => {
+    const names: Record<SupportedChain, string> = {
+      ethereum: 'Ethereum',
+      arbitrum: 'Arbitrum',
+      solana: 'Solana',
+    };
+    return names[chain];
   };
 
-  if (isConnected && connectedWallet) {
-    return (
-      <div className={`nexus-wallet-connected ${className}`}>
-        <div className="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                {connectedWallet.socialId.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900">{connectedWallet.socialId}</h3>
-                <p className="text-sm text-gray-600">{connectedWallet.socialType}</p>
-              </div>
-            </div>
-            <button
-              onClick={handleDisconnect}
-              className="text-gray-400 hover:text-gray-600 text-sm"
-            >
-              Disconnect
-            </button>
-          </div>
+  // Get chain logo emoji
+  const getChainLogo = (chain: SupportedChain) => {
+    const logos: Record<SupportedChain, string> = {
+      ethereum: '⟡',
+      arbitrum: '🔵',
+      solana: '🌟',
+    };
+    return logos[chain];
+  };
 
-          {showBalance && (
-            <div className="mb-4">
-              <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 text-white">
-                <p className="text-sm opacity-90">Total Portfolio Value</p>
-                <p className="text-2xl font-bold">${connectedWallet.metadata?.totalUsdValue || '0.00'}</p>
-              </div>
-            </div>
-          )}
+  // Theme colors
+  const colors = {
+    light: {
+      bg: '#ffffff',
+      cardBg: '#f8fafc',
+      border: '#e2e8f0',
+      text: '#1e293b',
+      textSecondary: '#64748b',
+      primary: '#3b82f6',
+      primaryHover: '#2563eb',
+      success: '#10b981',
+      error: '#ef4444',
+      inputBg: '#ffffff',
+      inputBorder: '#d1d5db',
+      inputFocus: '#3b82f6',
+    },
+    dark: {
+      bg: '#0f172a',
+      cardBg: '#1e293b',
+      border: '#334155',
+      text: '#f1f5f9',
+      textSecondary: '#94a3b8',
+      primary: '#3b82f6',
+      primaryHover: '#2563eb',
+      success: '#10b981',
+      error: '#ef4444',
+      inputBg: '#334155',
+      inputBorder: '#475569',
+      inputFocus: '#3b82f6',
+    },
+  };
 
-          <div className="space-y-2">
-            <h4 className="font-medium text-gray-900">Addresses</h4>
-            {Object.entries(connectedWallet.addresses).map(([chain, address]) => (
-              <div key={chain} className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded">
-                <span className="text-sm font-medium capitalize">{chain}</span>
-                <span className="text-xs text-gray-600 font-mono">
-                  {typeof address === 'string' ? `${address.slice(0, 6)}...${address.slice(-4)}` : ''}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {showGasTank && (
-            <div className="mt-4 p-3 bg-green-50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-green-800">⛽ Gas Tank</span>
-                <span className="text-sm text-green-600">Ready</span>
-              </div>
-              <p className="text-xs text-green-600 mt-1">
-                Gasless transactions enabled across all chains
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
+  const c = colors[currentTheme];
 
   return (
-    <div className={`nexus-wallet-connect ${className}`}>
-      <div className="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Connect Wallet</h2>
-          <p className="text-gray-600">Connect with social login across all chains</p>
+    <div 
+      className={`nexus-wallet-connect ${className}`}
+      style={{
+        maxWidth: '480px',
+        margin: '0 auto',
+        padding: '24px',
+        backgroundColor: c.bg,
+        borderRadius: '16px',
+        border: `1px solid ${c.border}`,
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        color: c.text,
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      }}
+    >
+      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <h2 style={{ 
+          margin: '0 0 8px 0', 
+          fontSize: '24px', 
+          fontWeight: '600',
+          color: c.text,
+        }}>
+          Create Wallet
+        </h2>
+        <p style={{ 
+          margin: '0', 
+          fontSize: '14px', 
+          color: c.textSecondary,
+        }}>
+          Connect with any social identifier across multiple chains
+        </p>
+      </div>
+
+      {error && (
+        <div style={{
+          padding: '12px',
+          backgroundColor: c.error + '10',
+          border: `1px solid ${c.error}30`,
+          borderRadius: '8px',
+          marginBottom: '20px',
+          color: c.error,
+          fontSize: '14px',
+        }}>
+          {error.message}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* Social Type Selection */}
+        <div>
+          <label style={{ 
+            display: 'block', 
+            fontSize: '14px', 
+            fontWeight: '500', 
+            marginBottom: '8px',
+            color: c.text,
+          }}>
+            Social Type
+          </label>
+          <select
+            value={socialType}
+            onChange={(e) => handleSocialTypeChange(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px',
+              border: `1px solid ${c.inputBorder}`,
+              borderRadius: '8px',
+              fontSize: '14px',
+              backgroundColor: c.inputBg,
+              color: c.text,
+              outline: 'none',
+              transition: 'border-color 0.2s',
+            }}
+            onFocus={(e) => e.target.style.borderColor = c.inputFocus}
+            onBlur={(e) => e.target.style.borderColor = c.inputBorder}
+          >
+            <option value="">Select social type</option>
+            {availableSocialTypes.map((type) => (
+              <option key={type.type} value={type.type}>
+                {type.label}
+              </option>
+            ))}
+            <option value="custom">Custom Type</option>
+          </select>
         </div>
 
-        {state.error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600 text-sm">{state.error}</p>
+        {/* Custom Social Type Input */}
+        {isCustomType && (
+          <div>
+            <label style={{ 
+              display: 'block', 
+              fontSize: '14px', 
+              fontWeight: '500', 
+              marginBottom: '8px',
+              color: c.text,
+            }}>
+              Custom Social Type
+            </label>
+            <input
+              type="text"
+              value={customSocialType}
+              onChange={(e) => setCustomSocialType(e.target.value)}
+              placeholder="Enter custom social type (e.g., nftHolder, daoMember)"
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: `1px solid ${c.inputBorder}`,
+                borderRadius: '8px',
+                fontSize: '14px',
+                backgroundColor: c.inputBg,
+                color: c.text,
+                outline: 'none',
+                transition: 'border-color 0.2s',
+              }}
+              onFocus={(e) => e.target.style.borderColor = c.inputFocus}
+              onBlur={(e) => e.target.style.borderColor = c.inputBorder}
+            />
           </div>
         )}
 
-        {!state.showSocialOptions && !state.selectedSocialType ? (
-          <button
-            onClick={() => setState(prev => ({ ...prev, showSocialOptions: true }))}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-          >
-            Choose Login Method
-          </button>
-        ) : state.showSocialOptions ? (
-          <div className="space-y-3">
-            <h3 className="font-medium text-gray-900 mb-3">Select Login Method</h3>
-            {socialOptions.map((option) => (
+        {/* Social ID Input */}
+        <div>
+          <label style={{ 
+            display: 'block', 
+            fontSize: '14px', 
+            fontWeight: '500', 
+            marginBottom: '8px',
+            color: c.text,
+          }}>
+            Social ID
+          </label>
+          <input
+            type="text"
+            value={socialId}
+            onChange={(e) => setSocialId(e.target.value)}
+            placeholder={
+              isCustomType 
+                ? "Enter your custom identifier" 
+                : socialType 
+                  ? getSocialPlaceholder(socialType)
+                  : "Enter your social identifier"
+            }
+            style={{
+              width: '100%',
+              padding: '12px',
+              border: `1px solid ${c.inputBorder}`,
+              borderRadius: '8px',
+              fontSize: '14px',
+              backgroundColor: c.inputBg,
+              color: c.text,
+              outline: 'none',
+              transition: 'border-color 0.2s',
+            }}
+            onFocus={(e) => e.target.style.borderColor = c.inputFocus}
+            onBlur={(e) => e.target.style.borderColor = c.inputBorder}
+          />
+        </div>
+
+        {/* Chain Selection */}
+        <div>
+          <label style={{ 
+            display: 'block', 
+            fontSize: '14px', 
+            fontWeight: '500', 
+            marginBottom: '8px',
+            color: c.text,
+          }}>
+            Select Chains
+          </label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {chains.map((chain) => (
               <button
-                key={option.type}
-                onClick={() => handleSocialLogin(option.type)}
-                className="w-full flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                key={chain}
+                type="button"
+                onClick={() => handleChainToggle(chain)}
+                style={{
+                  padding: '8px 16px',
+                  border: `1px solid ${selectedChains.includes(chain) ? c.primary : c.inputBorder}`,
+                  borderRadius: '20px',
+                  backgroundColor: selectedChains.includes(chain) ? c.primary : c.inputBg,
+                  color: selectedChains.includes(chain) ? 'white' : c.text,
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
               >
-                <span className="text-xl">{option.icon}</span>
-                <span className="font-medium">{option.label}</span>
+                <span>{getChainLogo(chain)}</span>
+                {getChainDisplayName(chain)}
               </button>
             ))}
-            <button
-              onClick={() => setState(prev => ({ ...prev, showSocialOptions: false }))}
-              className="w-full text-gray-500 text-sm py-2"
-            >
-              Back
-            </button>
           </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
-              <span className="text-xl">
-                {socialOptions.find(opt => opt.type === state.selectedSocialType)?.icon}
-              </span>
-              <span className="font-medium">
-                {socialOptions.find(opt => opt.type === state.selectedSocialType)?.label}
-              </span>
-            </div>
+        </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Enter your {state.selectedSocialType}
+        {/* Advanced Options */}
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: c.primary,
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              padding: '0',
+              textDecoration: 'underline',
+            }}
+          >
+            {showAdvanced ? 'Hide' : 'Show'} Advanced Options
+          </button>
+          
+          {showAdvanced && (
+            <div style={{ marginTop: '16px' }}>
+              <label style={{ 
+                display: 'block', 
+                fontSize: '14px', 
+                fontWeight: '500', 
+                marginBottom: '8px',
+                color: c.text,
+              }}>
+                Wallet Name (Optional)
               </label>
               <input
-                type={state.selectedSocialType === 'email' ? 'email' : 
-                      state.selectedSocialType === 'phone' ? 'tel' : 'text'}
-                value={state.socialId}
-                onChange={(e) => setState(prev => ({ ...prev, socialId: e.target.value }))}
-                placeholder={
-                  state.selectedSocialType === 'email' ? 'user@example.com' :
-                  state.selectedSocialType === 'phone' ? '+1234567890' :
-                  state.selectedSocialType === 'ens' ? 'user.eth' :
-                  state.selectedSocialType === 'twitter' ? '@username' :
-                  'Enter your ID'
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                type="text"
+                value={walletName}
+                onChange={(e) => setWalletName(e.target.value)}
+                placeholder="My Wallet"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: `1px solid ${c.inputBorder}`,
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  backgroundColor: c.inputBg,
+                  color: c.text,
+                  outline: 'none',
+                  transition: 'border-color 0.2s',
+                }}
+                onFocus={(e) => e.target.style.borderColor = c.inputFocus}
+                onBlur={(e) => e.target.style.borderColor = c.inputBorder}
               />
             </div>
-
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setState(prev => ({ 
-                  ...prev, 
-                  selectedSocialType: null, 
-                  socialId: '',
-                  showSocialOptions: true 
-                }))}
-                className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-              >
-                Back
-              </button>
-              <button
-                onClick={handleConnect}
-                disabled={state.isConnecting || !state.socialId.trim()}
-                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {state.isConnecting ? 'Connecting...' : 'Connect'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="mt-6 text-center">
-          <p className="text-xs text-gray-500">
-            Powered by <span className="font-semibold">NexusSDK</span> • 
-            Cross-chain support for {chains?.join(', ') || 'all chains'}
-          </p>
+          )}
         </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={isLoading}
+          style={{
+            width: '100%',
+            padding: '14px',
+            backgroundColor: isLoading ? c.textSecondary : c.primary,
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '16px',
+            fontWeight: '600',
+            cursor: isLoading ? 'not-allowed' : 'pointer',
+            transition: 'background-color 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+          }}
+          onMouseEnter={(e) => {
+            if (!isLoading) {
+              e.currentTarget.style.backgroundColor = c.primaryHover;
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isLoading) {
+              e.currentTarget.style.backgroundColor = c.primary;
+            }
+          }}
+        >
+          {isLoading ? (
+            <>
+              <span style={{ 
+                width: '16px', 
+                height: '16px', 
+                border: '2px solid white',
+                borderTop: '2px solid transparent',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+              }} />
+              Creating Wallet...
+            </>
+          ) : (
+            '🚀 Create Gasless Wallet'
+          )}
+        </button>
+      </form>
+
+      {/* Features */}
+      <div style={{ 
+        marginTop: '24px', 
+        padding: '16px', 
+        backgroundColor: c.cardBg,
+        borderRadius: '8px',
+        border: `1px solid ${c.border}`,
+      }}>
+        <h3 style={{ 
+          margin: '0 0 12px 0', 
+          fontSize: '16px', 
+          fontWeight: '600',
+          color: c.text,
+        }}>
+          ✨ Features
+        </h3>
+        <ul style={{ 
+          margin: '0', 
+          padding: '0', 
+          listStyle: 'none',
+          fontSize: '14px',
+          color: c.textSecondary,
+        }}>
+          <li style={{ marginBottom: '8px' }}>⚡ Gasless transactions across all chains</li>
+          <li style={{ marginBottom: '8px' }}>🔗 Cross-chain bridging & swaps</li>
+          <li style={{ marginBottom: '8px' }}>🔐 Multi-chain wallet infrastructure</li>
+          <li>🎯 Any social identifier supported</li>
+        </ul>
       </div>
+
+      {/* CSS Animation */}
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
-} 
+};
+
+export default WalletConnect; 

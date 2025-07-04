@@ -1,279 +1,376 @@
 /**
- * Core types for NexusPlatform SDK
+ * NexusSDK Types - Ultimate Flexible Cross-Chain Wallet Infrastructure
+ * Support for ANY social identifier and comprehensive token/bridging functionality
  */
 
-// Supported blockchain networks - Only 3 chains supported
-export type SupportedChain = 
-  | 'ethereum'
-  | 'arbitrum'
-  | 'solana';
+// Supported blockchain networks
+export type SupportedChain = 'ethereum' | 'arbitrum' | 'solana';
 
-// Chain categories
-export type EVMChain = Exclude<SupportedChain, 'solana'>;
-export type SVMChain = 'solana';
+// Completely flexible social type - developers can use ANY identifier
+export type SocialType = string; // ANY social identifier: email, twitter, gameId, NFT address, etc.
 
-// Social identity types - developers can use any custom type
-export type SocialIdType = string; // Allow any custom social identifier type
-
-// Common social types (examples - not restricted to these)
+// Common social type examples (not restrictive)
 export const COMMON_SOCIAL_TYPES = {
+  // Traditional
   EMAIL: 'email',
   PHONE: 'phone',
   USERNAME: 'username',
-  GOOGLE: 'google',
+  
+  // Social Platforms
   TWITTER: 'twitter',
   DISCORD: 'discord',
   TELEGRAM: 'telegram',
   GITHUB: 'github',
+  INSTAGRAM: 'instagram',
+  TIKTOK: 'tiktok',
+  LINKEDIN: 'linkedin',
+  
+  // Gaming & Web3
   GAME_ID: 'gameId',
-  USER_ID: 'userId',
   PLAYER_TAG: 'playerTag',
+  STEAM_ID: 'steamId',
+  EPIC_ID: 'epicId',
+  XBOX_GAMERTAG: 'xboxGamertag',
+  PSN_ID: 'psnId',
+  
+  // Business & Enterprise
+  EMPLOYEE_ID: 'employeeId',
+  CUSTOMER_ID: 'customerId',
+  MEMBER_ID: 'memberId',
+  SUBSCRIPTION_ID: 'subscriptionId',
+  
+  // Web3 & Crypto
+  ENS: 'ens',
+  WALLET_ADDRESS: 'walletAddress',
   NFT_HOLDER: 'nftHolder',
-  WALLET_ADDRESS: 'walletAddress'
+  TOKEN_HOLDER: 'tokenHolder',
+  DAO_MEMBER: 'daoMember',
+  
+  // Custom Business Logic
+  USER_UUID: 'userUuid',
+  API_KEY_HASH: 'apiKeyHash',
+  SESSION_ID: 'sessionId',
+  DEVICE_ID: 'deviceId',
+  
+  // Any custom type developers want
+  CUSTOM: 'custom'
 } as const;
 
-// Base configuration
+// Core SDK Configuration
 export interface NexusConfig {
   apiKey: string;
-  projectId?: string;
-  environment?: 'development' | 'staging' | 'production';
-  chains: SupportedChain[];
-  features?: {
-    socialRecovery?: boolean;
-    gaslessTransactions?: boolean;
-    crossChain?: boolean;
-    analytics?: boolean;
-  };
-  endpoints?: {
-    api?: string;
-    websocket?: string;
-  };
+  baseURL?: string;
+  timeout?: number;
+  enableBridging?: boolean; // Enable cross-chain bridging
+  enableGasless?: boolean; // Enable gasless transactions (default: true)
 }
 
-// Wallet creation parameters
-export interface CreateWalletParams {
-  socialId: string;
-  socialType: SocialIdType;
-  chains: SupportedChain[];
-  metadata?: {
-    name?: string;
-    email?: string;
-    phone?: string;
-    avatar?: string;
-    [key: string]: any;
-  };
-  recoveryOptions?: {
-    guardians?: string[];
-    threshold?: number;
-    backupMethods?: string[];
-  };
-}
-
-// Wallet information
-export interface WalletInfo {
-  socialId: string;
-  socialType: SocialIdType;
-  addresses: Record<SupportedChain, string>;
-  createdAt: string;
-  lastUsed?: string;
-  metadata?: any;
-  recoverySetup: boolean;
-  isActive: boolean;
-  crossChainEnabled: boolean;
-}
-
-// Transaction parameters
-export interface TransactionParams {
-  from: {
-    chain: SupportedChain;
-    socialId?: string;
-    address?: string;
-  };
-  to: {
-    chain: SupportedChain;
-    address: string;
-  };
-  amount: string;
-  asset?: string;
-  data?: string;
-  gasless?: boolean;
-  metadata?: any;
-}
-
-// Transaction result
-export interface TransactionResult {
-  hash: string;
-  from: string;
-  to: string;
-  amount: string;
-  chain: SupportedChain;
-  status: 'pending' | 'confirmed' | 'failed';
-  blockNumber?: number;
-  gasUsed?: string;
-  fee?: string;
-  timestamp: string;
-}
-
-// Cross-chain bridge parameters
-export interface BridgeParams {
-  fromChain: SupportedChain;
-  toChain: SupportedChain;
-  amount: string;
-  asset: string;
-  recipient: string;
-  socialId?: string;
-}
-
-// Bridge result
-export interface BridgeResult {
-  bridgeId: string;
-  fromTx: TransactionResult;
-  toTx?: TransactionResult;
-  status: 'initiated' | 'pending' | 'completed' | 'failed';
-  estimatedTime: number;
-  fee: string;
-}
-
-// Recovery parameters
-export interface RecoveryParams {
-  socialId: string;
-  socialType: SocialIdType;
-  recoveryMethod: 'guardians' | 'social' | 'backup';
-  proof: {
-    guardianSignatures?: string[];
-    socialProof?: any;
-    backupData?: any;
-  };
-  newOwner?: string;
-}
-
-// Analytics data
-export interface AnalyticsData {
-  wallets: {
-    total: number;
-    active: number;
-    byChain: Record<SupportedChain, number>;
-  };
-  transactions: {
-    total: number;
-    volume: string;
-    byChain: Record<SupportedChain, number>;
-  };
-  crossChain: {
-    bridges: number;
-    volume: string;
-  };
-  timeRange: string;
-}
-
-// Error types
+// Error Handling
 export interface NexusError {
   code: string;
   message: string;
-  details?: any;
+  details?: string;
+  statusCode?: number;
   chain?: SupportedChain;
-  socialId?: string;
+  retryable?: boolean;
+  suggestions?: string[]; // Developer-friendly error suggestions
 }
 
-// Event types
-export interface WalletEvent {
-  type: 'created' | 'funded' | 'transaction' | 'recovered' | 'frozen';
-  walletId: string;
-  socialId: string;
-  chain: SupportedChain;
-  data: any;
-  timestamp: string;
+export interface APIResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: NexusError;
 }
 
-// Contract addresses per chain
-export interface ContractAddresses {
-  entryPoint: string;
-  walletFactory: string;
-  paymaster: string;
-  bridge?: string;
-}
-
-export interface ChainConfig {
-  chainId: number | string;
-  name: string;
-  type: 'EVM' | 'SVM';
-  rpcUrl: string;
-  explorerUrl: string;
-  contracts: ContractAddresses;
-  gasToken: string;
-  isTestnet: boolean;
-}
-
-// Platform configuration
-export interface PlatformConfig {
-  chains: Record<SupportedChain, ChainConfig>;
-  features: {
-    socialRecovery: boolean;
-    gaslessTransactions: boolean;
-    crossChain: boolean;
-    multiSig: boolean;
-  };
-  limits: {
-    walletsPerUser: number;
-    dailyTransactionLimit: string;
-    crossChainCooldown: number;
-  };
-}
-
-// User operation (account abstraction)
-export interface UserOperation {
-  sender: string;
-  nonce: number;
-  initCode: string;
-  callData: string;
-  callGasLimit: number;
-  verificationGasLimit: number;
-  preVerificationGas: number;
-  maxFeePerGas: string;
-  maxPriorityFeePerGas: string;
-  paymasterAndData: string;
-  signature: string;
-}
-
-// Social recovery guardian
-export interface Guardian {
+// Project Types
+export interface Project {
   id: string;
-  type: SocialIdType;
-  address?: string;
-  publicKey?: string;
-  isActive: boolean;
-  addedAt: string;
+  name: string;
+  slug: string;
+  description?: string;
+  website?: string;
+  owner_id: string;
+  chains: SupportedChain[];
+  status: 'active' | 'inactive';
+  created_at: string;
+  updated_at: string;
+  settings: {
+    paymasterEnabled: boolean;
+    bridgingEnabled: boolean;
+    webhookUrl?: string;
+    rateLimit: number;
+    allowedSocialTypes: string[]; // Flexible social types
+  };
 }
 
-// Paymaster policy
-export interface PaymasterPolicy {
-  enabled: boolean;
-  sponsorGas: boolean;
-  dailyLimit: string;
-  perTransactionLimit: string;
-  allowedContracts?: string[];
-  blockedContracts?: string[];
+export interface CreateProjectRequest {
+  name: string;
+  description?: string;
+  website?: string;
+  chains: SupportedChain[];
+  allowedSocialTypes?: string[]; // Optional restriction on social types
 }
 
-// React component props
-export interface WalletConnectProps {
-  onWalletCreated?: (wallet: WalletInfo) => void;
-  onError?: (error: NexusError) => void;
-  onConnect?: (wallet: WalletInfo) => void;
-  onDisconnect?: () => void;
-  socialType?: SocialIdType;
-  chains?: SupportedChain[];
-  className?: string;
-  buttonText?: string;
-  showBalance?: boolean;
-  showGasTank?: boolean;
-}
-
-// Wallet options for SDK
-export interface WalletOptions {
+// Enhanced Wallet Types
+export interface Wallet {
+  id: string;
+  addresses: Record<SupportedChain, string>;
+  status: 'created' | 'deploying' | 'deployed' | 'failed';
+  deployment_status: Record<SupportedChain, 'pending' | 'confirmed' | 'failed'>;
   socialId: string;
-  socialType?: SocialIdType;
+  socialType: string; // Completely flexible
+  project_id: string;
+  created_at: string;
+  updated_at: string;
+  metadata?: {
+    name?: string;
+    avatar?: string;
+    customData?: Record<string, any>;
+  };
+  balances?: WalletBalances; // Token balances across chains
+  gasless_enabled: boolean;
+}
+
+export interface CreateWalletRequest {
+  socialId: string;
+  socialType: string; // ANY social type
+  chains: SupportedChain[];
+  metadata?: {
+    name?: string;
+    avatar?: string;
+    customData?: Record<string, any>;
+  };
+  enableGasless?: boolean; // Default: true
+}
+
+// Token & Balance Types
+export interface TokenBalance {
+  symbol: string;
+  name: string;
+  balance: string;
+  decimals: number;
+  usd_value: string;
+  contract_address?: string;
+  logo_url?: string;
+}
+
+export interface WalletBalances {
+  [chain: string]: {
+    native: TokenBalance; // ETH, SOL, etc.
+    tokens: TokenBalance[]; // ERC20, SPL tokens
+    total_usd: string;
+  };
+}
+
+export interface Token {
+  symbol: string;
+  name: string;
+  decimals: number;
+  contract_address: string;
+  chain: SupportedChain;
+  logo_url?: string;
+  is_native: boolean;
+  is_popular: boolean;
+}
+
+// Enhanced Transaction Types
+export interface TransactionRequest {
+  chain: SupportedChain;
+  userWalletAddress: string;
+  transaction: {
+    to: string;
+    value?: string;
+    data?: string;
+    gasLimit?: string;
+  };
+  usePaymaster?: boolean; // Default: true (gasless)
+  token?: {
+    contract_address?: string;
+    amount: string;
+    recipient?: string;
+  };
+}
+
+export interface TransactionResult {
+  transactionHash: string;
+  gasUsed: string;
+  gasCost: string;
+  paymasterUsed: boolean;
+  status: 'pending' | 'confirmed' | 'failed';
+  blockNumber?: number;
+  timestamp: string;
+  explorerUrl: string;
+}
+
+export interface GasEstimate {
+  gasLimit: string;
+  gasPrice: string;
+  totalCost: string;
+  usdCost: string;
+  paymasterCovered: boolean;
+}
+
+// Cross-Chain Bridging Types
+export interface BridgeRequest {
+  fromChain: SupportedChain;
+  toChain: SupportedChain;
+  token: string; // Contract address or 'native'
+  amount: string;
+  fromAddress: string;
+  toAddress: string;
+  usePaymaster?: boolean; // Default: true
+}
+
+export interface BridgeResult {
+  bridgeId: string;
+  fromTx: TransactionResult;
+  toTx?: TransactionResult; // Pending until bridge completion
+  status: 'initiated' | 'bridging' | 'completed' | 'failed';
+  estimatedTime: number; // seconds
+  bridgeFee: string;
+  exchangeRate?: string;
+}
+
+export interface BridgeStatus {
+  bridgeId: string;
+  status: 'initiated' | 'bridging' | 'completed' | 'failed';
+  fromTx: TransactionResult;
+  toTx?: TransactionResult;
+  progress: number; // 0-100
+  estimatedTimeRemaining: number; // seconds
+}
+
+// Token Transfer Types
+export interface TokenTransferRequest {
+  chain: SupportedChain;
+  fromAddress: string;
+  toAddress: string;
+  token: string; // Contract address or 'native'
+  amount: string;
+  usePaymaster?: boolean; // Default: true
+}
+
+export interface SwapRequest {
+  chain: SupportedChain;
+  userAddress: string;
+  fromToken: string;
+  toToken: string;
+  amount: string;
+  slippage?: number; // Default: 1%
+  usePaymaster?: boolean; // Default: true
+}
+
+export interface SwapResult {
+  transactionHash: string;
+  fromToken: Token;
+  toToken: Token;
+  fromAmount: string;
+  toAmount: string;
+  exchangeRate: string;
+  slippage: number;
+  fee: string;
+  paymasterUsed: boolean;
+}
+
+// Paymaster Types
+export interface PaymasterBalance {
+  chain: SupportedChain;
+  balance: string;
+  usd_value: string;
+  is_low_balance: boolean;
+  funding_address: string;
+  contract_address?: string;
+  estimated_transactions_remaining: number;
+}
+
+export interface PaymasterAddresses {
+  addresses: Record<SupportedChain, string>;
+  qr_codes: Record<SupportedChain, string>;
+  funding_instructions: Record<SupportedChain, string>;
+}
+
+export interface PaymasterTransaction {
+  id: string;
+  chain: SupportedChain;
+  transaction_hash: string;
+  amount: string;
+  gas_used: string;
+  gas_price: string;
+  usd_cost: string;
+  wallet_address: string;
+  transaction_type: 'transfer' | 'swap' | 'bridge' | 'contract_call';
+  created_at: string;
+}
+
+// Analytics Types
+export interface AnalyticsOverview {
+  total_wallets: number;
+  total_transactions: number;
+  total_gas_spent_usd: string;
+  total_gas_saved_usd: string; // Thanks to paymaster
+  active_users_7d: number;
+  active_users_30d: number;
+  paymaster_coverage_pct: number;
+  bridge_volume_usd: string;
+  swap_volume_usd: string;
+  chains: Record<SupportedChain, ChainAnalytics>;
+  social_types: Record<string, SocialTypeAnalytics>;
+}
+
+export interface ChainAnalytics {
+  chain: SupportedChain;
+  transactions: number;
+  gas_spent_usd: string;
+  gas_saved_usd: string;
+  active_users: number;
+  bridge_volume_usd: string;
+  swap_volume_usd: string;
+  popular_tokens: Token[];
+}
+
+export interface SocialTypeAnalytics {
+  social_type: string;
+  wallets_created: number;
+  transactions: number;
+  gas_spent_usd: string;
+  most_active_users: number;
+}
+
+export interface UserAnalytics {
+  user_id: string;
+  social_type: string;
+  wallets_created: number;
+  transactions_sent: number;
+  bridges_completed: number;
+  swaps_completed: number;
+  total_gas_spent_usd: string;
+  total_gas_saved_usd: string;
+  favorite_chains: SupportedChain[];
+  last_activity: string;
+}
+
+export interface CostAnalytics {
+  total_spent_usd: string;
+  total_saved_usd: string;
+  average_cost_per_transaction: string;
+  paymaster_efficiency: number; // % of gas costs covered
+  by_chain: Record<SupportedChain, {
+    spent_usd: string;
+    saved_usd: string;
+    transaction_count: number;
+    efficiency: number;
+  }>;
+  forecast_30d: string;
+  break_even_point: string;
+}
+
+// React Types
+export interface WalletConnectProps {
+  onWalletCreated?: (wallet: Wallet) => void;
+  onError?: (error: NexusError) => void;
   chains?: SupportedChain[];
-  metadata?: any;
-  paymaster?: boolean;
+  allowedSocialTypes?: string[]; // Restrict which social types to show
+  customSocialTypes?: { type: string; label: string; placeholder: string }[]; // Custom social types
+  className?: string;
+  theme?: 'light' | 'dark' | 'auto';
 } 

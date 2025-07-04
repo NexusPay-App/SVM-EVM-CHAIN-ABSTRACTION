@@ -1,14 +1,19 @@
 /**
- * useNexus - Main hook for accessing NexusSDK
+ * useNexus Hook - Ultimate Cross-Chain Wallet Operations
+ * Provides access to all SDK features with React state management
  */
 
 import { useContext } from 'react';
-import { useNexusContext, NexusContextType } from '../providers/NexusProvider';
+import { NexusContext, UseNexusReturn } from '../providers/NexusProvider.js';
 
-export function useNexus(): NexusContextType {
-  const context = useNexusContext();
+export const useNexus = (): UseNexusReturn => {
+  const context = useContext(NexusContext);
+  
   if (!context) {
     throw new Error('useNexus must be used within a NexusProvider');
   }
+  
   return context;
-} 
+};
+
+export default useNexus; 

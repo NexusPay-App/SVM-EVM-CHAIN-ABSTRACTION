@@ -1,785 +1,492 @@
 /**
- * NexusSDK v1.0.1 - Cross-Chain Wallet Infrastructure
- * 
- * SDK for real blockchain wallet creation and deployment
+ * NexusSDK - Ultimate Cross-Chain Wallet Infrastructure
+ * SIMPLE & POWERFUL: Initialize with just projectName + apiKey
  */
 
 import { 
   NexusConfig, 
-  WalletInfo, 
+  NexusError,
+  APIResponse,
+  Wallet,
+  CreateWalletRequest,
+  TransactionRequest,
+  TransactionResult,
+  GasEstimate,
+  PaymasterBalance,
+  PaymasterAddresses,
+  PaymasterTransaction,
+  AnalyticsOverview,
+  UserAnalytics,
+  CostAnalytics,
+  WalletBalances,
+  Token,
+  TokenTransferRequest,
+  BridgeRequest,
+  BridgeResult,
+  BridgeStatus,
+  SwapRequest,
+  SwapResult,
   SupportedChain,
-  SocialIdType
-} from '../types';
-
-// Simple interfaces for API endpoints
-interface WalletOptions {
-  socialId: string;
-  socialType?: SocialIdType;
-  chains?: SupportedChain[];
-  metadata?: any;
-  paymaster?: boolean; // true = company pays gas, false = user pays gas
-}
-
-interface PaymentOptions {
-  from: any;
-  to: any;
-  amount: string;
-  asset?: string;
-  gasless?: boolean;
-}
-
-interface TokenTransferOptions {
-  from: {
-    socialId: string;
-    socialType?: SocialIdType;
-    chain: SupportedChain;
-  };
-  to: {
-    address: string;
-    chain: SupportedChain;
-  };
-  tokenAddress: string;
-  amount: string;
-  decimals?: number;
-  gasless?: boolean;
-}
-
-interface NFTTransferOptions {
-  from: {
-    socialId: string;
-    socialType?: SocialIdType;
-    chain: SupportedChain;
-  };
-  to: {
-    address: string;
-    chain: SupportedChain;
-  };
-  nftContract: string;
-  tokenId: string;
-  gasless?: boolean;
-}
-
-interface TokenMintOptions {
-  socialId: string;
-  socialType?: SocialIdType;
-  chain: SupportedChain;
-  tokenContract: string;
-  amount: string;
-  metadata?: any;
-}
-
-interface NFTMintOptions {
-  socialId: string;
-  socialType?: SocialIdType;
-  chain: SupportedChain;
-  nftContract: string;
-  tokenURI: string;
-  metadata?: any;
-}
+} from '../types/index.js';
 
 /**
- * Main NexusSDK class - Your gateway to cross-chain wallet infrastructure
+ * Ultra-Simple SDK Configuration
+ * Only 2 required parameters: projectName + apiKey
  */
-export class NexusSDK {
-  private config: NexusConfig;
-  private initialized: boolean = false;
-  private requestCache: Map<string, { data: any; timestamp: number }> = new Map();
-  private cacheTimeout: number = 5 * 60 * 1000; // 5 minutes
+export interface SimpleNexusConfig {
+  projectName: string;           // Your project name from dashboard
+  apiKey: string;               // Your API key from dashboard
+  baseURL?: string;             // Optional: custom backend URL
+  timeout?: number;             // Optional: request timeout (default: 30s)
+  enableBridging?: boolean;     // Optional: enable cross-chain bridging (default: true)
+  enableGasless?: boolean;      // Optional: enable gasless transactions (default: true)
+}
 
-  constructor(config: NexusConfig) {
+export class NexusSDK {
+  private config: SimpleNexusConfig;
+  private projectId: string;
+  private baseURL: string;
+  private defaultTimeout: number;
+  private initialized: boolean = false;
+
+  constructor(config: SimpleNexusConfig) {
+    // Validate required parameters
+    if (!config.projectName || !config.apiKey) {
+      throw new Error('❌ NexusSDK requires projectName and apiKey. Get them from your dashboard.');
+    }
+
     this.config = {
-      environment: 'production',
-      endpoints: {
-        api: 'https://backend-amber-zeta-94.vercel.app'
-      },
+      enableBridging: true,
+      enableGasless: true,
       ...config,
-      chains: config.chains || ['ethereum', 'polygon', 'solana']
     };
+
+    // Auto-extract project ID from API key
+    this.projectId = this.extractProjectId(config.apiKey);
+    this.baseURL = config.baseURL || 'https://backend-amber-zeta-94.vercel.app';
+    this.defaultTimeout = config.timeout || 30000;
+
+    console.log('🚀 NexusSDK initialized');
+    console.log(`📁 Project: ${config.projectName}`);
+    console.log(`🔑 Project ID: ${this.projectId}`);
+    console.log(`💳 Gasless: ${this.config.enableGasless ? 'Enabled' : 'Disabled'}`);
+    console.log(`🌉 Bridging: ${this.config.enableBridging ? 'Enabled' : 'Disabled'}`);
   }
 
-  async initialize(): Promise<void> {
+  /**
+   * Auto-extract project ID from API key with enhanced validation
+   */
+  private extractProjectId(apiKey: string): string {
+    if (!apiKey.startsWith('npay_proj_')) {
+      throw new Error('❌ Invalid API key format. Must start with "npay_proj_"');
+    }
+
+    // Format: npay_proj_[project_id]_[key_id]_[type]_[hash]
+    const parts = apiKey.split('_');
+    if (parts.length < 6) {
+      throw new Error('❌ Invalid API key format. Key appears to be truncated or corrupted.');
+    }
+
+    // Extract project ID (everything between proj_ and the last 3 parts)
+    const projectIdParts = parts.slice(2, -3);
+    const projectId = projectIdParts.join('_');
+
+    if (!projectId) {
+      throw new Error('❌ Unable to extract project ID from API key.');
+    }
+
+    return projectId;
+  }
+
+  /**
+   * Enhanced API request with bulletproof error handling
+   */
+  private async makeRequest<T>(
+    endpoint: string,
+    options: RequestInit = {},
+    timeout?: number
+  ): Promise<APIResponse<T>> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout || this.defaultTimeout);
+
     try {
-      // Test API connection
-      const response = await fetch(`${this.config.endpoints?.api}/health`, {
+      const response = await fetch(`${this.baseURL}${endpoint}`, {
+        ...options,
         headers: {
-          'X-API-Key': this.config.apiKey
-        }
+          'Content-Type': 'application/json',
+          'X-API-Key': this.config.apiKey,
+          ...options.headers,
+        },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
-        throw new Error(`API connection failed: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        
+        // Enhanced error handling with suggestions
+        const error = {
+          code: errorData.error?.code || 'API_ERROR',
+          message: errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`,
+          statusCode: response.status,
+          retryable: response.status >= 500 || response.status === 429,
+          suggestions: errorData.error?.suggestions || [],
+          details: errorData.error?.details || undefined,
+        };
+
+        // Add SDK-specific error suggestions
+        if (error.code === 'PROJECT_NAME_MISMATCH') {
+          error.suggestions = [
+            `Your API key belongs to a different project than "${this.config.projectName}"`,
+            'Check your project name in the dashboard',
+            'Verify you\'re using the correct API key for this project',
+            'Make sure project name matches exactly (case-sensitive)'
+          ];
+        }
+
+        return { success: false, error };
       }
-      
-      this.initialized = true;
-      console.log('NexusSDK initialized successfully');
+
+      const data = await response.json();
+      return { success: true, data };
     } catch (error) {
-      console.error('NexusSDK initialization failed:', error);
+      clearTimeout(timeoutId);
+      
+      const isAbortError = error instanceof Error && error.name === 'AbortError';
+      return {
+        success: false,
+        error: {
+          code: isAbortError ? 'TIMEOUT' : 'NETWORK_ERROR',
+          message: isAbortError ? 'Request timed out' : 'Network request failed',
+          details: error instanceof Error ? error.message : String(error),
+          retryable: true,
+          suggestions: isAbortError ? 
+            ['Increase timeout in SDK config', 'Check your internet connection'] :
+            ['Check your internet connection', 'Verify the backend URL is correct']
+        },
+      };
+    }
+  }
+
+  /**
+   * Validate project name against API key (called automatically)
+   */
+  private async validateProjectConnection(): Promise<void> {
+    if (this.initialized) return;
+
+    try {
+      const response = await this.makeRequest<{ projectName: string; projectId: string }>(
+        `/v1/projects/validate`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ 
+            projectName: this.config.projectName,
+            projectId: this.projectId 
+          }),
+        }
+      );
+
+      if (!response.success) {
+        throw new Error(`❌ Project validation failed: ${response.error?.message}`);
+      }
+
+      this.initialized = true;
+      console.log('✅ Project validation successful');
+    } catch (error) {
+      console.error('❌ Project validation failed:', error);
       throw error;
     }
   }
 
-  private ensureInitialized(): void {
-    if (!this.initialized) {
-      throw new Error('NexusSDK not initialized. Call initialize() first.');
-    }
-  }
-
-  private async makeRequest(endpoint: string, options: RequestInit = {}, cacheable: boolean = false): Promise<any> {
-    this.ensureInitialized();
-    
-    // Check cache for GET requests
-    const cacheKey = `${endpoint}:${JSON.stringify(options.body || {})}`;
-    if (cacheable && options.method !== 'POST' && this.requestCache.has(cacheKey)) {
-      const cached = this.requestCache.get(cacheKey)!;
-      if (Date.now() - cached.timestamp < this.cacheTimeout) {
-        return cached.data;
-      }
-      this.requestCache.delete(cacheKey);
-    }
-    
-    const url = `${this.config.endpoints?.api}${endpoint}`;
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': this.config.apiKey,
-        'User-Agent': `NexusSDK/1.0.1`,
-        ...options.headers,
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    // Cache successful GET requests
-    if (cacheable && options.method !== 'POST') {
-      this.requestCache.set(cacheKey, { data, timestamp: Date.now() });
-    }
-
-    return data;
-  }
+  // ==================== WALLET OPERATIONS ====================
 
   /**
-   * Create a wallet and deploy it to blockchain
-   * ✅ Creates real blockchain wallets visible on block explorers
-   * @param options.paymaster - true: company pays gas fees, false: user pays gas fees
+   * Create wallet with just socialId and socialType
+   * Everything else is auto-configured
    */
-  async createWallet(options: WalletOptions): Promise<any> {
-    const response = await this.makeRequest('/api/wallets/deploy', {
-      method: 'POST',
-      body: JSON.stringify({
-        socialId: options.socialId,
-        socialType: options.socialType || 'email',
-        chains: options.chains || this.config.chains,
-        metadata: options.metadata || {},
-        paymaster: options.paymaster !== false
-      }),
-    });
-
-    return response;
-  }
-
-  /**
-   * Create wallet with predicted addresses only (not deployed)
-   * ⚠️ These addresses won't show up on block explorers until deployed
-   */
-  async createPredictedWallet(options: WalletOptions): Promise<WalletInfo> {
-    const response = await this.makeRequest('/api/wallets', {
-      method: 'POST',
-      body: JSON.stringify({
-        socialId: options.socialId,
-        socialType: options.socialType || 'email',
-        chains: options.chains || this.config.chains,
-        metadata: options.metadata || {}
-      }),
-    });
-
-    return response;
-  }
-
-  /**
-   * Deploy existing predicted wallet to blockchain
-   */
-  async deployWallet(options: WalletOptions): Promise<any> {
-    const response = await this.makeRequest('/api/wallets/deploy', {
-      method: 'POST',
-      body: JSON.stringify({
-        socialId: options.socialId,
-        socialType: options.socialType || 'email',
-        chains: options.chains || this.config.chains,
-        metadata: options.metadata || {},
-        paymaster: options.paymaster !== false
-      }),
-    });
-
-    return response;
-  }
-
-  /**
-   * Get wallet information (cached for efficiency)
-   */
-  async getWallet(socialId: string, socialType: string = 'email'): Promise<WalletInfo> {
-    const encodedSocialId = encodeURIComponent(socialId);
-    return this.makeRequest(`/api/wallets/${encodedSocialId}?socialType=${socialType}`, {}, true);
-  }
-
-  /**
-   * Batch create multiple wallets efficiently
-   */
-  async createWalletBatch(wallets: WalletOptions[]): Promise<any[]> {
-    const promises = wallets.map(wallet => this.createWallet(wallet));
-    const results = await Promise.allSettled(promises);
-    
-    return results.map(result => 
-      result.status === 'fulfilled' 
-        ? result.value 
-        : { error: result.reason.message }
-    );
-  }
-
-  /**
-   * Check multiple wallet statuses efficiently
-   */
-  async getWalletBatch(walletIds: Array<{socialId: string, socialType?: string}>): Promise<any[]> {
-    const promises = walletIds.map(({ socialId, socialType = 'email' }) => 
-      this.getWallet(socialId, socialType).catch(error => ({ error: error.message, socialId, socialType }))
-    );
-    
-    return Promise.all(promises);
-  }
-
-  /**
-   * Send cross-chain payment
-   */
-  async sendPayment(options: PaymentOptions): Promise<any> {
-    return this.makeRequest('/api/payments', {
-      method: 'POST',
-      body: JSON.stringify(options),
-    });
-  }
-
-  /**
-   * Bridge assets between chains
-   */
-  async bridgeAssets(options: any): Promise<any> {
-    return this.makeRequest('/api/bridge', {
-      method: 'POST',
-      body: JSON.stringify(options),
-    });
-  }
-
-  /**
-   * Get private key (tracked for compliance)
-   */
-  async getPrivateKey(options: {
+  async createWallet(data: {
     socialId: string;
-    socialType?: SocialIdType;
-    reason?: string;
-    ipAddress?: string;
-    userAgent?: string;
-  }): Promise<any> {
-    return this.makeRequest(`/api/wallets/${encodeURIComponent(options.socialId)}/private-key`, {
+    socialType: string;
+    chains?: SupportedChain[];
+    enableGasless?: boolean;
+  }): Promise<Wallet> {
+    await this.validateProjectConnection();
+
+    const response = await this.makeRequest<Wallet>('/v1/wallets/create', {
       method: 'POST',
       body: JSON.stringify({
-        socialType: options.socialType || 'email',
-        reason: options.reason || 'user_requested',
-        ipAddress: options.ipAddress,
-        userAgent: options.userAgent
+        ...data,
+        projectName: this.config.projectName,
+        enableGasless: data.enableGasless !== false,
+        chains: data.chains || ['ethereum', 'arbitrum', 'solana'], // Default to all chains
       }),
     });
+
+    if (!response.success) {
+      throw new Error(`❌ Failed to create wallet: ${response.error?.message}`);
+    }
+
+    console.log('✅ Wallet created successfully');
+    return response.data!;
   }
 
   /**
-   * Fund company gas tank
+   * Get wallet by social ID (simplified)
    */
-  async fundGasTank(options: {
-    companyId: string;
-    amount: string;
-    chain: string;
-    token?: string;
-  }): Promise<any> {
-    return this.makeRequest(`/api/companies/${options.companyId}/gas-tank/fund`, {
-      method: 'POST',
-      body: JSON.stringify({
-        amount: options.amount,
-        chain: options.chain,
-        token: options.token || 'ETH'
-      }),
-    });
-  }
+  async getWallet(socialId: string, socialType: string): Promise<Wallet> {
+    await this.validateProjectConnection();
 
-  /**
-   * Pay user transaction fees (sponsored transactions)
-   */
-  async payUserFees(options: {
-    companyId: string;
-    userSocialId: string;
-    chain?: string;
-    amount?: string;
-    txHash?: string;
-    transactionType?: string;
-    estimatedGas?: string;
-  }): Promise<any> {
-    return this.makeRequest(`/api/companies/${options.companyId}/pay-fees`, {
-      method: 'POST',
-      body: JSON.stringify({
-        userSocialId: options.userSocialId,
-        chain: options.chain,
-        amount: options.amount,
-        txHash: options.txHash,
-        transactionType: options.transactionType,
-        estimatedGas: options.estimatedGas
-      }),
-    });
-  }
+    const response = await this.makeRequest<Wallet>(
+      `/v1/wallets/social?socialId=${encodeURIComponent(socialId)}&socialType=${encodeURIComponent(socialType)}&projectName=${encodeURIComponent(this.config.projectName)}`
+    );
 
-  /**
-   * Get gas tank status
-   */
-  async getGasTankStatus(options: { companyId: string }): Promise<any> {
-    return this.makeRequest(`/api/companies/${options.companyId}/gas-tank`);
-  }
+    if (!response.success) {
+      throw new Error(`❌ Failed to get wallet: ${response.error?.message}`);
+    }
 
-  /**
-   * Get usage analytics
-   */
-  async getUsageAnalytics(options: { timeframe?: string } = {}): Promise<any> {
-    const params = options.timeframe ? `?timeframe=${options.timeframe}` : '';
-    return this.makeRequest(`/api/analytics/usage${params}`);
+    return response.data!;
   }
 
   /**
    * Get wallet balances across all chains
    */
-  async getWalletBalances(socialId: string, socialType: string = 'email'): Promise<any> {
-    const encodedSocialId = encodeURIComponent(socialId);
-    return this.makeRequest(`/api/wallets/${encodedSocialId}/balances?socialType=${socialType}`);
-  }
-
-  /**
-   * Get SDK configuration
-   */
-  getConfig(): NexusConfig {
-    return { ...this.config };
-  }
-
-  /**
-   * Clear request cache (useful for third-party apps)
-   */
-  clearCache(): void {
-    this.requestCache.clear();
-    console.log('🧹 SDK cache cleared');
-  }
-
-  /**
-   * Health check for third-party monitoring
-   */
-  async healthCheck(): Promise<any> {
-    try {
-      const health = await this.makeRequest('/health', {}, true);
-      return {
-        ...health,
-        sdk: {
-          version: '1.0.1',
-          cacheSize: this.requestCache.size,
-          initialized: this.initialized
-        }
-      };
-    } catch (error: any) {
-      throw new Error(`Health check failed: ${error.message}`);
-    }
-  }
-
-  /**
-   * Generate webhook-safe wallet identifier for third-party integrations
-   */
-  generateWebhookId(socialId: string, socialType: string): string {
-    return Buffer.from(`${socialType}:${socialId}`).toString('base64');
-  }
-
-  /**
-   * Parse webhook identifier back to social credentials
-   */
-  parseWebhookId(webhookId: string): { socialId: string; socialType: string } {
-    try {
-      const decoded = Buffer.from(webhookId, 'base64').toString('utf-8');
-      const [socialType, socialId] = decoded.split(':');
-      return { socialId, socialType };
-    } catch (error) {
-      throw new Error('Invalid webhook ID format');
-    }
-  }
-
-  /**
-   * Validate configuration for third-party apps
-   */
-  validateConfig(): { valid: boolean; errors: string[] } {
-    const errors: string[] = [];
+  async getWalletBalances(socialId: string, socialType: string): Promise<WalletBalances> {
+    const wallet = await this.getWallet(socialId, socialType);
     
-    if (!this.config.apiKey) {
-      errors.push('API key is required');
+    const response = await this.makeRequest<WalletBalances>(`/v1/wallets/${wallet.id}/balances`);
+
+    if (!response.success) {
+      throw new Error(`❌ Failed to get wallet balances: ${response.error?.message}`);
     }
-    
-    if (!this.config.endpoints?.api) {
-      errors.push('API endpoint is required');
+
+    return response.data!;
+  }
+
+  // ==================== TRANSACTION OPERATIONS ====================
+
+  /**
+   * Execute gasless transaction (simplified)
+   */
+  async sendTransaction(data: {
+    socialId: string;
+    socialType: string;
+    chain: SupportedChain;
+    to: string;
+    value?: string;
+    data?: string;
+    usePaymaster?: boolean;
+  }): Promise<TransactionResult> {
+    await this.validateProjectConnection();
+
+    const wallet = await this.getWallet(data.socialId, data.socialType);
+    const userWalletAddress = wallet.addresses[data.chain];
+
+    if (!userWalletAddress) {
+      throw new Error(`❌ Wallet not deployed on ${data.chain}`);
     }
-    
-    if (!this.config.chains || this.config.chains.length === 0) {
-      errors.push('At least one chain must be specified');
+
+    const response = await this.makeRequest<TransactionResult>(
+      `/v1/projects/${this.projectId}/transactions/execute`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          projectName: this.config.projectName,
+          chain: data.chain,
+          userWalletAddress,
+          transaction: {
+            to: data.to,
+            value: data.value || '0',
+            data: data.data || undefined,
+          },
+          usePaymaster: data.usePaymaster !== false, // Default to gasless
+        }),
+      }
+    );
+
+    if (!response.success) {
+      throw new Error(`❌ Transaction failed: ${response.error?.message}`);
     }
+
+    console.log('✅ Transaction sent successfully');
+    return response.data!;
+  }
+
+  /**
+   * Transfer tokens (simplified)
+   */
+  async transferTokens(data: {
+    socialId: string;
+    socialType: string;
+    chain: SupportedChain;
+    to: string;
+    amount: string;
+    token?: string; // 'native' or token address
+    usePaymaster?: boolean;
+  }): Promise<TransactionResult> {
+    const token = data.token || 'native';
     
+    // For native tokens, send directly
+    if (token === 'native') {
+      return this.sendTransaction({
+        socialId: data.socialId,
+        socialType: data.socialType,
+        chain: data.chain,
+        to: data.to,
+        value: data.amount,
+        usePaymaster: data.usePaymaster,
+      });
+    }
+
+    // For ERC-20 tokens, encode transfer
+    const transferData = this.encodeTokenTransfer(data.to, data.amount);
+    return this.sendTransaction({
+      socialId: data.socialId,
+      socialType: data.socialType,
+      chain: data.chain,
+      to: token,
+      value: '0',
+      data: transferData,
+      usePaymaster: data.usePaymaster,
+    });
+  }
+
+  // ==================== CROSS-CHAIN OPERATIONS ====================
+
+  /**
+   * Bridge tokens across chains (simplified)
+   */
+  async bridgeTokens(data: {
+    socialId: string;
+    socialType: string;
+    fromChain: SupportedChain;
+    toChain: SupportedChain;
+    amount: string;
+    token?: string;
+  }): Promise<BridgeResult> {
+    if (!this.config.enableBridging) {
+      throw new Error('❌ Bridging is disabled for this SDK instance');
+    }
+
+    await this.validateProjectConnection();
+
+    const response = await this.makeRequest<BridgeResult>(
+      `/v1/projects/${this.projectId}/bridge`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          projectName: this.config.projectName,
+          ...data,
+        }),
+      }
+    );
+
+    if (!response.success) {
+      throw new Error(`❌ Bridge failed: ${response.error?.message}`);
+    }
+
+    console.log('✅ Bridge transaction initiated');
+    return response.data!;
+  }
+
+  // ==================== ANALYTICS & MONITORING ====================
+
+  /**
+   * Get project analytics
+   */
+  async getAnalytics(days: number = 30): Promise<AnalyticsOverview> {
+    await this.validateProjectConnection();
+
+    const response = await this.makeRequest<AnalyticsOverview>(
+      `/v1/projects/${this.projectId}/analytics?days=${days}&projectName=${encodeURIComponent(this.config.projectName)}`
+    );
+
+    if (!response.success) {
+      throw new Error(`❌ Failed to get analytics: ${response.error?.message}`);
+    }
+
+    return response.data!;
+  }
+
+  /**
+   * Get paymaster balances
+   */
+  async getPaymasterBalances(): Promise<PaymasterBalance[]> {
+    await this.validateProjectConnection();
+
+    const response = await this.makeRequest<PaymasterBalance[]>(
+      `/v1/projects/${this.projectId}/paymaster/balances?projectName=${encodeURIComponent(this.config.projectName)}`
+    );
+
+    if (!response.success) {
+      throw new Error(`❌ Failed to get paymaster balances: ${response.error?.message}`);
+    }
+
+    return response.data!;
+  }
+
+  /**
+   * Health check for all systems
+   */
+  async healthCheck(): Promise<{ status: string; projectName: string; chains: string[] }> {
+    const response = await this.makeRequest<{ status: string; projectName: string; chains: string[] }>(
+      `/v1/health?projectName=${encodeURIComponent(this.config.projectName)}`
+    );
+
+    if (!response.success) {
+      throw new Error(`❌ Health check failed: ${response.error?.message}`);
+    }
+
+    return response.data!;
+  }
+
+  // ==================== UTILITY METHODS ====================
+
+  /**
+   * Encode ERC-20 token transfer
+   */
+  private encodeTokenTransfer(to: string, amount: string): string {
+    // ERC-20 transfer function signature: transfer(address,uint256)
+    const methodId = '0xa9059cbb';
+    const paddedTo = to.replace('0x', '').padStart(64, '0');
+    const paddedAmount = BigInt(amount).toString(16).padStart(64, '0');
+    return `${methodId}${paddedTo}${paddedAmount}`;
+  }
+
+  // ==================== DEVELOPER UTILITIES ====================
+
+  /**
+   * Get project configuration
+   */
+  getProjectInfo(): { projectName: string; projectId: string; chains: string[] } {
     return {
-      valid: errors.length === 0,
-      errors
+      projectName: this.config.projectName,
+      projectId: this.projectId,
+      chains: ['ethereum', 'arbitrum', 'solana'], // Will be dynamic in future
     };
   }
 
   /**
-   * Get SDK statistics for monitoring
+   * Check if gasless transactions are enabled
    */
-  getStats(): any {
+  isGaslessEnabled(): boolean {
+    return this.config.enableGasless !== false;
+  }
+
+  /**
+   * Check if bridging is enabled
+   */
+  isBridgingEnabled(): boolean {
+    return this.config.enableBridging !== false;
+  }
+
+  /**
+   * Get SDK version and configuration
+   */
+  getSDKInfo(): { version: string; config: SimpleNexusConfig } {
     return {
-      version: '1.0.1',
-      initialized: this.initialized,
-      cacheSize: this.requestCache.size,
-      supportedChains: this.config.chains,
-      environment: this.config.environment,
-      endpoint: this.config.endpoints?.api
+      version: '1.2.0',
+      config: this.config,
     };
-  }
-
-  // =============================================================================
-  // TOKEN & NFT FUNCTIONALITY
-  // =============================================================================
-
-  /**
-   * Transfer ERC20/SPL tokens between wallets
-   * Supports cross-chain token transfers
-   */
-  async transferToken(options: TokenTransferOptions): Promise<any> {
-    const response = await this.makeRequest('/api/tokens/transfer', {
-      method: 'POST',
-      body: JSON.stringify({
-        from: {
-          socialId: options.from.socialId,
-          socialType: options.from.socialType || 'email',
-          chain: options.from.chain
-        },
-        to: {
-          address: options.to.address,
-          chain: options.to.chain
-        },
-        tokenAddress: options.tokenAddress,
-        amount: options.amount,
-        decimals: options.decimals || 18,
-        gasless: options.gasless !== false
-      }),
-    });
-
-    return response;
-  }
-
-  /**
-   * Transfer NFTs (ERC721/ERC1155/Metaplex) between wallets
-   */
-  async transferNFT(options: NFTTransferOptions): Promise<any> {
-    const response = await this.makeRequest('/api/nfts/transfer', {
-      method: 'POST',
-      body: JSON.stringify({
-        from: {
-          socialId: options.from.socialId,
-          socialType: options.from.socialType || 'email',
-          chain: options.from.chain
-        },
-        to: {
-          address: options.to.address,
-          chain: options.to.chain
-        },
-        nftContract: options.nftContract,
-        tokenId: options.tokenId,
-        gasless: options.gasless !== false
-      }),
-    });
-
-    return response;
-  }
-
-  /**
-   * Get all tokens owned by a wallet
-   */
-  async getTokenBalances(socialId: string, socialType: string = 'email', chain?: SupportedChain): Promise<any> {
-    const response = await this.makeRequest('/api/tokens/balances', {
-      method: 'POST',
-      body: JSON.stringify({
-        socialId,
-        socialType,
-        chain
-      }),
-    }, true);
-
-    return response;
-  }
-
-  /**
-   * Get all NFTs owned by a wallet
-   */
-  async getNFTs(socialId: string, socialType: string = 'email', chain?: SupportedChain): Promise<any> {
-    const response = await this.makeRequest('/api/nfts/list', {
-      method: 'POST',
-      body: JSON.stringify({
-        socialId,
-        socialType,
-        chain
-      }),
-    }, true);
-
-    return response;
-  }
-
-  /**
-   * Mint new tokens to a wallet
-   */
-  async mintTokens(options: TokenMintOptions): Promise<any> {
-    const response = await this.makeRequest('/api/tokens/mint', {
-      method: 'POST',
-      body: JSON.stringify({
-        socialId: options.socialId,
-        socialType: options.socialType || 'email',
-        chain: options.chain,
-        tokenContract: options.tokenContract,
-        amount: options.amount,
-        metadata: options.metadata
-      }),
-    });
-
-    return response;
-  }
-
-  /**
-   * Mint new NFT to a wallet
-   */
-  async mintNFT(options: NFTMintOptions): Promise<any> {
-    const response = await this.makeRequest('/api/nfts/mint', {
-      method: 'POST',
-      body: JSON.stringify({
-        socialId: options.socialId,
-        socialType: options.socialType || 'email',
-        chain: options.chain,
-        nftContract: options.nftContract,
-        tokenURI: options.tokenURI,
-        metadata: options.metadata
-      }),
-    });
-
-    return response;
-  }
-
-  /**
-   * Get token information and metadata
-   */
-  async getTokenInfo(tokenAddress: string, chain: SupportedChain): Promise<any> {
-    const response = await this.makeRequest('/api/tokens/info', {
-      method: 'POST',
-      body: JSON.stringify({
-        tokenAddress,
-        chain
-      }),
-    }, true);
-
-    return response;
-  }
-
-  /**
-   * Get NFT metadata and details
-   */
-  async getNFTMetadata(nftContract: string, tokenId: string, chain: SupportedChain): Promise<any> {
-    const response = await this.makeRequest('/api/nfts/metadata', {
-      method: 'POST',
-      body: JSON.stringify({
-        nftContract,
-        tokenId,
-        chain
-      }),
-    }, true);
-
-    return response;
-  }
-
-  /**
-   * Swap tokens using DEX aggregators
-   */
-  async swapTokens(options: {
-    socialId: string;
-    socialType?: SocialIdType;
-    chain: SupportedChain;
-    fromToken: string;
-    toToken: string;
-    amount: string;
-    slippage?: number;
-    gasless?: boolean;
-  }): Promise<any> {
-    const response = await this.makeRequest('/api/tokens/swap', {
-      method: 'POST',
-      body: JSON.stringify({
-        socialId: options.socialId,
-        socialType: options.socialType || 'email',
-        chain: options.chain,
-        fromToken: options.fromToken,
-        toToken: options.toToken,
-        amount: options.amount,
-        slippage: options.slippage || 1,
-        gasless: options.gasless !== false
-      }),
-    });
-
-    return response;
-  }
-
-  /**
-   * Approve token spending for smart contracts
-   */
-  async approveToken(options: {
-    socialId: string;
-    socialType?: SocialIdType;
-    chain: SupportedChain;
-    tokenAddress: string;
-    spenderAddress: string;
-    amount: string;
-    gasless?: boolean;
-  }): Promise<any> {
-    const response = await this.makeRequest('/api/tokens/approve', {
-      method: 'POST',
-      body: JSON.stringify({
-        socialId: options.socialId,
-        socialType: options.socialType || 'email',
-        chain: options.chain,
-        tokenAddress: options.tokenAddress,
-        spenderAddress: options.spenderAddress,
-        amount: options.amount,
-        gasless: options.gasless !== false
-      }),
-    });
-
-    return response;
-  }
-
-  /**
-   * List NFT on marketplace
-   */
-  async listNFT(options: {
-    socialId: string;
-    socialType?: SocialIdType;
-    chain: SupportedChain;
-    nftContract: string;
-    tokenId: string;
-    price: string;
-    marketplace: string;
-    gasless?: boolean;
-  }): Promise<any> {
-    const response = await this.makeRequest('/api/nfts/list', {
-      method: 'POST',
-      body: JSON.stringify({
-        socialId: options.socialId,
-        socialType: options.socialType || 'email',
-        chain: options.chain,
-        nftContract: options.nftContract,
-        tokenId: options.tokenId,
-        price: options.price,
-        marketplace: options.marketplace,
-        gasless: options.gasless !== false
-      }),
-    });
-
-    return response;
-  }
-
-  /**
-   * Get transaction history for tokens and NFTs
-   */
-  async getTransactionHistory(socialId: string, socialType: string = 'email', options?: {
-    chain?: SupportedChain;
-    asset?: 'native' | 'tokens' | 'nfts' | 'all';
-    limit?: number;
-    offset?: number;
-  }): Promise<any> {
-    const response = await this.makeRequest('/api/transactions/history', {
-      method: 'POST',
-      body: JSON.stringify({
-        socialId,
-        socialType,
-        chain: options?.chain,
-        asset: options?.asset || 'all',
-        limit: options?.limit || 50,
-        offset: options?.offset || 0
-      }),
-    }, true);
-
-    return response;
-  }
-
-  /**
-   * Deploy new ERC20/SPL token contract
-   */
-  async deployToken(options: {
-    socialId: string;
-    socialType?: SocialIdType;
-    chain: SupportedChain;
-    name: string;
-    symbol: string;
-    decimals: number;
-    totalSupply: string;
-    metadata?: any;
-    gasless?: boolean;
-  }): Promise<any> {
-    const response = await this.makeRequest('/api/tokens/deploy', {
-      method: 'POST',
-      body: JSON.stringify({
-        socialId: options.socialId,
-        socialType: options.socialType || 'email',
-        chain: options.chain,
-        name: options.name,
-        symbol: options.symbol,
-        decimals: options.decimals,
-        totalSupply: options.totalSupply,
-        metadata: options.metadata,
-        gasless: options.gasless !== false
-      }),
-    });
-
-    return response;
-  }
-
-  /**
-   * Deploy new NFT collection contract
-   */
-  async deployNFTCollection(options: {
-    socialId: string;
-    socialType?: SocialIdType;
-    chain: SupportedChain;
-    name: string;
-    symbol: string;
-    baseURI?: string;
-    metadata?: any;
-    gasless?: boolean;
-  }): Promise<any> {
-    const response = await this.makeRequest('/api/nfts/deploy', {
-      method: 'POST',
-      body: JSON.stringify({
-        socialId: options.socialId,
-        socialType: options.socialType || 'email',
-        chain: options.chain,
-        name: options.name,
-        symbol: options.symbol,
-        baseURI: options.baseURI,
-        metadata: options.metadata,
-        gasless: options.gasless !== false
-      }),
-    });
-
-    return response;
   }
 } 

@@ -4,6 +4,10 @@ const ProjectAPIKey = require('../models/ProjectAPIKey');
 const AuthMiddleware = require('../middleware/auth');
 const PaymasterService = require('../services/paymasterService');
 const { getSupportedChainIds } = require('../config/chains');
+const ProjectAuthMiddleware = require('../middleware/project-auth');
+const ProjectPaymaster = require('../models/ProjectPaymaster');
+const crypto = require('crypto');
+const WalletGenerator = require('../services/walletGenerator');
 
 const router = express.Router();
 
@@ -351,6 +355,278 @@ router.delete('/:projectId', AuthMiddleware.authenticateToken, async (req, res) 
       error: {
         code: 'PROJECT_DELETION_FAILED',
         message: 'Failed to delete project'
+      }
+    });
+  }
+});
+
+/**
+ * @route POST /projects/:projectId/wallets
+ * @desc Create user wallets for a project using project paymaster
+ * @access Private (requires project API key)
+ */
+router.post('/:projectId/wallets', 
+  ProjectAuthMiddleware.validateProjectAPIKey,
+  async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { socialId, socialType, chains = ['ethereum', 'arbitrum', 'solana'] } = req.body;
+
+      // Validate required parameters
+      if (!socialId || !socialType) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'MISSING_PARAMETERS',
+            message: 'socialId and socialType are required'
+          }
+        });
+      }
+
+      // Validate chains
+      if (!Array.isArray(chains) || chains.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_CHAINS',
+            message: 'At least one chain must be specified'
+          }
+        });
+      }
+
+      console.log(`🚀 Creating user wallets for ${socialId} on project ${projectId}`);
+
+      // Get project paymasters to check funding
+      const projectPaymasters = await ProjectPaymaster.find({
+        project_id: projectId,
+        deployment_status: 'deployed'
+      });
+
+      if (projectPaymasters.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'NO_DEPLOYED_PAYMASTERS',
+            message: 'No deployed paymasters found for this project. Please deploy paymasters first.'
+          }
+        });
+      }
+
+      // Create user wallets using project paymasters
+      const wallets = {};
+      const deploymentResults = [];
+
+      for (const chain of chains) {
+        try {
+          console.log(`🔗 Deploying ${chain} wallet for ${socialId}...`);
+          
+          // Find paymaster for this chain
+          const paymaster = projectPaymasters.find(pm => 
+            pm.supported_chains.includes(chain)
+          );
+
+          if (!paymaster) {
+            console.warn(`⚠️ No paymaster found for ${chain}`);
+            continue;
+          }
+
+          // Generate deterministic wallet address
+          const walletGenerator = require('../services/walletGenerator');
+          const salt = crypto.createHash('sha256')
+            .update(`${socialId}-${socialType}-${projectId}`)
+            .digest('hex');
+
+          let walletResult;
+          if (chain === 'solana') {
+            walletResult = await walletGenerator.generateSolanaUserWallet({
+              socialId,
+              socialType,
+              salt,
+              usePaymaster: true,
+              projectId,
+              paymasterAddress: paymaster.address
+            });
+          } else {
+            walletResult = await walletGenerator.generateUserWallet({
+              socialId,
+              socialType,
+              chain,
+              salt,
+              usePaymaster: true,
+              projectId,
+              paymasterAddress: paymaster.address
+            });
+          }
+
+          if (walletResult.success) {
+            wallets[chain] = {
+              address: walletResult.address,
+              chain: chain,
+              category: chain === 'solana' ? 'svm' : 'evm',
+              isDeployed: walletResult.isDeployed,
+              deploymentTx: walletResult.txHash,
+              paymasterUsed: paymaster.address,
+              gasFeesPaid: walletResult.gasFees || 0
+            };
+
+            deploymentResults.push({
+              chain,
+              status: 'success',
+              address: walletResult.address,
+              txHash: walletResult.txHash,
+              gasFees: walletResult.gasFees || 0
+            });
+
+            console.log(`✅ ${chain} wallet deployed: ${walletResult.address}`);
+          } else {
+            console.error(`❌ ${chain} wallet deployment failed:`, walletResult.error);
+            deploymentResults.push({
+              chain,
+              status: 'failed',
+              error: walletResult.error
+            });
+          }
+
+        } catch (error) {
+          console.error(`❌ ${chain} deployment error:`, error);
+          deploymentResults.push({
+            chain,
+            status: 'error',
+            error: error.message
+          });
+        }
+      }
+
+      // Check if any wallets were created
+      if (Object.keys(wallets).length === 0) {
+        return res.status(500).json({
+          success: false,
+          error: {
+            code: 'WALLET_CREATION_FAILED',
+            message: 'Failed to create wallets on any chain'
+          },
+          details: deploymentResults
+        });
+      }
+
+      // Calculate total gas fees paid by project paymaster
+      const totalGasFees = deploymentResults
+        .filter(r => r.status === 'success')
+        .reduce((sum, r) => sum + (r.gasFees || 0), 0);
+
+      console.log(`🎉 User wallets created successfully. Total gas fees: $${totalGasFees.toFixed(4)}`);
+
+      res.status(201).json({
+        success: true,
+        message: 'User wallets created successfully',
+        data: {
+          projectId,
+          socialId,
+          socialType,
+          wallets,
+          project: {
+            name: req.project.name,
+            chains: req.project.chains
+          },
+          paymasterEnabled: true,
+          gasFeesSpent: totalGasFees,
+          deploymentResults
+        }
+      });
+
+    } catch (error) {
+      console.error('Wallet creation error:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'WALLET_CREATION_FAILED',
+          message: error.message
+        }
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/projects/validate
+ * Validate project name against API key (for SDK initialization)
+ */
+router.post('/validate', ProjectAuthMiddleware.validateProjectAPIKey, async (req, res) => {
+  try {
+    const { projectName, projectId } = req.body;
+
+    if (!projectName || !projectId) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'MISSING_PARAMETERS',
+          message: 'Both projectName and projectId are required',
+          suggestions: [
+            'Include projectName in your request body',
+            'Include projectId in your request body',
+            'Check your SDK configuration'
+          ]
+        }
+      });
+    }
+
+    // Check if the authenticated project matches the requested details
+    if (req.project.id !== projectId) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'PROJECT_ID_MISMATCH',
+          message: 'Project ID does not match API key',
+          details: `API key belongs to project ${req.project.id}, but request specifies ${projectId}`,
+          suggestions: [
+            'Verify your project ID is correct',
+            'Check that you\'re using the right API key',
+            'Regenerate your API key if needed'
+          ]
+        }
+      });
+    }
+
+    if (req.project.name !== projectName) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'PROJECT_NAME_MISMATCH',
+          message: 'Project name does not match API key',
+          details: `API key belongs to project "${req.project.name}", but request specifies "${projectName}"`,
+          suggestions: [
+            `Use "${req.project.name}" as your project name`,
+            'Check your project name in the dashboard',
+            'Verify project name is spelled correctly (case-sensitive)',
+            'Make sure you\'re using the correct API key'
+          ]
+        }
+      });
+    }
+
+    // Return validation success with project info
+    res.json({
+      success: true,
+      data: {
+        projectName: req.project.name,
+        projectId: req.project.id,
+        chains: req.project.chains,
+        validated: true
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Project validation error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'VALIDATION_FAILED',
+        message: 'Failed to validate project',
+        suggestions: [
+          'Check your API key is valid',
+          'Verify your project exists',
+          'Contact support if the problem persists'
+        ]
       }
     });
   }

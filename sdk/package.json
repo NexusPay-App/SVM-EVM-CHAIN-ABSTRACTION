@@ -1,60 +1,62 @@
 {
   "name": "@nexuspay/sdk",
-  "version": "1.1.2",
-  "description": "Cross-chain wallet SDK with unlimited custom social identifier support - create wallets for ANY social type: gaming IDs, NFT holders, employee IDs, customer tiers, and more. Enterprise-grade with gas tanks, sponsored transactions, and unified addresses.",
+  "version": "1.2.1",
+  "description": "🚀 Ultra-simple cross-chain wallet SDK - Initialize with just projectName + apiKey. Bulletproof gasless transactions across EVM/SVM chains with ANY social identifier support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "jest",
-    "prepublishOnly": "npm run build"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "npm run build"
   },
   "keywords": [
-    "blockchain",
     "wallet",
     "cross-chain",
-    "ethereum",
-    "solana",
-    "evm",
-    "svm",
-    "web3",
-    "defi",
-    "account-abstraction",
-    "gasless-transactions",
-    "social-login",
-    "custom-social-types",
-    "unlimited-identifiers",
-    "gaming-wallets",
-    "nft-wallets",
-    "employee-wallets",
-    "customer-wallets",
-    "gas-tank",
-    "sponsored-transactions",
-    "unified-addresses",
-    "private-key-tracking",
-    "usage-analytics",
-    "gaming-companies",
-    "enterprise",
-    "compliance",
-    "wallet-deployment",
+    "gasless",
     "paymaster",
-    "real-blockchain-wallets",
-    "flexible-social-auth"
+    "ethereum",
+    "arbitrum",
+    "solana",
+    "bridge",
+    "swap",
+    "social-auth",
+    "web3",
+    "blockchain",
+    "clean",
+    "fast",
+    "secure",
+    "minimal",
+    "easy-to-use",
+    "flexible",
+    "any-social-identifier"
   ],
-  "author": "NexusPay Team",
+  "author": "NexusPay",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION.git",
-    "directory": "sdk"
+    "url": "https://github.com/nexuspay/sdk.git"
   },
   "homepage": "https://backend-amber-zeta-94.vercel.app",
   "bugs": {
     "url": "https://github.com/NexusPay-App/SVM-EVM-CHAIN-ABSTRACTION/issues"
   },
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
     "typescript": "^5.0.0",
     "jest": "^29.0.0",
     "@types/jest": "^29.0.0"
@@ -63,10 +65,12 @@
   "files": [
     "dist/",
     "README.md",
-    "API_REFERENCE.md",
-    "DEVELOPER_QUICKSTART.md"
+    "LICENSE"
   ],
   "engines": {
     "node": ">=16.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
-} 
+}

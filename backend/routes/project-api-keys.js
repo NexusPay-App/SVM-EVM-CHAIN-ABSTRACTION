@@ -71,8 +71,8 @@ router.post('/:projectId/api-keys', AuthMiddleware.authenticateToken, async (req
 
     // Create API key record
     const newApiKey = new ProjectAPIKey({
-      projectId: projectId,
-      keyName: name.trim(),
+      project_id: projectId,
+      name: name.trim(),
       keyType: keyType,
       permissions: permissions || ['wallets:create', 'wallets:deploy', 'wallets:read'],
       createdBy: userId
@@ -186,7 +186,7 @@ router.get('/:projectId/api-keys/:keyId', AuthMiddleware.authenticateToken, asyn
 
     const apiKey = await ProjectAPIKey.findOne({
       keyId: keyId,
-      projectId: projectId,
+      project_id: projectId,
       status: 'active'
     });
 
@@ -243,7 +243,7 @@ router.get('/:projectId/api-keys/:keyId/reveal', AuthMiddleware.authenticateToke
 
     const apiKey = await ProjectAPIKey.findOne({
       keyId: keyId,
-      projectId: projectId,
+      project_id: projectId,
       status: 'active'
     });
 
@@ -264,7 +264,7 @@ router.get('/:projectId/api-keys/:keyId/reveal', AuthMiddleware.authenticateToke
       success: true,
       data: {
         key: fullKey,
-        name: apiKey.keyName,
+        name: apiKey.name,
         type: apiKey.keyType
       }
     });
@@ -306,7 +306,7 @@ router.put('/:projectId/api-keys/:keyId', AuthMiddleware.authenticateToken, asyn
 
     const apiKey = await ProjectAPIKey.findOne({
       keyId: keyId,
-      projectId: projectId,
+      project_id: projectId,
       status: 'active'
     });
 
@@ -374,7 +374,7 @@ router.delete('/:projectId/api-keys/:keyId', AuthMiddleware.authenticateToken, a
 
     const apiKey = await ProjectAPIKey.findOne({
       keyId: keyId,
-      projectId: projectId,
+      project_id: projectId,
       status: 'active'
     });
 
@@ -433,7 +433,7 @@ router.post('/:projectId/api-keys/:keyId/rotate', AuthMiddleware.authenticateTok
 
     const apiKey = await ProjectAPIKey.findOne({
       keyId: keyId,
-      projectId: projectId,
+      project_id: projectId,
       status: 'active'
     });
 
@@ -452,8 +452,8 @@ router.post('/:projectId/api-keys/:keyId/rotate', AuthMiddleware.authenticateTok
     
     // Create new API key record
     const newApiKey = new ProjectAPIKey({
-      projectId: projectId,
-      keyName: `${apiKey.keyName} (Rotated)`,
+      project_id: projectId,
+      name: `${apiKey.name} (Rotated)`,
       keyType: apiKey.keyType,
       permissions: apiKey.permissions,
       createdBy: userId
@@ -517,7 +517,7 @@ router.get('/:projectId/api-keys/:keyId/usage', AuthMiddleware.authenticateToken
 
     const apiKey = await ProjectAPIKey.findOne({
       keyId: keyId,
-      projectId: projectId,
+      project_id: projectId,
       status: 'active'
     });
 
@@ -592,7 +592,7 @@ router.post('/:projectId/api-keys/:keyId/whitelist', AuthMiddleware.authenticate
 
     const apiKey = await ProjectAPIKey.findOne({
       keyId: keyId,
-      projectId: projectId,
+      project_id: projectId,
       status: 'active'
     });
 
@@ -665,7 +665,7 @@ router.delete('/:projectId/api-keys/:keyId/whitelist/:ip', AuthMiddleware.authen
 
     const apiKey = await ProjectAPIKey.findOne({
       keyId: keyId,
-      projectId: projectId,
+      project_id: projectId,
       status: 'active'
     });
 
